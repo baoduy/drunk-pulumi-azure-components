@@ -1,18 +1,11 @@
 import * as pulumi from '@pulumi/pulumi';
+import * as azure from '@pulumi/azure-native';
 import { PGPGenerator } from '@drunk-pulumi/azure-components';
 
 const rs = (async () => {
-  var pgpKey = new PGPGenerator('pgp-test', {
-    user: { name: 'test', email: 'test@drunk.dev' },
-    passphrase: 'test',
-    validDays: 365,
-  });
+  const group = new azure.resources.ResourceGroup('common');
 
-  return {
-    publicKey: pgpKey.publicKey,
-    privateKey: pgpKey.privateKey,
-    revocationCertificate: pgpKey.revocationCertificate,
-  };
+  return {};
 })();
 
 export default pulumi.output(rs);

@@ -2,6 +2,15 @@ name: drunk-pulumi-test
 runtime: nodejs
 description: A testing project for @drunk-pulumi/azure
 config:
+  pulumi:autonaming:
+    value:
+      pattern: ${project}-${stack}-${name}-${alphanum(6)}
+      providers:
+        azure-native:
+          resources:
+            "azure-native:resources:ResourceGroup":
+              pattern: ${project}-${stack}-${name}
+
   pulumi:tags:
     value:
       pulumi:template: azure-typescript

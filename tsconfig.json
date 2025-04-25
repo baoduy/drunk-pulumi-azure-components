@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "outDir": "./bin",
+    "target": "ESNext",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "stripInternal": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "strict": true
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "files": [
+    "src/common/PGPGenerator.ts",
+    "src/common/index.ts",
+    "src/index.ts"
+  ]
+}

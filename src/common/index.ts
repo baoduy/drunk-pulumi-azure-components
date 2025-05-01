@@ -1,1 +1,2 @@
-export { PGPGenerator, PGPGeneratorArgs } from './PGPGenerator';
+export * from './PGPGenerator';
+export * from './RandomPassword';

@@ -20,7 +20,14 @@
   ],
   "files": [
     "src/common/PGPGenerator.ts",
+    "src/common/RandomPassword.ts",
     "src/common/index.ts",
-    "src/index.ts"
+    "src/helpers/configHelper.ts",
+    "src/helpers/index.ts",
+    "src/helpers/stackEnv.ts",
+    "src/index.ts",
+    "src/types.d.ts",
+    "src/vault/VaultSecret.ts",
+    "src/vault/index.ts"
   ]
 }

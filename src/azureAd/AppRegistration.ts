@@ -34,6 +34,11 @@ export interface AppRegistrationArgs extends WithVaultInfo, Pick<azAd.Applicatio
 }
 
 export class AppRegistration extends pulumi.ComponentResource {
+    public readonly clientId: pulumi.Output<string>;
+    public readonly clientSecret?: pulumi.Output<string>;
+    public readonly servicePrincipalId?: pulumi.Output<string>;
+    public readonly servicePrincipalPassword?: pulumi.Output<string>;
+
     private _app: azAd.Application;
 
     constructor(
@@ -79,11 +84,23 @@ export class AppRegistration extends pulumi.ComponentResource {
         }
 
         if (args.enableClientSecret) {
-            this.createClientSecret();
+            const secret = this.createClientSecret();
+            this.clientSecret = secret.clientSecret;
         }
         if (args.servicePrincipal?.enabled) {
-            this.createServicePrincipal();
+            const sp = this.createServicePrincipal();
+            this.servicePrincipalId = sp.servicePrincipalId;
+            this.servicePrincipalPassword = sp.servicePrincipalPassword;
         }
+
+        this.clientId = this._app.clientId;
+
+        this.registerOutputs({
+            clientId: this.clientId,
+            clientSecret: this.clientSecret,
+            servicePrincipalId: this.servicePrincipalId,
+            servicePrincipalPassword: this.servicePrincipalPassword,
+        });
     }
 
     private createServicePrincipal() {
@@ -107,6 +124,11 @@ export class AppRegistration extends pulumi.ComponentResource {
                 contentType: `${this.name} sp password`,
             }, { dependsOn: spPass, parent: this });
         }
+
+        return {
+            servicePrincipalId: sp.id,
+            servicePrincipalPassword: spPass.value,
+        };
     }
 
     private createClientSecret() {
@@ -126,5 +148,9 @@ export class AppRegistration extends pulumi.ComponentResource {
                 contentType: `${this.name} client-secret`,
             }, { dependsOn: clientSecret, parent: this });
         }
+
+        return {
+            clientSecret: clientSecret.value,
+        };
     }
 }

@@ -21,6 +21,8 @@
   "files": [
     "src/common/PGPGenerator.ts",
     "src/common/RandomPassword.ts",
+    "src/common/RandomString.ts",
+    "src/common/SshGenerator.ts",
     "src/common/index.ts",
     "src/helpers/configHelper.ts",
     "src/helpers/index.ts",
@@ -28,6 +30,7 @@
     "src/index.ts",
     "src/types.d.ts",
     "src/vault/VaultSecret.ts",
+    "src/vault/VaultSecrets.ts",
     "src/vault/index.ts"
   ]
 }

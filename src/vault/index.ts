@@ -1,1 +1,2 @@
-export * from './VaultSecret'
+export * from './VaultSecret';
+export * from './VaultSecrets';

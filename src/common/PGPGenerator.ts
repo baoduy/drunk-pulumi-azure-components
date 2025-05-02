@@ -1,9 +1,11 @@
 import * as pulumi from "@pulumi/pulumi";
-import { generateKey } from "openpgp";
+import { PGPResource } from "@drunk-pulumi/azure-providers";
+import { WithVaultInfo } from '../types';
+import { VaultSecretResult, VaultSecrets } from '../vault';
 
 type UserInfo = { name: string; email: string };
 
-export interface PGPGeneratorArgs {
+export interface PGPGeneratorArgs extends WithVaultInfo {
   user: UserInfo;
   passphrase?: string;
   type?: "ecc" | "rsa";
@@ -14,6 +16,11 @@ export class PGPGenerator extends pulumi.ComponentResource {
   public readonly publicKey: pulumi.Output<string>;
   public readonly privateKey: pulumi.Output<string>;
   public readonly revocationCertificate: pulumi.Output<string>;
+  public readonly vaultSecret?: {
+    publicKey: VaultSecretResult;
+    privateKey: VaultSecretResult;
+    revocationCertificate: VaultSecretResult;
+  };
 
   constructor(
     name: string,
@@ -22,32 +29,42 @@ export class PGPGenerator extends pulumi.ComponentResource {
   ) {
     super("drunk-pulumi:index:PGPGenerator", name, args, opts);
 
-    //Date preparation
-    const now = new Date();
-    const expireDate = new Date();
-    if (args.validDays)
-      expireDate.setDate(expireDate.getDate() + args.validDays);
+    const pgp = new PGPResource(name, args, opts);
 
-    const pgp = generateKey({
-      curve: "brainpoolP512r1",
-      format: "armored",
-      type: args.type ?? "rsa",
-      date: now,
-      keyExpirationTime: args.validDays ? expireDate.getTime() : undefined,
-      passphrase: args.passphrase,
-      userIDs: [args.user],
-    });
+    this.publicKey = pgp.publicKey;
+    this.privateKey = pgp.privateKey;
+    this.revocationCertificate = pgp.revocationCertificate;
 
-    const pgpOutputs = pulumi.output(pgp);
+    if (args.vaultInfo) {
+      const secrets = new VaultSecrets(
+        name,
+        {
+          vaultInfo: args.vaultInfo,
+          secrets: {
+            publicKey: {
+              value: pgp.publicKey,
+              contentType: "PGPGenerator",
+            },
+            privateKey: {
+              value: pgp.privateKey,
+              contentType: "PGPGenerator",
+            },
+            revocationCertificate: {
+              value: pgp.revocationCertificate,
+              contentType: "PGPGenerator",
+            }
+          }
+        }
+      );
 
-    this.publicKey = pgpOutputs.publicKey;
-    this.privateKey = pgpOutputs.privateKey;
-    this.revocationCertificate = pgpOutputs.revocationCertificate;
+      this.vaultSecret = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, revocationCertificate: secrets.results.revocationCertificate };
+    }
 
     this.registerOutputs({
-      publicKey: pgpOutputs.publicKey,
-      privateKey: pgpOutputs.privateKey,
-      revocationCertificate: pgpOutputs.revocationCertificate,
+      publicKey: this.publicKey,
+      privateKey: this.privateKey,
+      revocationCertificate: this.revocationCertificate,
+      vaultSecret: this.vaultSecret,
     });
   }
 }

@@ -6,7 +6,7 @@
         "up": "pulumi up --yes --skip-preview",
         "reup": "pulumi up --refresh --yes --skip-preview",
         "destroy": "pulumi destroy --yes --skip-preview",
-        "update": "npx npm-check-updates -u -y && pnpm install",
+        "update": "npx npm-check-updates -u && pnpm install",
         "check": "npx depcheck --detailed",
         "export": "pulumi stack export --file state.json",
         "import": "pulumi stack import --file state.json"
@@ -17,8 +17,9 @@
     "dependencies": {
         "@azure/identity": "^4.9.1",
         "@drunk-pulumi/azure-components": "file:/../bin",
-        "@pulumi/azure-native": "^3.2.0",
-        "@pulumi/pulumi": "^3.163.0",
-        "google-protobuf": "3.21.4"
+        "@drunk-pulumi/azure-providers": "^1.0.9",
+        "@pulumi/azure-native": "^3.3.0",
+        "@pulumi/pulumi": "^3.167.0",
+        "openpgp": "^6.1.0"
     }
 }

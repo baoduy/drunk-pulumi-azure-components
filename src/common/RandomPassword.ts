@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
 import { WithVaultInfo } from '../types';
+import { VaultSecretResult, VaultSecret } from '../vault';
 
 export interface RandomPasswordArgs extends WithVaultInfo {
   policy?: pulumi.Input<'monthly' | 'yearly' | boolean>;
@@ -15,6 +16,8 @@ export interface RandomPasswordArgs extends WithVaultInfo {
 
 export class RandomPassword extends pulumi.ComponentResource {
   public readonly value: pulumi.Output<string>;
+  public readonly vaultSecret?: VaultSecretResult;
+
   constructor(
     private name: string,
     private args: RandomPasswordArgs = { length: 50, policy: 'yearly' },
@@ -37,9 +40,24 @@ export class RandomPassword extends pulumi.ComponentResource {
       overrideSpecial: options.special == false ? '' : '#%&*+-/:<>?^_|~',
     }, opts);
 
+    if (args.vaultInfo) {
+      const secret = new VaultSecret(name, {
+        vaultInfo: args.vaultInfo,
+        value: randomPass.result,
+        contentType: 'random password',
+      }, { dependsOn: randomPass });
+
+      this.vaultSecret = {
+        id: secret.id,
+        vaultUrl: secret.vaultUrl,
+        version: secret.version,
+      };
+    }
+
     this.value = randomPass.result;
     this.registerOutputs({
-      value: randomPass.result,
+      value: this.value,
+      vaultSecret: this.vaultSecret,
     });
   }
 

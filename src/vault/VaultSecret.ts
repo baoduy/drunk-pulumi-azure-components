@@ -3,8 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { configHelper, stackInfo, removeLeadingAndTrailingDash } from '../helpers';
 import { VaultSecretResource } from '@drunk-pulumi/azure-providers/VaultSecret';
 
-export interface VaultSecretArgs {
-    vaultInfo: AzureResourceInfo;
+export type SecretItemArgs = {
     //** The value of the secret. If it is not provided the value will get from project secret. */
     value?: pulumi.Input<string>;
     contentType: pulumi.Input<string>;
@@ -13,9 +12,13 @@ export interface VaultSecretArgs {
     };
 }
 
+export interface VaultSecretArgs extends SecretItemArgs {
+    vaultInfo: AzureResourceInfo;
+}
+
 export class VaultSecret extends pulumi.ComponentResource {
     public readonly id: pulumi.Output<string>;
-    public readonly url: pulumi.Output<string>;
+    public readonly vaultUrl: pulumi.Output<string>;
     public readonly version: pulumi.Output<string>;
 
     constructor(private name: string, args: VaultSecretArgs, opts?: pulumi.ComponentResourceOptions) {
@@ -24,7 +27,7 @@ export class VaultSecret extends pulumi.ComponentResource {
         const secretName = this.getSecretName();
 
         const secret = new VaultSecretResource(
-            secretName,
+            name,
             {
                 name: secretName,
                 value: secretValue,
@@ -36,13 +39,13 @@ export class VaultSecret extends pulumi.ComponentResource {
         );
 
         this.id = secret.id;
-        this.url = secret.vaultUrl;
+        this.vaultUrl = secret.vaultUrl;
         this.version = secret.version;
 
         this.registerOutputs({
             id: this.id,
-            url: this.url,
-            version: this.version
+            vaultUrl: this.vaultUrl,
+            version: this.version,
         });
     }
 

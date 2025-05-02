@@ -11,15 +11,18 @@ dependencies:
   '@drunk-pulumi/azure-components':
     specifier: file:/../bin
     version: file:../bin
+  '@drunk-pulumi/azure-providers':
+    specifier: ^1.0.9
+    version: 1.0.9
   '@pulumi/azure-native':
-    specifier: ^3.2.0
-    version: 3.2.0
+    specifier: ^3.3.0
+    version: 3.3.0
   '@pulumi/pulumi':
-    specifier: ^3.163.0
-    version: 3.166.0
-  google-protobuf:
-    specifier: 3.21.4
-    version: 3.21.4
+    specifier: ^3.167.0
+    version: 3.167.0
+  openpgp:
+    specifier: ^6.1.0
+    version: 6.1.0
 
 devDependencies:
   '@types/node':
@@ -42,16 +45,16 @@ packages:
       tslib: 2.8.1
     dev: false
 
-  /@azure/arm-apimanagement@9.2.0:
-    resolution: {integrity: sha512-iwoEkWp0SFm+kVDXCaEB1q0+SmnIuU8TmyOEObdrgsmxHw+DByKePcx4OW+blYZiJK27b/kIsYt8zkmQxoUdHw==}
+  /@azure/arm-apimanagement@10.0.0:
+    resolution: {integrity: sha512-Gf6xnuTWjeB4VSPXlFMoIa70GmRvRD6cd/frO+zDijiGYwBZ4vzydDLqZPlDEXPtHbK7Pj0lOslDg4BuBfdyGA==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@azure/abort-controller': 1.1.0
+      '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -63,10 +66,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 1.1.0
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -78,10 +81,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -93,10 +96,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -108,10 +111,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -123,10 +126,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 1.1.0
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -138,10 +141,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -153,10 +156,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -168,10 +171,10 @@ packages:
     dependencies:
       '@azure/abort-controller': 1.1.0
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
+      '@azure/core-client': 1.9.4
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -182,32 +185,34 @@ packages:
     engines: {node: '>=18.0.0'}
     dependencies:
       '@azure/abort-controller': 2.1.2
-      '@azure/core-util': 1.11.0
-      tslib: 2.8.1
-    dev: false
-
-  /@azure/core-client@1.9.3:
-    resolution: {integrity: sha512-/wGw8fJ4mdpJ1Cum7s1S+VQyXt1ihwKLzfabS1O/RDADnmzVc01dHn44qD0BvGH6KlZNzOMW95tEpKqhkCChPA==}
-    engines: {node: '>=18.0.0'}
-    dependencies:
-      '@azure/abort-controller': 2.1.2
-      '@azure/core-auth': 1.9.0
-      '@azure/core-rest-pipeline': 1.19.1
-      '@azure/core-tracing': 1.2.0
-      '@azure/core-util': 1.11.0
-      '@azure/logger': 1.1.4
+      '@azure/core-util': 1.12.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /@azure/core-http-compat@2.2.0:
-    resolution: {integrity: sha512-1kW8ZhN0CfbNOG6C688z5uh2yrzALE7dDXHiR9dY4vt+EbhGZQSbjDa5bQd2rf3X2pdWMsXbqbArxUyeNdvtmg==}
+  /@azure/core-client@1.9.4:
+    resolution: {integrity: sha512-f7IxTD15Qdux30s2qFARH+JxgwxWLG2Rlr4oSkPGuLWm+1p5y1+C04XGLA0vmX6EtqfutmjvpNmAfgwVIS5hpw==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@azure/abort-controller': 2.1.2
-      '@azure/core-client': 1.9.3
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-auth': 1.9.0
+      '@azure/core-rest-pipeline': 1.20.0
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.12.0
+      '@azure/logger': 1.2.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@azure/core-http-compat@2.3.0:
+    resolution: {integrity: sha512-qLQujmUypBBG0gxHd0j6/Jdmul6ttl24c8WGiLXIk7IHXdBlfoBqW27hyz3Xn6xbfdyVSarl1Ttbk0AwnZBYCw==}
+    engines: {node: '>=18.0.0'}
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-client': 1.9.4
+      '@azure/core-rest-pipeline': 1.20.0
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -217,9 +222,11 @@ packages:
     engines: {node: '>=18.0.0'}
     dependencies:
       '@azure/abort-controller': 2.1.2
-      '@azure/core-util': 1.11.0
-      '@azure/logger': 1.1.4
+      '@azure/core-util': 1.12.0
+      '@azure/logger': 1.2.0
       tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /@azure/core-paging@1.6.2:
@@ -229,17 +236,16 @@ packages:
       tslib: 2.8.1
     dev: false
 
-  /@azure/core-rest-pipeline@1.19.1:
-    resolution: {integrity: sha512-zHeoI3NCs53lLBbWNzQycjnYKsA1CVKlnzSNuSFcUDwBp8HHVObePxrM7HaX+Ha5Ks639H7chNC9HOaIhNS03w==}
+  /@azure/core-rest-pipeline@1.20.0:
+    resolution: {integrity: sha512-ASoP8uqZBS3H/8N8at/XwFr6vYrRP3syTK0EUjDXQy0Y1/AUS+QeIRThKmTNJO2RggvBBxaXDPM7YoIwDGeA0g==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
       '@azure/core-tracing': 1.2.0
-      '@azure/core-util': 1.11.0
-      '@azure/logger': 1.1.4
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      '@azure/core-util': 1.12.0
+      '@azure/logger': 1.2.0
+      '@typespec/ts-http-runtime': 0.2.2
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -252,12 +258,15 @@ packages:
       tslib: 2.8.1
     dev: false
 
-  /@azure/core-util@1.11.0:
-    resolution: {integrity: sha512-DxOSLua+NdpWoSqULhjDyAZTXFdP/LKkqtYuxxz1SCN289zk3OG8UOpnCQAz/tygyACBtWp/BoO72ptK7msY8g==}
+  /@azure/core-util@1.12.0:
+    resolution: {integrity: sha512-13IyjTQgABPARvG90+N2dXpC+hwp466XCdQXPCRlbWHgd3SJd5Q1VvaBGv6k1BIa4MQm6hAF1UBU1m8QUxV8sQ==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@azure/abort-controller': 2.1.2
+      '@typespec/ts-http-runtime': 0.2.2
       tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /@azure/identity@4.9.1:
@@ -266,11 +275,11 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-client': 1.9.4
+      '@azure/core-rest-pipeline': 1.20.0
       '@azure/core-tracing': 1.2.0
-      '@azure/core-util': 1.11.0
-      '@azure/logger': 1.1.4
+      '@azure/core-util': 1.12.0
+      '@azure/logger': 1.2.0
       '@azure/msal-browser': 4.11.1
       '@azure/msal-node': 3.5.2
       open: 10.1.2
@@ -285,15 +294,15 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
-      '@azure/core-http-compat': 2.2.0
+      '@azure/core-client': 1.9.4
+      '@azure/core-http-compat': 2.3.0
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       '@azure/core-tracing': 1.2.0
-      '@azure/core-util': 1.11.0
+      '@azure/core-util': 1.12.0
       '@azure/keyvault-common': 2.0.0
-      '@azure/logger': 1.1.4
+      '@azure/logger': 1.2.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -305,11 +314,11 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-client': 1.9.4
+      '@azure/core-rest-pipeline': 1.20.0
       '@azure/core-tracing': 1.2.0
-      '@azure/core-util': 1.11.0
-      '@azure/logger': 1.1.4
+      '@azure/core-util': 1.12.0
+      '@azure/logger': 1.2.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -321,15 +330,15 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
-      '@azure/core-http-compat': 2.2.0
+      '@azure/core-client': 1.9.4
+      '@azure/core-http-compat': 2.3.0
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       '@azure/core-tracing': 1.2.0
-      '@azure/core-util': 1.11.0
+      '@azure/core-util': 1.12.0
       '@azure/keyvault-common': 2.0.0
-      '@azure/logger': 1.1.4
+      '@azure/logger': 1.2.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -341,25 +350,28 @@ packages:
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
-      '@azure/core-client': 1.9.3
-      '@azure/core-http-compat': 2.2.0
+      '@azure/core-client': 1.9.4
+      '@azure/core-http-compat': 2.3.0
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.19.1
+      '@azure/core-rest-pipeline': 1.20.0
       '@azure/core-tracing': 1.2.0
-      '@azure/core-util': 1.11.0
+      '@azure/core-util': 1.12.0
       '@azure/keyvault-common': 2.0.0
-      '@azure/logger': 1.1.4
+      '@azure/logger': 1.2.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /@azure/logger@1.1.4:
-    resolution: {integrity: sha512-4IXXzcCdLdlXuCG+8UKEwLA1T1NHqUfanhXYHiQTn+6sfWCZXduqbtXDGceg3Ce5QxTGo7EqmbV6Bi+aqKuClQ==}
+  /@azure/logger@1.2.0:
+    resolution: {integrity: sha512-0hKEzLhpw+ZTAfNJyRrn6s+V0nDWzXk9OjBr2TiGIu0OfMr5s2V4FpKLTAK3Ca5r5OKLbf4hkOGDPyiRjie/jA==}
     engines: {node: '>=18.0.0'}
     dependencies:
+      '@typespec/ts-http-runtime': 0.2.2
       tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /@azure/msal-browser@4.11.1:
@@ -383,10 +395,10 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /@drunk-pulumi/azure-providers@1.0.8:
-    resolution: {integrity: sha512-/sf4S9iI/owuWgmqKr/YwKnJBsuNqWTWrSbcWO7OKuKr/TvcWgFwTzplIPZOwrJvJ1LpR3TiUWDUUCZrAFIc0g==}
+  /@drunk-pulumi/azure-providers@1.0.9:
+    resolution: {integrity: sha512-Pobpn8Mx6uG77XR0Edma5M4fuOAByQMnbX5UoVJsNrtyOEa5fB8s1hV6fMnzLyVIHxa1eCLRAX5cuM+7/AQVBg==}
     dependencies:
-      '@azure/arm-apimanagement': 9.2.0
+      '@azure/arm-apimanagement': 10.0.0
       '@azure/arm-cdn': 9.1.0
       '@azure/arm-compute': 22.4.0
       '@azure/arm-containerservice': 21.6.0
@@ -400,8 +412,8 @@ packages:
       '@azure/keyvault-keys': 4.9.0
       '@azure/keyvault-secrets': 4.9.0
       '@openpgp/web-stream-tools': 0.0.11
-      '@pulumi/azure-native': 3.2.0
-      '@pulumi/pulumi': 3.166.0
+      '@pulumi/azure-native': 3.3.0
+      '@pulumi/pulumi': 3.167.0
       node-forge: 1.3.1
       openpgp: 6.1.0
     transitivePeerDependencies:
@@ -641,16 +653,6 @@ packages:
       web-streams-polyfill: 3.0.3
     dev: false
 
-  /@openpgp/web-stream-tools@0.1.3:
-    resolution: {integrity: sha512-mT/ds43cH6c+AO5RFpxs+LkACr7KjC3/dZWHrP6KPrWJu4uJ/XJ+p7telaoYiqUfdjiiIvdNSOfhezW9fkmboQ==}
-    engines: {node: '>= 18.0.0'}
-    peerDependencies:
-      typescript: '>=4.2'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dev: false
-
   /@opentelemetry/api-logs@0.55.0:
     resolution: {integrity: sha512-3cpa+qI45VHYcA5c0bHM6VHo9gicv3p5mlLHNG3rLyjQU8b7e0st1rWtrUn3JbZ3DwwCfhKop4eQ9UuYlC6Pkg==}
     engines: {node: '>=14'}
@@ -843,10 +845,10 @@ packages:
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
     dev: false
 
-  /@pulumi/azure-native@3.2.0:
-    resolution: {integrity: sha512-uDtuDvXxkeF+pTj76fCa4VxeZaDp8HbKS65r85ldrLpnXjerwq4fasfA/C0VkyZfHa5+VJP4BQNXjNjnQKEFQA==}
+  /@pulumi/azure-native@3.3.0:
+    resolution: {integrity: sha512-cg6MKABH4Gs3iwbHHW+o8ooAe/J1A/pQ4w0KfaM+pcVhg+H6EEcJDTsCgbxlCa2gJoU18P363Nvd0LRy/B4Y5A==}
     dependencies:
-      '@pulumi/pulumi': 3.166.0
+      '@pulumi/pulumi': 3.167.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -854,8 +856,8 @@ packages:
       - typescript
     dev: false
 
-  /@pulumi/pulumi@3.166.0:
-    resolution: {integrity: sha512-2RycSFy2q60/Lkhkwp3WEIndWUOWUq4nvLLeftcyzXzs5Lv54tM1J/Y4MbwbHm4ww82IE9yNZ9yxS3oIkIoCsA==}
+  /@pulumi/pulumi@3.167.0:
+    resolution: {integrity: sha512-nqqG9ya86CO8eRpPSL34K0NWhQbH2hXAlVo+lCvi7I51nKFqaJITvfgfVEqwKU0g3KJspK8ZG0/1OZBRe0Dogg==}
     engines: {node: '>=18'}
     peerDependencies:
       ts-node: '>= 7.0.1 < 12'
@@ -902,7 +904,7 @@ packages:
   /@pulumi/random@4.18.2:
     resolution: {integrity: sha512-jC0HfgkFKwgUGmocM7Tw6UyOrpLFXGO8kYfV6f5Q9R/yziaVxEVPQ0Uup2HfosDh926EZHJrt2EUIJHWCyOvFA==}
     dependencies:
-      '@pulumi/pulumi': 3.166.0
+      '@pulumi/pulumi': 3.167.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -1029,6 +1031,17 @@ packages:
 
   /@types/tmp@0.2.6:
     resolution: {integrity: sha512-chhaNf2oKHlRkDGt+tiKE2Z5aJ6qalm7Z9rlLdBwmOiAAf09YQvvoLXjWK4HWPF1xU/fqvMgfNfpVoBscA/tKA==}
+    dev: false
+
+  /@typespec/ts-http-runtime@0.2.2:
+    resolution: {integrity: sha512-Gz/Sm64+Sq/vklJu1tt9t+4R2lvnud8NbTD/ZfpZtMiUX7YeVpCA8j6NSW8ptwcoLL+NmYANwqP8DV0q/bwl2w==}
+    engines: {node: '>=18.0.0'}
+    dependencies:
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /abbrev@2.0.0:
@@ -2583,10 +2596,9 @@ packages:
     resolution: {directory: ../bin, type: directory}
     name: '@drunk-pulumi/azure-components'
     dependencies:
-      '@drunk-pulumi/azure-providers': 1.0.8
-      '@openpgp/web-stream-tools': 0.1.3
-      '@pulumi/azure-native': 3.2.0
-      '@pulumi/pulumi': 3.166.0
+      '@drunk-pulumi/azure-providers': 1.0.9
+      '@pulumi/azure-native': 3.3.0
+      '@pulumi/pulumi': 3.167.0
       '@pulumi/random': 4.18.2
       openpgp: 6.1.0
     transitivePeerDependencies:

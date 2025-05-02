@@ -23,7 +23,7 @@ export class ResourceLocker extends pulumi.ComponentResource {
                 scope: args.resource.id,
                 notes: `Lock ${name} from ${args.level}`,
             },
-            opts,
+            { ...opts, parent: this },
         );
     }
 }

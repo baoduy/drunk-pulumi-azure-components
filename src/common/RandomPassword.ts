@@ -38,14 +38,14 @@ export class RandomPassword extends pulumi.ComponentResource {
       ...options,
       //Exclude some special characters that are not accepted by XML and SQLServer.
       overrideSpecial: options.special == false ? '' : '#%&*+-/:<>?^_|~',
-    }, opts);
+    }, { ...opts, parent: this });
 
     if (args.vaultInfo) {
       const secret = new VaultSecret(name, {
         vaultInfo: args.vaultInfo,
         value: randomPass.result,
         contentType: 'random password',
-      }, { dependsOn: randomPass });
+      }, { dependsOn: randomPass, parent: this });
 
       this.vaultSecret = {
         id: secret.id,

@@ -31,7 +31,7 @@ export class PGPGenerator extends pulumi.ComponentResource {
   ) {
     super("drunk-pulumi:index:PGPGenerator", name, args, opts);
 
-    const pgp = new PGPResource(name, args, opts);
+    const pgp = new PGPResource(name, args, { ...opts, parent: this });
 
     this.publicKey = pgp.publicKey;
     this.privateKey = pgp.privateKey;
@@ -64,7 +64,7 @@ export class PGPGenerator extends pulumi.ComponentResource {
         {
           vaultInfo: args.vaultInfo,
           secrets: items,
-        }
+        }, { dependsOn: pgp, parent: this }
       );
 
       this.vaultSecrets = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, revocationCertificate: secrets.results.revocationCertificate, passphrase: secrets.results.passphrase };

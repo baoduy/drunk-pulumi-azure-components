@@ -25,7 +25,7 @@ export class SshGenerator extends pulumi.ComponentResource {
   ) {
     super("drunk-pulumi:index:SshGenerator", name, args, opts);
 
-    const ssh = new SshKeyResource(name, args, opts);
+    const ssh = new SshKeyResource(name, args, { ...opts, parent: this });
 
     this.publicKey = ssh.publicKey;
     this.privateKey = ssh.privateKey;
@@ -50,7 +50,7 @@ export class SshGenerator extends pulumi.ComponentResource {
               contentType: "SshGenerator",
             }
           }
-        }
+        }, { dependsOn: ssh, parent: this }
       );
 
       this.vaultSecrets = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, password: secrets.results.password };

@@ -19,8 +19,8 @@ export class RandomString extends pulumi.ComponentResource {
   public readonly vaultSecret?: VaultSecretResult;
 
   constructor(
-    private name: string,
-    private args: RandomStringArgs = { length: 25, type: "string" },
+    name: string,
+    args: RandomStringArgs = { length: 25, type: "string" },
     opts?: pulumi.ComponentResourceOptions
   ) {
     super("drunk-pulumi:index:RandomString", name, args, opts);
@@ -35,14 +35,14 @@ export class RandomString extends pulumi.ComponentResource {
       minNumeric: 2,
       minSpecial: options.special ? 2 : 0,
       ...options,
-    }, opts) : new random.RandomUuid(name, {}, opts);
+    }, { ...opts, parent: this }) : new random.RandomUuid(name, {}, opts);
 
     if (args.vaultInfo) {
       const secret = new VaultSecret(name, {
         vaultInfo: args.vaultInfo,
         value: randomString.result,
         contentType: `random ${args.type}`,
-      }, { dependsOn: randomString });
+      }, { dependsOn: randomString, parent: this });
 
       this.vaultSecret = {
         id: secret.id,

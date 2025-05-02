@@ -856,6 +856,17 @@ packages:
       - typescript
     dev: false
 
+  /@pulumi/azuread@6.4.0:
+    resolution: {integrity: sha512-C3Iym3GtFjdh2QwOs/q6qFAIjvFWJxrsjwSeD1XnjoYT5SUh2a+Z9zKnKUBQCH/VaK8QFeSHqUTQwyFpvuxurg==}
+    dependencies:
+      '@pulumi/pulumi': 3.167.0
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+      - ts-node
+      - typescript
+    dev: false
+
   /@pulumi/pulumi@3.167.0:
     resolution: {integrity: sha512-nqqG9ya86CO8eRpPSL34K0NWhQbH2hXAlVo+lCvi7I51nKFqaJITvfgfVEqwKU0g3KJspK8ZG0/1OZBRe0Dogg==}
     engines: {node: '>=18'}
@@ -2598,6 +2609,7 @@ packages:
     dependencies:
       '@drunk-pulumi/azure-providers': 1.0.9
       '@pulumi/azure-native': 3.3.0
+      '@pulumi/azuread': 6.4.0
       '@pulumi/pulumi': 3.167.0
       '@pulumi/random': 4.18.2
       openpgp: 6.1.0

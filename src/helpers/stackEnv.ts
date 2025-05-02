@@ -1,4 +1,5 @@
 import * as pulumi from "@pulumi/pulumi";
+import { registerAutoTags } from './autoTags';
 
 export const isDryRun = Boolean(process.env.PULUMI_NODEJS_DRY_RUN);
 export const organization = process.env.PULUMI_NODEJS_ORGANIZATION!;
@@ -12,4 +13,11 @@ console.log("Pulumi Environments:", {
   projectName,
   stack,
   isDryRun,
+});
+
+
+registerAutoTags({
+  environment: stack,
+  organization: organization,
+  'pulumi-project': projectName,
 });

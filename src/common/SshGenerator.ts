@@ -12,7 +12,7 @@ export class SshGenerator extends pulumi.ComponentResource {
   public readonly privateKey: pulumi.Output<string>;
   public readonly password?: pulumi.Output<string>;
 
-  public readonly vaultSecret?: {
+  public readonly vaultSecrets?: {
     publicKey: VaultSecretResult;
     privateKey: VaultSecretResult;
     password: VaultSecretResult;
@@ -53,14 +53,14 @@ export class SshGenerator extends pulumi.ComponentResource {
         }
       );
 
-      this.vaultSecret = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, password: secrets.results.password };
+      this.vaultSecrets = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, password: secrets.results.password };
     }
 
     this.registerOutputs({
       publicKey: this.publicKey,
       privateKey: this.privateKey,
       password: this.password,
-      vaultSecret: this.vaultSecret,
+      vaultSecrets: this.vaultSecrets,
     });
   }
 }

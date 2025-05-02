@@ -19,11 +19,18 @@
     "node_modules"
   ],
   "files": [
+    "src/azureAd/AppRegistration.ts",
+    "src/azureAd/index.ts",
     "src/common/PGPGenerator.ts",
     "src/common/RandomPassword.ts",
     "src/common/RandomString.ts",
+    "src/common/ResourceLocker.ts",
     "src/common/SshGenerator.ts",
     "src/common/index.ts",
+    "src/helpers/Location/LocationBuiltIn.ts",
+    "src/helpers/Location/index.ts",
+    "src/helpers/autoTags.ts",
+    "src/helpers/azureEnv.ts",
     "src/helpers/configHelper.ts",
     "src/helpers/index.ts",
     "src/helpers/stackEnv.ts",

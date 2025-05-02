@@ -13,6 +13,10 @@ export type AzureResourceInfo = {
     name: pulumi.Input<string>
 } & WithResourceGroupInfo;
 
+export type AzureResourceResult = AzureResourceInfo & {
+    id: pulumi.Output<string>;
+}
+
 export type WithVaultInfo = {
     vaultInfo?: AzureResourceInfo;
 };

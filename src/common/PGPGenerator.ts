@@ -17,7 +17,7 @@ export class PGPGenerator extends pulumi.ComponentResource {
   public readonly privateKey: pulumi.Output<string>;
   public readonly passphrase?: pulumi.Output<string>;
   public readonly revocationCertificate: pulumi.Output<string>;
-  public readonly vaultSecret?: {
+  public readonly vaultSecrets?: {
     publicKey: VaultSecretResult;
     privateKey: VaultSecretResult;
     revocationCertificate: VaultSecretResult;
@@ -67,7 +67,7 @@ export class PGPGenerator extends pulumi.ComponentResource {
         }
       );
 
-      this.vaultSecret = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, revocationCertificate: secrets.results.revocationCertificate, passphrase: secrets.results.passphrase };
+      this.vaultSecrets = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, revocationCertificate: secrets.results.revocationCertificate, passphrase: secrets.results.passphrase };
     }
 
     this.registerOutputs({
@@ -75,7 +75,7 @@ export class PGPGenerator extends pulumi.ComponentResource {
       privateKey: this.privateKey,
       passphrase: this.passphrase,
       revocationCertificate: this.revocationCertificate,
-      vaultSecret: this.vaultSecret,
+      vaultSecrets: this.vaultSecrets,
     });
   }
 }

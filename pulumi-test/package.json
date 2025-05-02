@@ -6,7 +6,7 @@
         "up": "pulumi up --yes --skip-preview",
         "reup": "pulumi up --refresh --yes --skip-preview",
         "destroy": "pulumi destroy --yes --skip-preview",
-        "update": "npx npm-check-updates -u && pnpm install",
+        "update": "npx npm-check-updates -u && npm install",
         "check": "npx depcheck --detailed",
         "export": "pulumi stack export --file state.json",
         "import": "pulumi stack import --file state.json"

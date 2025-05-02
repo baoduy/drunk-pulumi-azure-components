@@ -11,10 +11,11 @@ export class SshGenerator extends pulumi.ComponentResource {
   public readonly publicKey: pulumi.Output<string>;
   public readonly privateKey: pulumi.Output<string>;
   public readonly password?: pulumi.Output<string>;
+
   public readonly vaultSecret?: {
     publicKey: VaultSecretResult;
     privateKey: VaultSecretResult;
-    revocationCertificate: VaultSecretResult;
+    password: VaultSecretResult;
   };
 
   constructor(
@@ -28,36 +29,37 @@ export class SshGenerator extends pulumi.ComponentResource {
 
     this.publicKey = ssh.publicKey;
     this.privateKey = ssh.privateKey;
-    this.password = pulumi.output(args.password);
+    this.password = pulumi.secret(args.password);
 
-    // if (args.vaultInfo) {
-    //   const secrets = new VaultSecrets(
-    //     name,
-    //     {
-    //       vaultInfo: args.vaultInfo,
-    //       secrets: {
-    //         publicKey: {
-    //           value: Ssh.publicKey,
-    //           contentType: "SshGenerator",
-    //         },
-    //         privateKey: {
-    //           value: Ssh.privateKey,
-    //           contentType: "SshGenerator",
-    //         },
-    //         revocationCertificate: {
-    //           value: Ssh.revocationCertificate,
-    //           contentType: "SshGenerator",
-    //         }
-    //       }
-    //     }
-    //   );
+    if (args.vaultInfo) {
+      const secrets = new VaultSecrets(
+        name,
+        {
+          vaultInfo: args.vaultInfo,
+          secrets: {
+            publicKey: {
+              value: ssh.publicKey,
+              contentType: "SshGenerator",
+            },
+            privateKey: {
+              value: ssh.privateKey,
+              contentType: "SshGenerator",
+            },
+            password: {
+              value: args.password,
+              contentType: "SshGenerator",
+            }
+          }
+        }
+      );
 
-    //this.vaultSecret = { publicKey: ssh.publicKey, privateKey: ssh.privateKey };
-
+      this.vaultSecret = { publicKey: secrets.results.publicKey, privateKey: secrets.results.privateKey, password: secrets.results.password };
+    }
 
     this.registerOutputs({
       publicKey: this.publicKey,
       privateKey: this.privateKey,
+      password: this.password,
       vaultSecret: this.vaultSecret,
     });
   }

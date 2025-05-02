@@ -1,9 +1,9 @@
-name: drunk-pulumi-test
-description: A testing project for @drunk-pulumi/azure
-runtime:
+name: drunk-pulumi-components-test
+description: A testing project for @drunk-pulumi/azure-components
+runtime: 
   name: nodejs
   options:
-    packagemanager: npm
+    packagemanager: pnpm
 config:
   pulumi:autonaming:
     value:

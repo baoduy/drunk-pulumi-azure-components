@@ -1,17 +1,13 @@
 import * as pulumi from '@pulumi/pulumi';
-import { PGPGenerator } from '@drunk-pulumi/azure-components';
+import { SshGenerator } from '@drunk-pulumi/azure-components';
 
 const rs = (async () => {
   //const group = new azure.resources.ResourceGroup('common');
-  const rs = new PGPGenerator('dev-pgp', {
-    user: { email: 'drunk@coding.net', "name": "Drunk Coding" },
-    passphrase: "drunkcoding",
-    type: 'rsa',
-    validDays: 365,
-    vaultInfo: {
-      name: "global-drunkcoding-vlt",
+  const rs = new SshGenerator('dev-pgp', {
+    password: 'password', vaultInfo: {
+      name: 'global-drunkcoding-vlt',
       rsGroupInfo: {
-        resourceGroupName: "global-grp-drunkcoding",
+        resourceGroupName: 'global-grp-drunkcoding'
       }
     }
   });

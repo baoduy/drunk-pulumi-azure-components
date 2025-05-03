@@ -46,7 +46,7 @@ export class AppRegistration extends pulumi.ComponentResource {
         private args: AppRegistrationArgs = { appType: 'native' },
         opts?: pulumi.ComponentResourceOptions
     ) {
-        super("drunk-pulumi:index:PGPGenerator", name, args, opts);
+        super("drunk-pulumi:index:AppRegistration", name, args, opts);
         const ops = args.info ?? {
             displayName: name,
             description: name,

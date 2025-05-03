@@ -1,5 +1,6 @@
 import { AzureResourceInfo } from '../types';
 import * as pulumi from '@pulumi/pulumi';
+import { getComponentResourceType } from '../base';
 import { SecretItemArgs, VaultSecret } from './VaultSecret';
 
 export type VaultSecretResult = {
@@ -18,7 +19,7 @@ export class VaultSecrets extends pulumi.ComponentResource {
     } = {};
 
     constructor(name: string, args: VaultSecretsArgs, opts?: pulumi.ComponentResourceOptions) {
-        super("drunk-pulumi:index:VaultSecrets", name, args, opts);
+        super(getComponentResourceType('VaultSecrets'), name, args, opts);
 
         Object.keys(args.secrets).forEach((key) => {
             const secret = new VaultSecret(

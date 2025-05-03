@@ -20,7 +20,11 @@
   ],
   "files": [
     "src/azureAd/AppRegistration.ts",
+    "src/azureAd/AzRole.ts",
+    "src/azureAd/GroupRole.ts",
+    "src/azureAd/UserAssignedIdentity.ts",
     "src/azureAd/index.ts",
+    "src/base/index.ts",
     "src/common/PGPGenerator.ts",
     "src/common/RandomPassword.ts",
     "src/common/RandomString.ts",
@@ -35,7 +39,7 @@
     "src/helpers/index.ts",
     "src/helpers/stackEnv.ts",
     "src/index.ts",
-    "src/types.d.ts",
+    "src/types.ts",
     "src/vault/VaultSecret.ts",
     "src/vault/VaultSecrets.ts",
     "src/vault/index.ts"

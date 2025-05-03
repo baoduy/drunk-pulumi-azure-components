@@ -2,11 +2,12 @@ import { AzureResourceInfo } from '../types';
 import * as pulumi from '@pulumi/pulumi';
 import { configHelper, stackInfo, removeLeadingAndTrailingDash } from '../helpers';
 import { VaultSecretResource } from '@drunk-pulumi/azure-providers/VaultSecret';
+import { getComponentResourceType } from '../base';
 
 export type SecretItemArgs = {
     //** The value of the secret. If it is not provided the value will get from project secret. */
     value?: pulumi.Input<string>;
-    contentType: pulumi.Input<string>;
+    contentType?: pulumi.Input<string>;
     tags?: {
         [key: string]: string;
     };
@@ -22,7 +23,7 @@ export class VaultSecret extends pulumi.ComponentResource {
     public readonly version: pulumi.Output<string>;
 
     constructor(private name: string, args: VaultSecretArgs, opts?: pulumi.ComponentResourceOptions) {
-        super("drunk-pulumi:index:VaultSecret", name, args, opts);
+        super(getComponentResourceType('VaultSecret'), name, args, opts);
         const secretValue = args.value ?? configHelper.getSecret(name) ?? '';
         const secretName = this.getSecretName();
 

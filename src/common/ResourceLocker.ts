@@ -14,7 +14,7 @@ export class ResourceLocker extends pulumi.ComponentResource {
     ) {
         if (!args.level) args.level = authorization.LockLevel.CanNotDelete;
         const name = `${args.resource.name}-${args.level}-Locker`;
-        super("drunk-pulumi:index:PGPGenerator", name, args, opts);
+        super("drunk-pulumi:index:ResourceLocker", name, args, opts);
 
         new authorization.ManagementLockByScope(
             name,

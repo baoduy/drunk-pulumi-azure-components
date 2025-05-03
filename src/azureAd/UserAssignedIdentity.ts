@@ -1,39 +1,65 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as mid from '@pulumi/azure-native/managedidentity';
+import * as azAd from '@pulumi/azuread';
 import { BaseArgs, BaseComponentResource } from '../base';
 
 export interface UserAssignedIdentityArgs extends BaseArgs {
+  /** The Id of the EntraID group */
+  memberof?: pulumi.Input<string>[];
 }
 
 export class UserAssignedIdentity extends BaseComponentResource<UserAssignedIdentityArgs> {
-    public readonly id: pulumi.Output<string>;
-    public readonly clientId: pulumi.Output<string>;
-    public readonly principalId: pulumi.Output<string>;
+  public readonly id: pulumi.Output<string>;
+  public readonly clientId: pulumi.Output<string>;
+  public readonly principalId: pulumi.Output<string>;
 
-    constructor(name: string, args: UserAssignedIdentityArgs, opts?: pulumi.ComponentResourceOptions) {
-        super("UserAssignedIdentity", name, args, opts);
+  constructor(
+    name: string,
+    args: UserAssignedIdentityArgs,
+    opts?: pulumi.ComponentResourceOptions
+  ) {
+    super('UserAssignedIdentity', name, args, opts);
 
-        const group = this.getRsGroupInfo();
-        const managedIdentity = new mid.UserAssignedIdentity(
-            name,
-            { ...group },
-            { ...opts, parent: this },
-        );
+    const group = this.getRsGroupInfo();
+    const managedIdentity = new mid.UserAssignedIdentity(
+      name,
+      { ...group },
+      { ...opts, parent: this }
+    );
 
-        this.addSecrets({
-            id: managedIdentity.id,
-            clientId: managedIdentity.clientId,
-            principalId: managedIdentity.principalId,
-        });
+    this.addSecrets({
+      id: managedIdentity.id,
+      clientId: managedIdentity.clientId,
+      principalId: managedIdentity.principalId,
+    });
 
-        this.id = managedIdentity.id;
-        this.clientId = managedIdentity.clientId;
-        this.principalId = managedIdentity.principalId;
+    this.id = managedIdentity.id;
+    this.clientId = managedIdentity.clientId;
+    this.principalId = managedIdentity.principalId;
 
-        this.registerOutputs({
-            id: this.id,
-            clientId: this.clientId,
-            principalId: this.principalId,
-        });
-    }
+    this.addMemberOf();
+
+    this.registerOutputs({
+      id: this.id,
+      clientId: this.clientId,
+      principalId: this.principalId,
+    });
+  }
+
+  private addMemberOf() {
+    if (!this.args.memberof) return;
+    this.args.memberof.map((group) =>
+      pulumi.output(group).apply(
+        (id) =>
+          new azAd.GroupMember(
+            `${this.name}-${id}`,
+            {
+              groupObjectId: id,
+              memberObjectId: this.principalId,
+            },
+            { parent: this }
+          )
+      )
+    );
+  }
 }

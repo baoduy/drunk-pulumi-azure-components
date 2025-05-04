@@ -9,6 +9,7 @@ const excludeFolders: string[] = [
   'bin',
   'z_tests',
   '.tasks',
+  '__tests__',
 ]; // List of folder names to exclude
 
 // Function to recursively find .ts files, excluding specified folders
@@ -52,6 +53,6 @@ fs.readFile(tsconfigPath, 'utf8', (err, data) => {
         return;
       }
       console.log('tsconfig.json has been updated with TypeScript files.');
-    }
+    },
   );
 });

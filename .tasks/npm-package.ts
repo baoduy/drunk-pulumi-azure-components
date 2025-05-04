@@ -7,12 +7,12 @@ const srcPackageJsonPath = './package.json'; // Source package.json path
 // Read the tsconfig.json file to determine the output directory
 const tsConfigRaw = fs.readFileSync(tsConfigPath, 'utf8');
 const tsConfig = JSON.parse(tsConfigRaw);
-const targetDir = tsConfig?.compilerOptions?.outDir ?? '../bin'; // Fallback to '../other-folder' if outDir is not specified
+const targetDir = tsConfig?.compilerOptions?.outDir ?? '../bin';
 
 // Validate that we have a meaningful targetDir
 if (!targetDir) {
   throw new Error(
-    'Target directory (outDir) is not specified in tsconfig.json.'
+    'Target directory (outDir) is not specified in tsconfig.json.',
   );
 }
 
@@ -40,5 +40,5 @@ fs.writeFileSync(targetPackageJsonPath, JSON.stringify(packageJson, null, 2), {
 });
 
 console.log(
-  `package.json has been copied to ${targetDir} without devDependencies.`
+  `package.json has been copied to ${targetDir} without devDependencies.`,
 );

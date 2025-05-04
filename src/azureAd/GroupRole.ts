@@ -2,7 +2,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
 import { AzRole } from './AzRole';
 import { stackInfo } from '../helpers';
-import { BaseArgs, BaseComponentResource } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base';
 
 export enum GroupRoleTypes {
   admin = 'admin',
@@ -22,7 +22,7 @@ export interface GroupRoleOutput {
   objectId: string;
   name: string;
 }
-export class GroupRole extends BaseComponentResource<GroupRoleArgs> {
+export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
   public readonly admin: pulumi.Output<GroupRoleOutput>;
   public readonly contributor: pulumi.Output<GroupRoleOutput>;
   public readonly readOnly: pulumi.Output<GroupRoleOutput>;

@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as resources from '@pulumi/azure-native/resources';
-import { getComponentResourceType } from '../base';
+import { BaseComponent } from '../base';
 import {
   RsRoleDefinitionType,
   RoleAssignment,
@@ -10,7 +10,7 @@ import { ResourceLocker } from './ResourceLocker';
 
 export interface RsGroupArgs extends resources.ResourceGroupArgs {
   roleAssignment?: {
-    azGroup: {
+    groupRole: {
       admin: pulumi.Output<{ objectId: string }>;
       contributor: pulumi.Output<{ objectId: string }>;
       readOnly: pulumi.Output<{ objectId: string }>;
@@ -20,28 +20,29 @@ export interface RsGroupArgs extends resources.ResourceGroupArgs {
   lock?: boolean;
 }
 
-export class RsGroup extends pulumi.ComponentResource {
+export class RsGroup extends BaseComponent {
+  public readonly id: pulumi.Output<string>;
   public readonly location: pulumi.Output<string>;
   public readonly resourceGroupName: pulumi.Output<string>;
-  private _group: resources.ResourceGroup;
 
   constructor(
     private name: string,
     private args: RsGroupArgs = {},
     opts?: pulumi.ComponentResourceOptions
   ) {
-    super(getComponentResourceType('RsGroup'), name, args, opts);
+    super('RsGroup', name, args, opts);
 
-    this._group = new resources.ResourceGroup(name, args, {
+    const group = new resources.ResourceGroup(name, args, {
       ...opts,
       parent: this,
     });
 
-    this.createRoleAssignment();
-    this.createLock();
+    this.location = group.location;
+    this.resourceGroupName = group.name;
+    this.id = group.id;
 
-    this.location = this._group.location;
-    this.resourceGroupName = this._group.name;
+    this.createRoleAssignment();
+    this.createLock(group);
 
     this.registerOutputs({
       location: this.location,
@@ -66,9 +67,9 @@ export class RsGroup extends pulumi.ComponentResource {
               principalId: groupId,
               principalType: 'Group',
               roleName: role,
-              scope: this._group.id,
+              scope: this.id,
             },
-            { dependsOn: this._group, parent: this }
+            { parent: this }
           )
       );
     };
@@ -76,31 +77,31 @@ export class RsGroup extends pulumi.ComponentResource {
     roleAssignment.roleDefinitions.forEach((role) => {
       createRoles(
         GroupRoleTypes.admin,
-        roleAssignment.azGroup.admin.objectId,
+        roleAssignment.groupRole.admin.objectId,
         role.admin
       );
       createRoles(
         GroupRoleTypes.contributor,
-        roleAssignment.azGroup.contributor.objectId,
+        roleAssignment.groupRole.contributor.objectId,
         role.contributor
       );
       createRoles(
         GroupRoleTypes.readOnly,
-        roleAssignment.azGroup.readOnly.objectId,
+        roleAssignment.groupRole.readOnly.objectId,
         role.readOnly
       );
     });
   }
 
-  private createLock() {
+  private createLock(resource: pulumi.CustomResource) {
     if (!this.args.lock) return;
     new ResourceLocker(
       `${this.name}-lock`,
       {
-        resource: this._group,
+        resource,
         level: 'CanNotDelete',
       },
-      { dependsOn: this._group, parent: this }
+      { dependsOn: resource, parent: this }
     );
   }
 }

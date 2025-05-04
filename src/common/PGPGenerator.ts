@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import { PGPResource } from '@drunk-pulumi/azure-providers';
-import { BaseArgs, BaseComponentResource } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base';
 
 type UserInfo = { name: string; email: string };
 
@@ -11,7 +11,7 @@ export interface PGPGeneratorArgs extends BaseArgs {
   validDays?: pulumi.Input<number>;
 }
 
-export class PGPGenerator extends BaseComponentResource<PGPGeneratorArgs> {
+export class PGPGenerator extends BaseResourceComponent<PGPGeneratorArgs> {
   public readonly publicKey: pulumi.Output<string>;
   public readonly privateKey: pulumi.Output<string>;
   public readonly passphrase?: pulumi.Output<string>;

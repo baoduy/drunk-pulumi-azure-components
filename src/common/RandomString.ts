@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as random from '@pulumi/random';
-import { BaseArgs, BaseComponentResource } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base';
 
 export interface RandomStringArgs extends BaseArgs {
   type: 'string' | 'uuId';
@@ -13,7 +13,7 @@ export interface RandomStringArgs extends BaseArgs {
   };
 }
 
-export class RandomString extends BaseComponentResource<RandomStringArgs> {
+export class RandomString extends BaseResourceComponent<RandomStringArgs> {
   public readonly value: pulumi.Output<string>;
 
   constructor(

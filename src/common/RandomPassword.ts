@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as random from '@pulumi/random';
-import { BaseArgs, BaseComponentResource } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base';
 
 export interface RandomPasswordArgs extends BaseArgs {
   policy?: pulumi.Input<'monthly' | 'yearly' | boolean>;
@@ -13,7 +13,7 @@ export interface RandomPasswordArgs extends BaseArgs {
   };
 }
 
-export class RandomPassword extends BaseComponentResource<RandomPasswordArgs> {
+export class RandomPassword extends BaseResourceComponent<RandomPasswordArgs> {
   public readonly value: pulumi.Output<string>;
 
   constructor(

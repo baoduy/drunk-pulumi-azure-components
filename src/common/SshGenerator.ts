@@ -1,14 +1,12 @@
 import * as pulumi from '@pulumi/pulumi';
 import { SshKeyResource } from '@drunk-pulumi/azure-providers';
-import { WithVaultInfo } from '../types';
-import { VaultSecretResult, VaultSecrets } from '../vault';
-import { BaseArgs, BaseComponentResource } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base';
 
 export interface SshGeneratorArgs extends BaseArgs {
   password: pulumi.Input<string>;
 }
 
-export class SshGenerator extends BaseComponentResource<SshGeneratorArgs> {
+export class SshGenerator extends BaseResourceComponent<SshGeneratorArgs> {
   public readonly publicKey: pulumi.Output<string>;
   public readonly privateKey: pulumi.Output<string>;
   public readonly password?: pulumi.Output<string>;

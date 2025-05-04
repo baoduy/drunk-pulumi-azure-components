@@ -49,6 +49,7 @@
     "src/helpers/stackEnv.ts",
     "src/index.ts",
     "src/types.ts",
+    "src/vault/KeyVault.ts",
     "src/vault/VaultSecret.ts",
     "src/vault/VaultSecrets.ts",
     "src/vault/index.ts"

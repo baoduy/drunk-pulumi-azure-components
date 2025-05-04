@@ -6,12 +6,30 @@ import { ResourceGroup } from '@pulumi/azure-native/resources';
 export const getComponentResourceType = (type: string) =>
   type.includes('drunk-pulumi') ? type : `drunk-pulumi:index:${type}`;
 
+export abstract class BaseComponent extends pulumi.ComponentResource {
+  constructor(
+    type: string,
+    name: string,
+    args?: pulumi.Inputs,
+    opts?: pulumi.ComponentResourceOptions
+  ) {
+    super(getComponentResourceType(type), name, args, opts);
+  }
+
+  public PickOutputs<K extends keyof this>(...keys: K[]) {
+    return keys.reduce((acc, key) => {
+      acc[key] = (this as any)[key];
+      return acc;
+    }, {} as Pick<this, K>);
+  }
+}
+
 export interface BaseArgs extends WithVaultInfo, WithResourceGroup {}
 
-export class BaseComponentResource<
+export abstract class BaseResourceComponent<
   TArgs extends BaseArgs
-> extends pulumi.ComponentResource {
-  private secrets: { [key: string]: pulumi.Input<string> } = {};
+> extends BaseComponent {
+  private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
   public vaultSecrets?: { [key: string]: VaultSecretResult };
 
@@ -21,19 +39,19 @@ export class BaseComponentResource<
     protected args: TArgs,
     opts?: pulumi.ComponentResourceOptions
   ) {
-    super(getComponentResourceType(type), name, args, opts);
+    super(type, name, args, opts);
   }
 
   private postCreated() {
     const { vaultInfo } = this.args;
-    if (Object.keys(this.secrets).length <= 0 || !vaultInfo) return;
+    if (Object.keys(this._secrets).length <= 0 || !vaultInfo) return;
     //Ensure secrets only created once
     if (this._vaultSecretsCreated) return;
 
     const se: { [key: string]: SecretItemArgs } = {};
-    for (const key in this.secrets) {
+    for (const key in this._secrets) {
       se[key] = {
-        value: this.secrets[key],
+        value: this._secrets[key],
         contentType: `${this.type} ${key}`,
       };
     }
@@ -49,10 +67,6 @@ export class BaseComponentResource<
     );
 
     this.vaultSecrets = rs.results;
-
-    super.registerOutputs({
-      vaultSecrets: this.vaultSecrets,
-    });
   }
 
   protected getRsGroupInfo(): ResourceGroupInfo {
@@ -65,21 +79,16 @@ export class BaseComponentResource<
 
   /** this methods allows to be called multiple times */
   protected addSecret(name: string, value: pulumi.Input<string>) {
-    this.secrets[name] = value;
+    this._secrets[name] = value;
   }
 
   /** this methods allows to be called only one */
   protected addSecrets(secrets: { [key: string]: pulumi.Input<string> }) {
-    this.secrets = { ...this.secrets, ...secrets };
+    this._secrets = { ...this._secrets, ...secrets };
   }
 
-  protected registerOutputs(
-    outputs?:
-      | pulumi.Inputs
-      | Promise<pulumi.Inputs>
-      | pulumi.Output<pulumi.Inputs>
-  ): void {
+  protected registerOutputs(outputs?: pulumi.Inputs): void {
     this.postCreated();
-    super.registerOutputs(outputs);
+    super.registerOutputs({ ...outputs, vaultSecrets: this.vaultSecrets });
   }
 }

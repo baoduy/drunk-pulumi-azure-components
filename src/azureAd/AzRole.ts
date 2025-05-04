@@ -1,13 +1,13 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
 import { stackInfo } from '../helpers';
-import { BaseArgs, BaseComponentResource } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base';
 
 export interface AzRoleArgs
   extends BaseArgs,
     Pick<azAd.GroupArgs, 'owners' | 'members' | 'preventDuplicateNames'> {}
 
-export class AzRole extends BaseComponentResource<AzRoleArgs> {
+export class AzRole extends BaseResourceComponent<AzRoleArgs> {
   public readonly objectId: pulumi.Output<string>;
   public readonly displayName: pulumi.Output<string>;
 

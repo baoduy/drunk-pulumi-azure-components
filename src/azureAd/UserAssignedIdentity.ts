@@ -1,14 +1,14 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as mid from '@pulumi/azure-native/managedidentity';
 import * as azAd from '@pulumi/azuread';
-import { BaseArgs, BaseComponentResource } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base';
 
 export interface UserAssignedIdentityArgs extends BaseArgs {
   /** The Id of the EntraID group */
   memberof?: pulumi.Input<string>[];
 }
 
-export class UserAssignedIdentity extends BaseComponentResource<UserAssignedIdentityArgs> {
+export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIdentityArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly clientId: pulumi.Output<string>;
   public readonly principalId: pulumi.Output<string>;

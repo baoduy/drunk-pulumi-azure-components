@@ -4,6 +4,7 @@ import {
   UserAssignedIdentity,
   GroupRole,
   rsRoleDefinitions,
+  KeyVault,
 } from '@drunk-pulumi/azure-components';
 import { AzureResourceInfo } from '@drunk-pulumi/azure-components/types';
 
@@ -12,13 +13,24 @@ const rs = (async () => {
   const group = new RsGroup(
     'common',
     {
-      lock: true,
+      lock: false,
       roleAssignment: {
         groupRole: envRole,
-        roleDefinitions: [rsRoleDefinitions.rsGroup, rsRoleDefinitions.aks],
+        roleDefinitions: [
+          rsRoleDefinitions.rsGroup,
+          rsRoleDefinitions.keyVault,
+        ],
       },
     },
     { dependsOn: envRole }
+  );
+
+  const vault = new KeyVault(
+    'vault',
+    {
+      rsGroup: group,
+    },
+    { dependsOn: group }
   );
 
   const vaultInfo: AzureResourceInfo = {
@@ -30,7 +42,7 @@ const rs = (async () => {
     'azure-test',
     {
       rsGroup: group,
-      vaultInfo,
+      vaultInfo: vault,
     },
     { dependsOn: group }
   );

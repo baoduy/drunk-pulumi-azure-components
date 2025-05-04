@@ -1,6 +1,6 @@
 name: drunk-pulumi-components-test
 description: A testing project for @drunk-pulumi/azure-components
-runtime: 
+runtime:
   name: nodejs
   options:
     packagemanager: pnpm
@@ -11,8 +11,10 @@ config:
       providers:
         azure-native:
           resources:
-            "azure-native:resources:ResourceGroup":
+            'azure-native:resources:ResourceGroup':
               pattern: ${project}-${stack}-${name}
+            'azure-native:keyvault:Vault':
+              pattern: ${stack}-${name}-${alphanum(6)}
 
   pulumi:tags:
     value:

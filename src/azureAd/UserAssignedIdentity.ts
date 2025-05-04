@@ -23,7 +23,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     const group = this.getRsGroupInfo();
     const managedIdentity = new mid.UserAssignedIdentity(
       name,
-      { ...group },
+      { resourceGroupName: group.resourceGroupName },
       { ...opts, parent: this }
     );
 

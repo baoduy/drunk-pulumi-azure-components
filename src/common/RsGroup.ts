@@ -26,7 +26,7 @@ export class RsGroup extends BaseComponent {
   public readonly resourceGroupName: pulumi.Output<string>;
 
   constructor(
-    private name: string,
+    name: string,
     private args: RsGroupArgs = {},
     opts?: pulumi.ComponentResourceOptions
   ) {

@@ -52,6 +52,10 @@
     "src/vault/KeyVault.ts",
     "src/vault/VaultSecret.ts",
     "src/vault/VaultSecrets.ts",
-    "src/vault/index.ts"
+    "src/vault/index.ts",
+    "src/vnet/PrivateDnsZone.ts",
+    "src/vnet/PrivateEndpoint.ts",
+    "src/vnet/helpers.ts",
+    "src/vnet/index.ts"
   ]
 }

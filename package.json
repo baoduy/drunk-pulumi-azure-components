@@ -2,7 +2,8 @@
   "name": "@drunk-pulumi/azure-components",
   "version": "1.0.0",
   "description": "The custom components for Pulumi Azure",
-  "main": "index.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "pulumi": {
     "resource": false,
     "name": "@drunk-pulumi/azure-components"

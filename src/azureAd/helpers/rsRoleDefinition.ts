@@ -2,7 +2,7 @@ import { GroupRoleTypes } from '../GroupRole';
 
 export type RsRoleDefinitionType = Record<GroupRoleTypes, string[]>;
 
-export const rsRoleDefinitions = {
+const rsRoles = {
   rsGroup: {
     admin: ['Owner'],
     contributor: ['Contributor'],
@@ -106,3 +106,29 @@ export const rsRoleDefinitions = {
     admin: [],
   },
 };
+export type RsRoleDefinitionObject = {
+  [K in keyof typeof rsRoles]: RsRoleDefinitionType & {
+    getReadOnly: () => RsRoleDefinitionType;
+    getContributor: () => RsRoleDefinitionType;
+  };
+};
+
+const getRsRoleDefinitions = (): RsRoleDefinitionObject =>
+  Object.entries(rsRoles).reduce((acc, [key, roles]) => {
+    acc[key as keyof typeof rsRoles] = {
+      ...roles,
+      getReadOnly: () => ({
+        admin: [],
+        contributor: [],
+        readOnly: roles.readOnly,
+      }),
+      getContributor: () => ({
+        admin: [],
+        contributor: roles.contributor,
+        readOnly: roles.readOnly,
+      }),
+    };
+    return acc;
+  }, {} as RsRoleDefinitionObject);
+
+export const rsRoleDefinitions = getRsRoleDefinitions();

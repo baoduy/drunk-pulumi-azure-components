@@ -62,7 +62,7 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
   constructor(
     name: string,
     args: PrivateEndpointArgs,
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super('PrivateEndpoint', name, args, opts);
 
@@ -101,11 +101,11 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
       {
         ...opts,
         parent: this,
-      }
+      },
     );
 
     const privateIpAddresses = privateEndpoint.customDnsConfigs.apply((c) =>
-      c!.flatMap((i) => i!.ipAddresses!)
+      c!.flatMap((i) => i!.ipAddresses!),
     );
 
     const zone = pulumi.output(args.resourceInfo).apply((info) => {
@@ -126,7 +126,7 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
         {
           dependsOn: privateEndpoint,
           parent: this,
-        }
+        },
       );
     });
 
@@ -209,7 +209,7 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
       case 'storage':
         if (!storageType) {
           throw new Error(
-            'Storage type must be specified for storage private endpoints'
+            'Storage type must be specified for storage private endpoints',
           );
         }
         return {

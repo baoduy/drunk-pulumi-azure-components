@@ -4,6 +4,7 @@ import { BaseComponent } from '../base';
 import {
   RsRoleDefinitionType,
   RoleAssignment,
+  rsRoleDefinitions,
   GroupRoleTypes,
 } from '../azureAd';
 import { ResourceLocker } from './ResourceLocker';
@@ -15,7 +16,8 @@ export interface RsGroupArgs extends resources.ResourceGroupArgs {
       contributor: pulumi.Output<{ objectId: string }>;
       readOnly: pulumi.Output<{ objectId: string }>;
     };
-    roleDefinitions: RsRoleDefinitionType[];
+    /** if the role definition is not provided the readonly role will be added to this group by default  */
+    roleDefinitions?: RsRoleDefinitionType[];
   };
   lock?: boolean;
 }
@@ -28,7 +30,7 @@ export class RsGroup extends BaseComponent {
   constructor(
     name: string,
     private args: RsGroupArgs = {},
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super('RsGroup', name, args, opts);
 
@@ -57,7 +59,7 @@ export class RsGroup extends BaseComponent {
     const createRoles = (
       type: GroupRoleTypes,
       groupId: pulumi.Output<string>,
-      roles: string[]
+      roles: string[],
     ) => {
       roles.forEach(
         (role) =>
@@ -69,26 +71,30 @@ export class RsGroup extends BaseComponent {
               roleName: role,
               scope: this.id,
             },
-            { parent: this }
-          )
+            { parent: this },
+          ),
       );
     };
 
-    roleAssignment.roleDefinitions.forEach((role) => {
+    const roleDefinitions = roleAssignment.roleDefinitions ?? [
+      rsRoleDefinitions.rsGroup.getReadOnly(),
+    ];
+
+    roleDefinitions.forEach((role) => {
       createRoles(
         GroupRoleTypes.admin,
         roleAssignment.groupRole.admin.objectId,
-        role.admin
+        role.admin,
       );
       createRoles(
         GroupRoleTypes.contributor,
         roleAssignment.groupRole.contributor.objectId,
-        role.contributor
+        role.contributor,
       );
       createRoles(
         GroupRoleTypes.readOnly,
         roleAssignment.groupRole.readOnly.objectId,
-        role.readOnly
+        role.readOnly,
       );
     });
   }
@@ -101,7 +107,7 @@ export class RsGroup extends BaseComponent {
         resource,
         level: 'CanNotDelete',
       },
-      { dependsOn: resource, parent: this }
+      { dependsOn: resource, parent: this },
     );
   }
 }

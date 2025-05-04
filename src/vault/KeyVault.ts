@@ -2,27 +2,19 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
 import * as keyvault from '@pulumi/azure-native/keyvault';
 import { azureEnv } from '../helpers';
-import { PrivateEndpoint, PrivateEndpointType } from '../vnet';
-import { WithResourceGroupInputs, ResourceGroupInputs } from '../types';
+import { PrivateEndpoint } from '../vnet';
+import {
+  WithResourceGroupInputs,
+  ResourceGroupInputs,
+  WithNetworkArgs,
+} from '../types';
 
 export interface KeyVaultArgs
   extends BaseArgs,
     WithResourceGroupInputs,
+    WithNetworkArgs,
     Pick<keyvault.VaultArgs, 'tags'> {
   sku?: 'standard' | 'premium';
-
-  network?: {
-    publicNetworkAccess?: 'disabled' | 'enabled';
-    bypass?: 'AzureServices' | 'None';
-    defaultAction?: 'Allow' | 'Deny';
-
-    ipRules?: pulumi.Input<pulumi.Input<string>[]>;
-    vnetRules?: pulumi.Input<
-      pulumi.Input<{ id: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]
-    >;
-
-    privateLink?: PrivateEndpointType;
-  };
 
   properties?: {
     enablePurgeProtection?: pulumi.Input<boolean>;
@@ -43,7 +35,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
   constructor(
     name: string,
     args: KeyVaultArgs,
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super('KeyVault', name, args, opts);
 
@@ -78,6 +70,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
           networkAcls: {
             bypass: args.network?.bypass,
             defaultAction: args.network?.defaultAction,
+
             ipRules: args.network?.ipRules
               ? pulumi
                   .output(args.network.ipRules)
@@ -90,7 +83,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
                     id: v.id,
                     ignoreMissingVnetServiceEndpoint:
                       v.ignoreMissingVnetServiceEndpoint,
-                  }))
+                  })),
                 )
               : undefined,
           },
@@ -101,7 +94,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
         ...opts,
         ignoreChanges: ['properties.accessPolicies'],
         parent: this,
-      }
+      },
     );
 
     this.createPrivateEndpoint(vault);
@@ -129,7 +122,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
         type: 'keyVault',
         ...network.privateLink,
       },
-      { dependsOn: vault, parent: this }
+      { dependsOn: vault, parent: this },
     );
   }
 }

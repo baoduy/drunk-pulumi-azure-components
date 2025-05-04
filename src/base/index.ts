@@ -1,7 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import { WithVaultInfo, WithResourceGroupInputs } from '../types';
 import { VaultSecrets, SecretItemArgs, VaultSecretResult } from '../vault';
-import { ResourceGroup } from '@pulumi/azure-native/resources';
 
 /**
  * Formats the component resource type to ensure it follows the drunk-pulumi naming convention
@@ -27,7 +26,7 @@ export abstract class BaseComponent extends pulumi.ComponentResource {
     type: string,
     public name: string,
     args?: pulumi.Inputs,
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super(getComponentResourceType(type), name, args, opts);
   }
@@ -50,13 +49,16 @@ export abstract class BaseComponent extends pulumi.ComponentResource {
  * Combines vault information and resource group requirements
  */
 export interface BaseArgs extends WithVaultInfo {}
+export interface BaseArgsWithRsGroup
+  extends BaseArgs,
+    WithResourceGroupInputs {}
 
 /**
  * Extended base component that handles Azure resources with vault integration
  * Provides secret management and resource group handling capabilities
  */
 export abstract class BaseResourceComponent<
-  TArgs extends BaseArgs
+  TArgs extends BaseArgs,
 > extends BaseComponent {
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
@@ -73,7 +75,7 @@ export abstract class BaseResourceComponent<
     private type: string,
     name: string,
     protected args: TArgs,
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super(type, name, args, opts);
   }
@@ -102,7 +104,7 @@ export abstract class BaseResourceComponent<
         vaultInfo,
         secrets: se,
       },
-      { parent: this }
+      { parent: this },
     );
 
     this.vaultSecrets = rs.results;

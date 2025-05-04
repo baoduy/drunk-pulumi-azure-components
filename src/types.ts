@@ -1,4 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
+import { PrivateEndpointType } from './vnet';
 
 export type ResourceGroupType = {
   resourceGroupName: string;
@@ -29,4 +30,31 @@ export type AzureResourceResult = pulumi.Output<ResourceType> & {
 
 export type WithVaultInfo = {
   vaultInfo?: ResourceInputs;
+};
+
+export type WithUserAssignedIdentity = {
+  /** UserAssignedIdentity information */
+  UserAssignedIdentity?: { id: pulumi.Input<string> };
+};
+
+export type WithEncryptionEnabler = {
+  /** this only work when vaultInfo is provided. */
+  enableEncryption?: boolean;
+};
+
+export type NetworkArgs = {
+  publicNetworkAccess?: 'disabled' | 'enabled';
+  bypass?: 'AzureServices' | 'None' | string;
+  defaultAction?: 'Allow' | 'Deny';
+
+  ipRules?: pulumi.Input<pulumi.Input<string>[]>;
+  vnetRules?: pulumi.Input<
+    pulumi.Input<{ id: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]
+  >;
+
+  privateLink?: PrivateEndpointType;
+};
+
+export type WithNetworkArgs = {
+  network?: NetworkArgs;
 };

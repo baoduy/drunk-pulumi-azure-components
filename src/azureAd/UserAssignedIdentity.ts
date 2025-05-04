@@ -19,14 +19,14 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
   constructor(
     name: string,
     args: UserAssignedIdentityArgs,
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super('UserAssignedIdentity', name, args, opts);
 
     const managedIdentity = new mid.UserAssignedIdentity(
       name,
       { ...args.rsGroup },
-      { ...opts, parent: this }
+      { ...opts, parent: this },
     );
 
     this.addSecrets({
@@ -59,9 +59,9 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
               groupObjectId: id,
               memberObjectId: this.principalId,
             },
-            { parent: this }
-          )
-      )
+            { parent: this },
+          ),
+      ),
     );
   }
 }

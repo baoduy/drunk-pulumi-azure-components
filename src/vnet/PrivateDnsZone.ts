@@ -1,10 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as privateDns from '@pulumi/azure-native/privatedns';
 import { BaseArgs, BaseResourceComponent } from '../base';
-import { ResourceGroupInfo } from '../types';
+import { WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
 
-export interface PrivateDnsZoneArgs extends BaseArgs {
+export interface PrivateDnsZoneArgs extends BaseArgs, WithResourceGroupInputs {
   aRecords?: Array<{
     name: string;
     ipv4Address: pulumi.Input<pulumi.Input<string>[]>;
@@ -72,8 +72,8 @@ export class PrivateDnsZone extends BaseResourceComponent<PrivateDnsZoneArgs> {
       return new privateDns.PrivateRecordSet(
         `${this._rsName}-${recordName}`,
         {
+          ...group,
           privateZoneName: zone.name,
-          resourceGroupName: group.resourceGroupName,
           relativeRecordSetName: recordName,
           recordType: 'A',
           aRecords: pulumi
@@ -105,11 +105,11 @@ export class PrivateDnsZone extends BaseResourceComponent<PrivateDnsZoneArgs> {
     );
   }
 
-  protected getRsGroupInfo(): pulumi.Output<Required<ResourceGroupInfo>> {
-    const group = super.getRsGroupInfo();
-    return pulumi.output(group).apply((g) => ({
-      resourceGroupName: g.resourceGroupName,
+  protected getRsGroupInfo() {
+    const group = this.args.rsGroup;
+    return {
+      resourceGroupName: group.resourceGroupName,
       location: 'global',
-    }));
+    };
   }
 }

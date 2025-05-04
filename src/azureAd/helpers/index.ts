@@ -4,11 +4,11 @@ import { AppRegistration } from '../AppRegistration';
 import { getGraphPermissions } from './graphBuiltIn';
 import { RoleAssignment } from '../RoleAssignment';
 import { azureEnv } from '../../helpers';
-import { AzureResourceInfo } from '../../types';
+import { ResourceInputs } from '../../types';
 
 export const createAzureDevOpsAppRegistration = (
   name: string,
-  vaultInfo: AzureResourceInfo
+  vaultInfo: ResourceInputs
 ) => {
   const graphAccess = getGraphPermissions({ name: 'User.Read', type: 'Scope' });
 

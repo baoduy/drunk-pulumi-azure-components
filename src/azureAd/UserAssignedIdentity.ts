@@ -2,8 +2,11 @@ import * as pulumi from '@pulumi/pulumi';
 import * as mid from '@pulumi/azure-native/managedidentity';
 import * as azAd from '@pulumi/azuread';
 import { BaseArgs, BaseResourceComponent } from '../base';
+import { WithResourceGroupInputs } from '../types';
 
-export interface UserAssignedIdentityArgs extends BaseArgs {
+export interface UserAssignedIdentityArgs
+  extends BaseArgs,
+    WithResourceGroupInputs {
   /** The Id of the EntraID group */
   memberof?: pulumi.Input<string>[];
 }
@@ -20,10 +23,9 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
   ) {
     super('UserAssignedIdentity', name, args, opts);
 
-    const group = this.getRsGroupInfo();
     const managedIdentity = new mid.UserAssignedIdentity(
       name,
-      { resourceGroupName: group.resourceGroupName },
+      { ...args.rsGroup },
       { ...opts, parent: this }
     );
 

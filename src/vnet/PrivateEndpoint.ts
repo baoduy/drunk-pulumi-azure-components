@@ -3,7 +3,7 @@ import { BaseArgs, BaseResourceComponent } from '../base';
 import * as network from '@pulumi/azure-native/network';
 import { PrivateDnsZone } from './PrivateDnsZone';
 import * as helpers from './helpers';
-import { Zone } from '@pulumi/azure-native/containerstorage';
+import { WithResourceGroupInputs } from '../types';
 
 export type PrivateEndpointServices =
   | 'azApi'
@@ -37,7 +37,10 @@ export type PrivateEndpointType = {
   vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
 };
 
-export interface PrivateEndpointArgs extends BaseArgs, PrivateEndpointType {
+export interface PrivateEndpointArgs
+  extends BaseArgs,
+    WithResourceGroupInputs,
+    PrivateEndpointType {
   type: PrivateEndpointServices;
   storageType?: StorageEndpointTypes;
   resourceInfo: {
@@ -63,13 +66,12 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
   ) {
     super('PrivateEndpoint', name, args, opts);
 
-    const group = this.getRsGroupInfo();
     const linkInfo = this.getPrivateEndpointProps();
 
     const privateEndpoint = new network.PrivateEndpoint(
       name,
       {
-        resourceGroupName: group.resourceGroupName,
+        ...args.rsGroup,
         subnet: { id: args.subnetInfo.subnetId },
         customDnsConfigs: args.subnetInfo.staticPrivateIp
           ? [

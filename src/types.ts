@@ -1,28 +1,32 @@
 import * as pulumi from '@pulumi/pulumi';
-import { ResourceGroup } from '@pulumi/azure-native/resources';
 
-export type ResourceGroupInfo = {
+export type ResourceGroupType = {
   resourceGroupName: string;
   location?: string;
 };
 
-export type WithResourceGroupInfo = {
-  rsGroupInfo: pulumi.Input<ResourceGroupInfo> | ResourceGroupInfo;
+export type ResourceGroupInputs = {
+  resourceGroupName: pulumi.Input<string>;
+  location?: pulumi.Input<string>;
+};
+export type WithResourceGroupInputs = {
+  rsGroup: ResourceGroupInputs;
 };
 
-export type WithResourceGroup = {
-  rsGroup?: pulumi.Input<ResourceGroupInfo> | ResourceGroupInfo | ResourceGroup;
-};
-
-export type AzureResourceInfo = {
+export type ResourceType = {
   resourceName: string;
-  rsGroupInfo: ResourceGroupInfo;
+  rsGroup: ResourceGroupType;
 };
 
-export type AzureResourceResult = AzureResourceInfo & {
+export type ResourceInputs = {
+  resourceName: pulumi.Input<string>;
+  rsGroup: ResourceGroupInputs;
+};
+
+export type AzureResourceResult = pulumi.Output<ResourceType> & {
   id: pulumi.Output<string>;
 };
 
 export type WithVaultInfo = {
-  vaultInfo?: pulumi.Input<AzureResourceInfo> | AzureResourceInfo;
+  vaultInfo?: ResourceInputs;
 };

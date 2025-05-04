@@ -6,7 +6,7 @@ import {
   rsRoleDefinitions,
   KeyVault,
 } from '@drunk-pulumi/azure-components';
-import { AzureResourceInfo } from '@drunk-pulumi/azure-components/types';
+import { ResourceType } from '@drunk-pulumi/azure-components/types';
 
 const rs = (async () => {
   const envRole = new GroupRole();
@@ -22,7 +22,7 @@ const rs = (async () => {
         ],
       },
     },
-    { dependsOn: envRole }
+    { dependsOn: envRole },
   );
 
   const vault = new KeyVault(
@@ -30,12 +30,12 @@ const rs = (async () => {
     {
       rsGroup: group,
     },
-    { dependsOn: group }
+    { dependsOn: group },
   );
 
-  const vaultInfo: AzureResourceInfo = {
-    name: 'global-drunkcoding-vlt',
-    rsGroupInfo: { resourceGroupName: 'global-grp-drunkcoding' },
+  const vaultInfo: ResourceType = {
+    resourceName: 'global-drunkcoding-vlt',
+    rsGroup: { resourceGroupName: 'global-grp-drunkcoding' },
   };
 
   const rs = new UserAssignedIdentity(
@@ -44,7 +44,7 @@ const rs = (async () => {
       rsGroup: group,
       vaultInfo: vault,
     },
-    { dependsOn: group }
+    { dependsOn: group },
   );
 
   return {

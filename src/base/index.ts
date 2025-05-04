@@ -1,5 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
-import { WithVaultInfo, WithResourceGroup, ResourceGroupInfo } from '../types';
+import { WithVaultInfo, WithResourceGroupInputs } from '../types';
 import { VaultSecrets, SecretItemArgs, VaultSecretResult } from '../vault';
 import { ResourceGroup } from '@pulumi/azure-native/resources';
 
@@ -49,7 +49,7 @@ export abstract class BaseComponent extends pulumi.ComponentResource {
  * Base interface for resource component arguments
  * Combines vault information and resource group requirements
  */
-export interface BaseArgs extends WithVaultInfo, WithResourceGroup {}
+export interface BaseArgs extends WithVaultInfo {}
 
 /**
  * Extended base component that handles Azure resources with vault integration
@@ -106,22 +106,6 @@ export abstract class BaseResourceComponent<
     );
 
     this.vaultSecrets = rs.results;
-  }
-
-  /**
-   * Retrieves resource group information from component arguments
-   * @returns ResourceGroupInfo object containing resource group name and location
-   * @throws Error if resource group is not provided
-   */
-  protected getRsGroupInfo(): pulumi.Output<ResourceGroupInfo> {
-    const { rsGroup } = this.args;
-    if (!rsGroup) throw new Error('Resource group is required.');
-    if (rsGroup instanceof ResourceGroup)
-      return pulumi.output({
-        resourceGroupName: rsGroup.name,
-        location: rsGroup.location,
-      });
-    return pulumi.output(rsGroup);
   }
 
   /**

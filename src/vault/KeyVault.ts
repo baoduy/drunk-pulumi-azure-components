@@ -3,10 +3,11 @@ import { BaseArgs, BaseResourceComponent } from '../base';
 import * as keyvault from '@pulumi/azure-native/keyvault';
 import { azureEnv } from '../helpers';
 import { PrivateEndpoint, PrivateEndpointType } from '../vnet';
-import { ResourceGroupInfo } from '../types';
+import { WithResourceGroupInputs, ResourceGroupInputs } from '../types';
 
 export interface KeyVaultArgs
   extends BaseArgs,
+    WithResourceGroupInputs,
     Pick<keyvault.VaultArgs, 'tags'> {
   sku?: 'standard' | 'premium';
 
@@ -37,20 +38,19 @@ export interface KeyVaultArgs
 export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
   public readonly resourceName: pulumi.Output<string>;
   public readonly id: pulumi.Output<string>;
-  public readonly rsGroupInfo: pulumi.Output<ResourceGroupInfo>;
+  public readonly rsGroup: ResourceGroupInputs;
 
   constructor(
     name: string,
-    args: KeyVaultArgs = {},
+    args: KeyVaultArgs,
     opts?: pulumi.ComponentResourceOptions
   ) {
     super('KeyVault', name, args, opts);
 
-    const group = this.getRsGroupInfo();
     const vault = new keyvault.Vault(
       name,
       {
-        resourceGroupName: pulumi.output(group).resourceGroupName,
+        ...args.rsGroup,
         // vaultName:
         //   `${stackInfo.stack}-${name}-${stackInfo.organization}-vlt`.substring(
         //     0,
@@ -108,12 +108,12 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
 
     this.resourceName = vault.name;
     this.id = vault.id;
-    this.rsGroupInfo = pulumi.output(group);
+    this.rsGroup = args.rsGroup;
 
     this.registerOutputs({
       resourceName: this.resourceName,
       id: this.id,
-      rsGroupInfo: this.rsGroupInfo,
+      rsGroup: this.rsGroup,
     });
   }
 
@@ -124,6 +124,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     return new PrivateEndpoint(
       `${this.name}-private-endpoint`,
       {
+        rsGroup: this.args.rsGroup,
         resourceInfo: { id: vault.id, name: this.name },
         type: 'keyVault',
         ...network.privateLink,

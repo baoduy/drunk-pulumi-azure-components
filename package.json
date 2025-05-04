@@ -38,7 +38,8 @@
     "typescript": "5.8.3"
   },
   "prettier": {
-    "singleQuote": true
+    "singleQuote": true,
+    "trailingComma": "all"
   },
   "lint-staged": {
     "**/*.{js,ts}": [

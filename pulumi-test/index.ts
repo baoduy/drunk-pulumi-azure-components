@@ -6,6 +6,7 @@ import {
   rsRoleDefinitions,
   KeyVault,
   StorageAccount,
+  Logs,
 } from '@drunk-pulumi/azure-components';
 
 const rs = (async () => {
@@ -37,6 +38,13 @@ const rs = (async () => {
     },
     { dependsOn: group },
   );
+
+  const logs = new Logs('log', {
+    rsGroup: group,
+    retentionInDays: 30,
+    storage: { enabled: true },
+    workspace: { enabled: true, appInsightEnabled: true },
+  });
 
   const storage = new StorageAccount(
     'storage',

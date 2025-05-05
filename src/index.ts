@@ -1,6 +1,7 @@
 export * from './azureAd';
 export * from './common';
 export * from './helpers';
+export * from './logs';
 export * from './storage';
 export * from './vault';
 

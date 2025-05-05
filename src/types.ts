@@ -16,6 +16,10 @@ export type WithResourceGroupInputs = {
 
 export type ResourceType = {
   resourceName: string;
+  id: string;
+};
+
+export type ResourceWithGroupType = ResourceType & {
   rsGroup: ResourceGroupType;
 };
 
@@ -27,6 +31,9 @@ export type ResourceInputs = {
 export type ResourceResult = {
   id: pulumi.Output<string>;
   resourceName: pulumi.Output<string>;
+};
+
+export type ResourceWithGroupResult = ResourceResult & {
   rsGroup: pulumi.Output<ResourceGroupType>;
 };
 
@@ -66,9 +73,7 @@ export type NetworkArgs = {
   defaultAction?: 'Allow' | 'Deny';
 
   ipRules?: pulumi.Input<pulumi.Input<string>[]>;
-  vnetRules?: pulumi.Input<
-    pulumi.Input<{ id: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]
-  >;
+  vnetRules?: pulumi.Input<pulumi.Input<{ id: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]>;
 
   privateLink?: PrivateEndpointType;
 };

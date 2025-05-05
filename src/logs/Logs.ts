@@ -4,8 +4,8 @@ import { BaseArgs, BaseResourceComponent } from '../base';
 import * as az from '@pulumi/azure-native';
 import { StorageAccount } from '../storage';
 
-export type WorkspaceResult = types.ResourceType & { customerId: string };
-export type AppInsightResult = types.ResourceType & { instrumentationKey: string };
+export type WorkspaceResult = types.ResourceResult & { customerId: pulumi.Output<string> };
+export type AppInsightResult = types.ResourceResult & { instrumentationKey: pulumi.Output<string> };
 
 export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
   retentionInDays?: pulumi.Input<number>;
@@ -27,9 +27,9 @@ export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
 }
 
 export class Logs extends BaseResourceComponent<LogsArgs> {
-  public readonly storage?: pulumi.Output<types.ResourceType>;
-  public readonly workspace?: pulumi.Output<WorkspaceResult>;
-  public readonly appInsight?: pulumi.Output<AppInsightResult>;
+  public readonly storage?: types.ResourceResult;
+  public readonly workspace?: WorkspaceResult;
+  public readonly appInsight?: AppInsightResult;
 
   constructor(name: string, args: LogsArgs, private opts?: pulumi.ComponentResourceOptions) {
     super('Logs', name, args, opts);
@@ -39,28 +39,28 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
     const appInsight = this.createAppInsight(workspace);
 
     if (storage) {
-      this.storage = pulumi.output({
+      this.storage = {
         id: storage.id,
-        resourceName: storage.name,
-      });
+        resourceName: storage.resourceName,
+      };
     }
 
     if (workspace) {
-      this.workspace = pulumi.output({
+      this.workspace = {
         id: workspace.id,
         resourceName: workspace.name,
-        customerId: workspace.customerId,
-      });
+        customerId: pulumi.secret(workspace.customerId),
+      };
 
       this.addSecret(`${name}-wp-customerId`, workspace.customerId);
     }
 
     if (appInsight) {
-      this.appInsight = pulumi.output({
+      this.appInsight = {
         id: appInsight.id,
         resourceName: appInsight.name,
-        instrumentationKey: appInsight.instrumentationKey,
-      });
+        instrumentationKey: pulumi.secret(appInsight.instrumentationKey),
+      };
 
       this.addSecret(`${name}-appInsight-key`, appInsight.instrumentationKey);
     }

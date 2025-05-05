@@ -58,10 +58,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     const { rsGroup, sku, vaultInfo, defaultUAssignedId, policies, enableEncryption, network, containers, ...props } =
       args;
 
-    const encryptionKey =
-      enableEncryption && vaultInfo
-        ? new vault.EncryptionKey(`${name}-storage`, { vaultInfo }, { dependsOn: opts?.dependsOn, parent: this })
-        : undefined;
+    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
 
     const stg = new storage.StorageAccount(
       name,

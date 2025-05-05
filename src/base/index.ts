@@ -2,7 +2,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
 import * as types from '../types';
 import { GroupRoleTypes } from '../azureAd';
-import { VaultSecrets, SecretItemArgs, VaultSecretResult } from '../vault';
+import { VaultSecrets, SecretItemArgs, VaultSecretResult, EncryptionKey } from '../vault';
 
 /**
  * Formats the component resource type to ensure it follows the drunk-pulumi naming convention
@@ -16,21 +16,15 @@ export const getComponentResourceType = (type: string) =>
  * Base interface for resource component arguments
  * Combines vault information and resource group requirements
  */
-export interface BaseArgs
-  extends types.WithVaultInfo,
-    types.WithGroupRolesArgs {}
+export interface BaseArgs extends types.WithVaultInfo, types.WithGroupRolesArgs {}
 
-export interface BaseArgsWithRsGroup
-  extends BaseArgs,
-    types.WithResourceGroupInputs {}
+export interface BaseArgsWithRsGroup extends BaseArgs, types.WithResourceGroupInputs {}
 
 /**
  * Extended base component that handles Azure resources with vault integration
  * Provides secret management and resource group handling capabilities
  */
-export abstract class BaseResourceComponent<
-  TArgs extends BaseArgs,
-> extends pulumi.ComponentResource {
+export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulumi.ComponentResource {
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
   public vaultSecrets?: { [key: string]: VaultSecretResult };
@@ -109,10 +103,12 @@ export abstract class BaseResourceComponent<
     super.registerOutputs({ ...outputs, vaultSecrets: this.vaultSecrets });
   }
 
-  public addIdentityToRole(
-    type: GroupRoleTypes,
-    identity: pulumi.Output<{ principalId: string } | undefined>,
-  ) {
+  protected getEncryptionKey() {
+    if (!this.args.vaultInfo) return undefined;
+    return new EncryptionKey(this.name, { vaultInfo: this.args.vaultInfo }, { parent: this });
+  }
+
+  public addIdentityToRole(type: GroupRoleTypes, identity: pulumi.Output<{ principalId: string } | undefined>) {
     const { groupRoles } = this.args;
     if (!groupRoles) return;
 

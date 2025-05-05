@@ -1,1 +1,1 @@
-import * as pulumi from 
+import * as pulumi from '@pulumi/pulumi';

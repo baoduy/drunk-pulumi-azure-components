@@ -20,11 +20,17 @@ dependencies:
   '@pulumi/random':
     specifier: ^4.18.2
     version: 4.18.2(ts-node@10.9.2)(typescript@5.8.3)
+  netmask:
+    specifier: ^2.0.2
+    version: 2.0.2
   openpgp:
     specifier: ^6.1.0
     version: 6.1.0
 
 devDependencies:
+  '@types/netmask':
+    specifier: ^2.0.5
+    version: 2.0.5
   '@types/node':
     specifier: 22.15.3
     version: 22.15.3
@@ -1087,6 +1093,10 @@ packages:
       '@types/node': 22.15.3
     dev: false
 
+  /@types/netmask@2.0.5:
+    resolution: {integrity: sha512-9Q5iw9+pHZBVLDG700dlQSWWHTYvOb8KfPjfQTNckCYky4IyjV2xh81+RgC1CCwqv92bYLpz1cVKyJav0B88uQ==}
+    dev: true
+
   /@types/node@22.15.3:
     resolution: {integrity: sha512-lX7HFZeHf4QG/J7tBZqrCAXwz9J5RD56Y6MpP0eJkka8p+K0RY/yBTW7CYFJ4VGCclxqOLKmiGP5juQc6MKgcw==}
     dependencies:
@@ -2140,6 +2150,11 @@ packages:
   /nested-error-stacks@2.1.1:
     resolution: {integrity: sha512-9iN1ka/9zmX1ZvLV9ewJYEk9h7RyRRtqdK0woXcqohu8EWIerfPUjYJPg0ULy0UqP7cslmdGc8xKDJcojlKiaw==}
     dev: true
+
+  /netmask@2.0.2:
+    resolution: {integrity: sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==}
+    engines: {node: '>= 0.4.0'}
+    dev: false
 
   /node-forge@1.3.1:
     resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}

@@ -72,6 +72,7 @@ export type NetworkArgs = {
   bypass?: 'AzureServices' | 'None' | string;
   defaultAction?: 'Allow' | 'Deny';
 
+  //subnet?: { id: pulumi.Input<string> };
   ipRules?: pulumi.Input<pulumi.Input<string>[]>;
   vnetRules?: pulumi.Input<pulumi.Input<{ id: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]>;
 

@@ -1,11 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as storage from '@pulumi/azure-native/storage';
-import { SecretItemArgs, VaultSecrets } from '../vault';
-import { EncryptionKey } from '../vault';
+import * as vault from '../vault';
 import { BaseArgsWithRsGroup, BaseResourceComponent } from '../base';
-import { StorageEndpointTypes, PrivateEndpoint } from '../vnet';
 import * as types from '../types';
+import * as vnet from '../vnet';
 
 export interface StorageAccountArgs
   extends BaseArgsWithRsGroup,
@@ -23,10 +22,13 @@ export interface StorageAccountArgs
     > {
   sku?: storage.SkuName | string;
   network?: types.NetworkArgs & {
-    storageEndpointTypes?: StorageEndpointTypes[];
+    storageEndpointTypes?: vnet.StorageEndpointTypes[];
   };
   policies?: {
-    enableStaticWebsite?: boolean;
+    staticWebsite?: Partial<Pick<vnet.AzCdnArgs, 'endpoint'>> & {
+      enabled: boolean;
+      existingProfile?: types.ResourceInputs;
+    };
     keyExpirationPeriodInDays?: pulumi.Input<number>;
     /**
      * The SAS expiration period, DD.HH:MM:SS.
@@ -34,14 +36,9 @@ export interface StorageAccountArgs
     sasExpirationPeriod?: pulumi.Input<string>;
     sasExpirationAction?: 'Log' | 'Block';
 
-    blob?: Omit<
-      storage.BlobServicePropertiesArgs,
-      'blobServicesName' | 'resourceGroupName' | 'accountName'
-    >;
+    blob?: Omit<storage.BlobServicePropertiesArgs, 'blobServicesName' | 'resourceGroupName' | 'accountName'>;
 
-    defaultManagementPolicyRules?: pulumi.Input<
-      pulumi.Input<inputs.storage.ManagementPolicyRuleArgs>[]
-    >;
+    defaultManagementPolicyRules?: pulumi.Input<pulumi.Input<inputs.storage.ManagementPolicyRuleArgs>[]>;
   };
 
   containers?: {
@@ -56,31 +53,14 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: StorageAccountArgs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, args: StorageAccountArgs, opts?: pulumi.ComponentResourceOptions) {
     super('StorageAccount', name, args, opts);
-    const {
-      rsGroup,
-      sku,
-      vaultInfo,
-      defaultUAssignedId,
-      policies,
-      enableEncryption,
-      network,
-      containers,
-      ...props
-    } = args;
+    const { rsGroup, sku, vaultInfo, defaultUAssignedId, policies, enableEncryption, network, containers, ...props } =
+      args;
 
     const encryptionKey =
       enableEncryption && vaultInfo
-        ? new EncryptionKey(
-            `${name}-storage`,
-            { vaultInfo },
-            { dependsOn: opts?.dependsOn, parent: this },
-          )
+        ? new vault.EncryptionKey(`${name}-storage`, { vaultInfo }, { dependsOn: opts?.dependsOn, parent: this })
         : undefined;
 
     const stg = new storage.StorageAccount(
@@ -103,9 +83,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
           type: defaultUAssignedId
             ? storage.IdentityType.SystemAssigned_UserAssigned
             : storage.IdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId
-            ? [defaultUAssignedId.id]
-            : undefined,
+          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
         },
 
         keyPolicy: {
@@ -163,8 +141,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
         networkRuleSet: {
           bypass: args.network?.bypass ?? 'None',
-          defaultAction:
-            args.network?.defaultAction ?? storage.DefaultAction.Allow,
+          defaultAction: args.network?.defaultAction ?? storage.DefaultAction.Allow,
 
           ipRules: args.network?.ipRules
             ? pulumi.output(args.network.ipRules).apply((ips) =>
@@ -217,7 +194,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     const types = network.storageEndpointTypes ?? ['blob'];
     return types.map(
       (t) =>
-        new PrivateEndpoint(
+        new vnet.PrivateEndpoint(
           `${this.name}-${t}`,
           {
             ...network.privateLink!,
@@ -266,9 +243,9 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
 
   private enableStaticWebsite(stg: storage.StorageAccount) {
     const { rsGroup, policies } = this.args;
-    if (!policies?.enableStaticWebsite) return;
+    if (!policies?.staticWebsite?.enabled) return;
 
-    new storage.StorageAccountStaticWebsite(
+    const staticWeb = new storage.StorageAccountStaticWebsite(
       `${this.name}-static-website`,
       {
         ...rsGroup,
@@ -278,6 +255,18 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
       },
       { dependsOn: stg, parent: this },
     );
+
+    if (policies.staticWebsite.endpoint) {
+      new vnet.AzCdn(
+        `${this.name}-cdn`,
+        {
+          endpoint: policies.staticWebsite.endpoint,
+          rsGroup: policies.staticWebsite.existingProfile?.rsGroup ?? this.args.rsGroup,
+          existingProfile: policies.staticWebsite.existingProfile,
+        },
+        { dependsOn: [stg, staticWeb], parent: this },
+      );
+    }
   }
 
   private addSecretsToVault(stg: storage.StorageAccount) {
@@ -299,12 +288,9 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
                 contentType: `StorageAccount ${k.keyName}`,
               },
             }))
-            .reduce(
-              (acc, curr) => ({ ...acc, ...curr }),
-              {} as { [key: string]: SecretItemArgs },
-            );
+            .reduce((acc, curr) => ({ ...acc, ...curr }), {} as { [key: string]: vault.SecretItemArgs });
 
-          return new VaultSecrets(
+          return new vault.VaultSecrets(
             this.name,
             {
               vaultInfo,

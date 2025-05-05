@@ -38,8 +38,11 @@
     "typescript": "5.8.3"
   },
   "prettier": {
+    "semi": true,
+    "trailingComma": "all",
     "singleQuote": true,
-    "trailingComma": "all"
+    "printWidth": 120,
+    "tabWidth": 2
   },
   "lint-staged": {
     "**/*.{js,ts}": [

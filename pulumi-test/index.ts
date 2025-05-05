@@ -15,10 +15,7 @@ const rs = (async () => {
     {
       lock: false,
       groupRoles: envRole,
-      roleAssignments: [
-        rsRoleDefinitions.rsGroup.getReadOnly(),
-        rsRoleDefinitions.keyVault.getContributor(),
-      ],
+      roleAssignments: [rsRoleDefinitions.rsGroup.getReadOnly(), rsRoleDefinitions.keyVault],
     },
     { dependsOn: envRole },
   );
@@ -36,7 +33,7 @@ const rs = (async () => {
     {
       rsGroup: group,
       vaultInfo: vault,
-      memberof: [envRole.readOnly.objectId],
+      memberof: [envRole.readOnly],
     },
     { dependsOn: group },
   );
@@ -50,7 +47,7 @@ const rs = (async () => {
       vaultInfo: vault,
       //only able to enable after storage account is created
       enableEncryption: true,
-      policies: { enableStaticWebsite: true },
+      policies: { staticWebsite: { enabled: true } },
       containers: {
         containers: [{ name: 'test' }],
         fileShares: ['test'],

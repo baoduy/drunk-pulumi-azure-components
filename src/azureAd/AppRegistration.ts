@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
-import { WithVaultInfo } from '../types';
+import { WithVaultInfo, WithMemberOfArgs } from '../types';
 import { VaultSecret } from '../vault';
 
 export enum GroupMembershipClaimsTypes {
@@ -13,6 +13,7 @@ export enum GroupMembershipClaimsTypes {
 
 export interface AppRegistrationArgs
   extends WithVaultInfo,
+    WithMemberOfArgs,
     Pick<
       azAd.ApplicationArgs,
       | 'identifierUris'
@@ -57,8 +58,6 @@ export interface AppRegistrationArgs
     accessTokenIssuanceEnabled?: pulumi.Input<boolean>;
     idTokenIssuanceEnabled?: pulumi.Input<boolean>;
   }>;
-  /** The Id of the EntraID group */
-  memberof?: pulumi.Input<string>[];
 }
 
 export class AppRegistration extends pulumi.ComponentResource {
@@ -72,7 +71,7 @@ export class AppRegistration extends pulumi.ComponentResource {
   constructor(
     private name: string,
     private args: AppRegistrationArgs = { appType: 'native' },
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super('drunk-pulumi:index:AppRegistration', name, args, opts);
     const ops = args.info ?? {
@@ -115,7 +114,7 @@ export class AppRegistration extends pulumi.ComponentResource {
             ? { redirectUris: args.redirectUris }
             : undefined,
       },
-      { ...opts, parent: this }
+      { ...opts, parent: this },
     );
 
     if (args.vaultInfo) {
@@ -126,7 +125,7 @@ export class AppRegistration extends pulumi.ComponentResource {
           value: this._app.clientId,
           contentType: `${this.name} client-id`,
         },
-        { dependsOn: this._app, parent: this }
+        { dependsOn: this._app, parent: this },
       );
     }
 
@@ -161,7 +160,7 @@ export class AppRegistration extends pulumi.ComponentResource {
         clientId: this._app.clientId,
         owners: this.args.owners,
       },
-      { dependsOn: this._app, parent: this }
+      { dependsOn: this._app, parent: this },
     );
 
     var spPass = new azAd.ServicePrincipalPassword(
@@ -170,7 +169,7 @@ export class AppRegistration extends pulumi.ComponentResource {
         displayName: this.name,
         servicePrincipalId: pulumi.interpolate`/servicePrincipals/${sp.objectId}`,
       },
-      { dependsOn: sp, parent: this }
+      { dependsOn: sp, parent: this },
     );
 
     if (this.args.vaultInfo) {
@@ -181,7 +180,7 @@ export class AppRegistration extends pulumi.ComponentResource {
           value: spPass.value,
           contentType: `${this.name} sp password`,
         },
-        { dependsOn: spPass, parent: this }
+        { dependsOn: spPass, parent: this },
       );
     }
 
@@ -198,7 +197,7 @@ export class AppRegistration extends pulumi.ComponentResource {
         displayName: this.name,
         applicationId: this._app.id,
       },
-      { dependsOn: this._app, parent: this }
+      { dependsOn: this._app, parent: this },
     );
 
     if (this.args.vaultInfo) {
@@ -209,7 +208,7 @@ export class AppRegistration extends pulumi.ComponentResource {
           value: clientSecret.value,
           contentType: `${this.name} client-secret`,
         },
-        { dependsOn: clientSecret, parent: this }
+        { dependsOn: clientSecret, parent: this },
       );
     }
 
@@ -224,14 +223,14 @@ export class AppRegistration extends pulumi.ComponentResource {
       pulumi.output(group).apply(
         (id) =>
           new azAd.GroupMember(
-            `${this.name}-${id}`,
+            `${this.name}-${id.objectId}`,
             {
-              groupObjectId: id,
+              groupObjectId: id.objectId,
               memberObjectId: this._app.objectId,
             },
-            { dependsOn: this._app, parent: this }
-          )
-      )
+            { dependsOn: this._app, parent: this },
+          ),
+      ),
     );
   }
 }

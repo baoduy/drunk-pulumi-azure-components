@@ -34,6 +34,11 @@ export type WithVaultInfo = {
   vaultInfo?: ResourceInputs;
 };
 
+export type WithMemberOfArgs = {
+  /** The Id of the EntraID group */
+  memberof?: pulumi.Input<{ objectId: string }>[];
+};
+
 export type WithUserAssignedIdentity = {
   /** Default User-Assigned Managed Identity that is shared across resources
    *  to access common services like Key Vault secrets */

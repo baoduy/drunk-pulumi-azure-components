@@ -36,15 +36,20 @@ const rs = (async () => {
       vaultInfo: vault,
       memberof: [envRole.readOnly],
     },
-    { dependsOn: group },
+    { dependsOn: [group, envRole, vault] },
   );
 
-  const logs = new Logs('log', {
-    rsGroup: group,
-    retentionInDays: 30,
-    storage: { enabled: true },
-    workspace: { enabled: true, appInsightEnabled: true, sku: 'PerGB2018' },
-  });
+  const logs = new Logs(
+    'log',
+    {
+      rsGroup: group,
+      retentionInDays: 30,
+      storage: { enabled: true },
+      workspace: { enabled: true, appInsightEnabled: true, sku: 'PerGB2018' },
+      vaultInfo: vault,
+    },
+    { dependsOn: [group, vault] },
+  );
 
   const storage = new StorageAccount(
     'storage',
@@ -62,7 +67,7 @@ const rs = (async () => {
         queues: ['test'],
       },
     },
-    { dependsOn: group },
+    { dependsOn: [group, envRole, userAssignedId, vault] },
   );
 
   return {

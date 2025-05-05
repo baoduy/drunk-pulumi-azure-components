@@ -43,7 +43,7 @@ const rs = (async () => {
     rsGroup: group,
     retentionInDays: 30,
     storage: { enabled: true },
-    workspace: { enabled: true, appInsightEnabled: true },
+    workspace: { enabled: true, appInsightEnabled: true, sku: '' },
   });
 
   const storage = new StorageAccount(

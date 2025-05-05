@@ -13,7 +13,7 @@ export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
   workspace?: {
     enabled: boolean;
     appInsightEnabled?: boolean;
-    sku?: pulumi.Input<az.operationalinsights.WorkspaceSkuNameEnum | string>;
+    sku?: az.operationalinsights.WorkspaceSkuNameEnum;
     dailyQuotaGb?: pulumi.Input<number>;
     publicNetworkAccessForIngestion?: pulumi.Input<'Disabled' | 'Enabled'>;
     publicNetworkAccessForQuery?: pulumi.Input<'Disabled' | 'Enabled'>;
@@ -129,7 +129,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
     if (!storage?.enabled) return undefined;
 
     return new StorageAccount(
-      `${this.name}-stg`,
+      this.name,
       {
         rsGroup,
         allowSharedKeyAccess: true,

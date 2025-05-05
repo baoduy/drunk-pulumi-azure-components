@@ -43,7 +43,7 @@ const rs = (async () => {
     rsGroup: group,
     retentionInDays: 30,
     storage: { enabled: true },
-    workspace: { enabled: true, appInsightEnabled: true, sku: '' },
+    workspace: { enabled: true, appInsightEnabled: true, sku: 'PerGB2018' },
   });
 
   const storage = new StorageAccount(

@@ -144,7 +144,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
                   baseBlob: {
                     delete: {
                       daysAfterCreationGreaterThan: retentionInDays ?? 30,
-                      daysAfterModificationGreaterThan: retentionInDays ?? 30,
+                      //daysAfterModificationGreaterThan: retentionInDays ?? 30,
                     },
                   },
                 },

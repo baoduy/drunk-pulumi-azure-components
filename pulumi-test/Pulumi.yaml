@@ -15,6 +15,8 @@ config:
               pattern: ${project}-${stack}-${name}
             'azure-native:keyvault:Vault':
               pattern: ${stack}-${name}-${alphanum(6)}
+            'azure-native:storage:StorageAccount':
+              pattern: ${stack}${name}drunkstg${alphanum(3)}
 
   pulumi:tags:
     value:

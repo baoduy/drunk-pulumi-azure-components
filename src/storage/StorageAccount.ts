@@ -1,5 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
+import * as inputs from '@pulumi/azure-native/types/input';
 import * as storage from '@pulumi/azure-native/storage';
+import { SecretItemArgs, VaultSecrets } from '../vault';
 import { EncryptionKey } from '../vault';
 import { BaseArgsWithRsGroup, BaseResourceComponent } from '../base';
 import { StorageEndpointTypes, PrivateEndpoint } from '../vnet';
@@ -16,12 +18,36 @@ export interface StorageAccountArgs
       | 'isHnsEnabled'
       | 'allowSharedKeyAccess'
       | 'isSftpEnabled'
-      | 'keyPolicy'
-      | 'sasPolicy'
+      | 'largeFileSharesState'
+      | 'routingPreference'
     > {
   sku?: storage.SkuName | string;
   network?: types.NetworkArgs & {
     storageEndpointTypes?: StorageEndpointTypes[];
+  };
+  policies?: {
+    enableStaticWebsite?: boolean;
+    keyExpirationPeriodInDays?: pulumi.Input<number>;
+    /**
+     * The SAS expiration period, DD.HH:MM:SS.
+     */
+    sasExpirationPeriod?: pulumi.Input<string>;
+    sasExpirationAction?: 'Log' | 'Block';
+
+    blob?: Omit<
+      storage.BlobServicePropertiesArgs,
+      'blobServicesName' | 'resourceGroupName' | 'accountName'
+    >;
+
+    defaultManagementPolicyRules?: pulumi.Input<
+      pulumi.Input<inputs.storage.ManagementPolicyRuleArgs>[]
+    >;
+  };
+
+  containers?: {
+    containers?: Array<{ name: string; isPublic?: boolean }>;
+    queues?: Array<string>;
+    fileShares?: Array<string>;
   };
 }
 
@@ -40,17 +66,18 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
       rsGroup,
       sku,
       vaultInfo,
-      UserAssignedIdentity,
-      keyPolicy,
+      defaultUAssignedId,
+      policies,
       enableEncryption,
       network,
+      containers,
       ...props
     } = args;
 
     const encryptionKey =
       enableEncryption && vaultInfo
         ? new EncryptionKey(
-            name,
+            `${name}-storage`,
             { vaultInfo },
             { dependsOn: opts?.dependsOn, parent: this },
           )
@@ -73,26 +100,36 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         defaultToOAuthAuthentication: !props.allowSharedKeyAccess,
 
         identity: {
-          type: UserAssignedIdentity
+          type: defaultUAssignedId
             ? storage.IdentityType.SystemAssigned_UserAssigned
             : storage.IdentityType.SystemAssigned,
-          userAssignedIdentities: UserAssignedIdentity
-            ? [UserAssignedIdentity.id]
+          userAssignedIdentities: defaultUAssignedId
+            ? [defaultUAssignedId.id]
             : undefined,
         },
 
-        keyPolicy: keyPolicy ?? {
-          keyExpirationPeriodInDays: 365,
+        keyPolicy: {
+          keyExpirationPeriodInDays: policies?.keyExpirationPeriodInDays ?? 365,
         },
+        sasPolicy: policies?.sasExpirationPeriod
+          ? {
+              expirationAction: policies?.sasExpirationAction ?? 'Block',
+              sasExpirationPeriod: policies?.sasExpirationPeriod,
+            }
+          : undefined,
         encryption: encryptionKey
           ? {
               keySource: storage.KeySource.Microsoft_Keyvault,
-              keyVaultProperties: encryptionKey,
+              keyVaultProperties: {
+                keyName: encryptionKey.keyName,
+                //keyVersion: encryptionKey.version,
+                keyVaultUri: encryptionKey.vaultUrl,
+              },
               requireInfrastructureEncryption: true,
-              encryptionIdentity: UserAssignedIdentity
+              encryptionIdentity: defaultUAssignedId
                 ? {
                     //encryptionFederatedIdentityClientId?: pulumi.Input<string>;
-                    encryptionUserAssignedIdentity: UserAssignedIdentity.id,
+                    encryptionUserAssignedIdentity: defaultUAssignedId.id,
                   }
                 : undefined,
 
@@ -155,6 +192,12 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     );
 
     this.createPrivateLink(stg);
+    this.createLifeCycleManagement(stg);
+    this.enableStaticWebsite(stg);
+    this.createContainers(stg);
+
+    this.addIdentityToRole('readOnly', stg.identity);
+    this.addSecretsToVault(stg);
 
     this.id = stg.id;
     this.resourceName = stg.name;
@@ -182,6 +225,138 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             rsGroup: this.args.rsGroup,
             type: 'storage',
             storageType: t,
+          },
+          { dependsOn: stg, parent: this },
+        ),
+    );
+  }
+
+  private createLifeCycleManagement(stg: storage.StorageAccount) {
+    const { rsGroup, policies } = this.args;
+
+    if (policies?.blob) {
+      new storage.BlobServiceProperties(
+        `${this.name}-blob-properties`,
+        {
+          ...rsGroup,
+          accountName: stg.name,
+          blobServicesName: 'default',
+          ...policies.blob,
+        },
+        { dependsOn: stg, parent: this },
+      );
+    }
+
+    if (policies?.defaultManagementPolicyRules) {
+      return new storage.ManagementPolicy(
+        `${this.name}-lifecycle`,
+        {
+          ...rsGroup,
+          managementPolicyName: 'default',
+          accountName: stg.name,
+
+          policy: {
+            rules: policies.defaultManagementPolicyRules,
+          },
+        },
+        { dependsOn: stg, parent: this },
+      );
+    }
+  }
+
+  private enableStaticWebsite(stg: storage.StorageAccount) {
+    const { rsGroup, policies } = this.args;
+    if (!policies?.enableStaticWebsite) return;
+
+    new storage.StorageAccountStaticWebsite(
+      `${this.name}-static-website`,
+      {
+        ...rsGroup,
+        accountName: stg.name,
+        indexDocument: 'index.html',
+        error404Document: 'index.html',
+      },
+      { dependsOn: stg, parent: this },
+    );
+  }
+
+  private addSecretsToVault(stg: storage.StorageAccount) {
+    const { rsGroup, vaultInfo } = this.args;
+    if (!vaultInfo) return;
+
+    return stg.id.apply((id) => {
+      if (!id) return;
+      return storage
+        .listStorageAccountKeysOutput({
+          resourceGroupName: rsGroup.resourceGroupName,
+          accountName: stg.name,
+        })
+        .apply((keys) => {
+          const secrets = keys.keys
+            .map((k) => ({
+              [`${this.name}-${k.keyName}`]: {
+                value: k.value,
+                contentType: `StorageAccount ${k.keyName}`,
+              },
+            }))
+            .reduce(
+              (acc, curr) => ({ ...acc, ...curr }),
+              {} as { [key: string]: SecretItemArgs },
+            );
+
+          return new VaultSecrets(
+            this.name,
+            {
+              vaultInfo,
+              secrets,
+            },
+            { dependsOn: stg, parent: this },
+          );
+        });
+    });
+  }
+
+  private createContainers(stg: storage.StorageAccount) {
+    const { rsGroup, containers } = this.args;
+    if (!containers) return;
+
+    containers.containers?.map(
+      (c) =>
+        new storage.BlobContainer(
+          c.name,
+          {
+            containerName: c.name.toLowerCase(),
+            ...rsGroup,
+            accountName: stg.name,
+            publicAccess: c.isPublic ? 'Blob' : 'None',
+          },
+          { dependsOn: stg, parent: this },
+        ),
+    );
+
+    //Create Queues
+    containers.queues?.map(
+      (q) =>
+        new storage.Queue(
+          q,
+          {
+            queueName: q.toLowerCase(),
+            accountName: stg.name,
+            ...rsGroup,
+          },
+          { dependsOn: stg, parent: this },
+        ),
+    );
+
+    //File Share
+    containers.fileShares?.map(
+      (s) =>
+        new storage.FileShare(
+          s,
+          {
+            shareName: s.toLowerCase(),
+            accountName: stg.name,
+            ...rsGroup,
           },
           { dependsOn: stg, parent: this },
         ),

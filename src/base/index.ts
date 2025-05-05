@@ -1,5 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
-import { WithVaultInfo, WithResourceGroupInputs } from '../types';
+import * as azAd from '@pulumi/azuread';
+import * as types from '../types';
+import { GroupRoleTypes } from '../azureAd';
 import { VaultSecrets, SecretItemArgs, VaultSecretResult } from '../vault';
 
 /**
@@ -11,47 +13,16 @@ export const getComponentResourceType = (type: string) =>
   type.includes('drunk-pulumi') ? type : `drunk-pulumi:index:${type}`;
 
 /**
- * Base component class that extends Pulumi's ComponentResource
- * Provides common functionality for all drunk-pulumi components
- */
-export abstract class BaseComponent extends pulumi.ComponentResource {
-  /**
-   * Creates a new instance of BaseComponent
-   * @param type - The type of the component resource
-   * @param name - The unique name of the component resource
-   * @param args - Optional input arguments for the component
-   * @param opts - Optional component resource options
-   */
-  constructor(
-    type: string,
-    public name: string,
-    args?: pulumi.Inputs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
-    super(getComponentResourceType(type), name, args, opts);
-  }
-
-  /**
-   * Selectively picks properties from the component instance
-   * @param keys - Array of property keys to pick from the component
-   * @returns Object containing only the selected properties
-   */
-  public PickOutputs<K extends keyof this>(...keys: K[]) {
-    return keys.reduce((acc, key) => {
-      acc[key] = (this as any)[key];
-      return acc;
-    }, {} as Pick<this, K>);
-  }
-}
-
-/**
  * Base interface for resource component arguments
  * Combines vault information and resource group requirements
  */
-export interface BaseArgs extends WithVaultInfo {}
+export interface BaseArgs
+  extends types.WithVaultInfo,
+    types.WithGroupRolesArgs {}
+
 export interface BaseArgsWithRsGroup
   extends BaseArgs,
-    WithResourceGroupInputs {}
+    types.WithResourceGroupInputs {}
 
 /**
  * Extended base component that handles Azure resources with vault integration
@@ -59,7 +30,7 @@ export interface BaseArgsWithRsGroup
  */
 export abstract class BaseResourceComponent<
   TArgs extends BaseArgs,
-> extends BaseComponent {
+> extends pulumi.ComponentResource {
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
   public vaultSecrets?: { [key: string]: VaultSecretResult };
@@ -73,7 +44,7 @@ export abstract class BaseResourceComponent<
    */
   constructor(
     private type: string,
-    name: string,
+    public name: string,
     protected args: TArgs,
     opts?: pulumi.ComponentResourceOptions,
   ) {
@@ -136,5 +107,33 @@ export abstract class BaseResourceComponent<
   protected registerOutputs(outputs?: pulumi.Inputs): void {
     this.postCreated();
     super.registerOutputs({ ...outputs, vaultSecrets: this.vaultSecrets });
+  }
+
+  public addIdentityToRole(
+    type: GroupRoleTypes,
+    identity: pulumi.Output<{ principalId: string } | undefined>,
+  ) {
+    const { groupRoles } = this.args;
+    if (!groupRoles) return;
+
+    return identity.apply((i) => {
+      if (!i?.principalId) return;
+      return new azAd.GroupMember(`${this.name}-${type}-${i.principalId}`, {
+        groupObjectId: groupRoles[type].objectId,
+        memberObjectId: i.principalId,
+      });
+    });
+  }
+
+  /**
+   * Selectively picks properties from the component instance
+   * @param keys - Array of property keys to pick from the component
+   * @returns Object containing only the selected properties
+   */
+  public PickOutputs<K extends keyof this>(...keys: K[]) {
+    return keys.reduce((acc, key) => {
+      acc[key] = (this as any)[key];
+      return acc;
+    }, {} as Pick<this, K>);
   }
 }

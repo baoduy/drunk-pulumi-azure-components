@@ -4,11 +4,7 @@ import { AzRole } from './AzRole';
 import { stackInfo } from '../helpers';
 import { BaseArgs, BaseResourceComponent } from '../base';
 
-export enum GroupRoleTypes {
-  admin = 'admin',
-  contributor = 'contributor',
-  readOnly = 'readOnly',
-}
+export type GroupRoleTypes = 'admin' | 'contributor' | 'readOnly';
 
 export interface GroupRoleArgs
   extends BaseArgs,
@@ -16,6 +12,7 @@ export interface GroupRoleArgs
   admin?: Pick<azAd.GroupArgs, 'members'>;
   contributor?: Pick<azAd.GroupArgs, 'members'>;
   readOnly?: Pick<azAd.GroupArgs, 'members'>;
+  preventDuplicateNames?: pulumi.Input<boolean>;
 }
 
 export interface GroupRoleOutput {
@@ -30,55 +27,73 @@ export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
   constructor(
     name: string = stackInfo.stack,
     args: GroupRoleArgs = {},
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
     super('GroupRole', name, args, opts);
 
-    const admin = new AzRole(
-      `${name} admin`,
-      {
-        vaultInfo: args.vaultInfo,
-        owners: args.owners,
-        members: args.admin?.members,
-      },
-      { parent: this }
-    );
-    const contributor = new AzRole(
-      `${name} contributor`,
-      {
-        vaultInfo: args.vaultInfo,
-        owners: args.owners,
-        members: args.admin?.members,
-      },
-      { parent: this }
-    );
-    const readOnly = new AzRole(
-      `${name} readOnly`,
-      {
-        vaultInfo: args.vaultInfo,
-        owners: args.owners,
-        members: args.admin?.members,
-      },
-      { parent: this }
+    const roles = ['admin', 'contributor', 'readOnly'] as const;
+
+    const roleInstances = Object.fromEntries(
+      roles.map((role) => [
+        role,
+        new AzRole(
+          `${name} ${role}`,
+          {
+            vaultInfo: args.vaultInfo,
+            owners: args.owners,
+            members: args[role]?.members,
+            preventDuplicateNames: args.preventDuplicateNames,
+          },
+          { parent: this },
+        ),
+      ]),
     );
 
     this.admin = pulumi.output({
-      objectId: admin.objectId,
-      name: admin.displayName,
+      objectId: roleInstances.admin.objectId,
+      name: roleInstances.admin.displayName,
     });
+
     this.contributor = pulumi.output({
-      objectId: contributor.objectId,
-      name: contributor.displayName,
+      objectId: roleInstances.contributor.objectId,
+      name: roleInstances.contributor.displayName,
     });
+
     this.readOnly = pulumi.output({
-      objectId: readOnly.objectId,
-      name: readOnly.displayName,
+      objectId: roleInstances.readOnly.objectId,
+      name: roleInstances.readOnly.displayName,
     });
+
+    this.configHierarchyRoles();
 
     this.registerOutputs({
       admin: this.admin,
       contributor: this.contributor,
       readOnly: this.readOnly,
     });
+  }
+
+  private configHierarchyRoles() {
+    if (this.admin && this.contributor) {
+      new azAd.GroupMember(
+        `${this.name}-admin2contributor`,
+        {
+          groupObjectId: this.contributor.objectId,
+          memberObjectId: this.admin.objectId,
+        },
+        { parent: this },
+      );
+    }
+
+    if (this.contributor && this.readOnly) {
+      new azAd.GroupMember(
+        `${this.name}-contributor2readOnly`,
+        {
+          groupObjectId: this.readOnly.objectId,
+          memberObjectId: this.contributor.objectId,
+        },
+        { parent: this },
+      );
+    }
   }
 }

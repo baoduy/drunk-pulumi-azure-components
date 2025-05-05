@@ -24,8 +24,10 @@ export type ResourceInputs = {
   rsGroup: ResourceGroupInputs;
 };
 
-export type AzureResourceResult = pulumi.Output<ResourceType> & {
+export type ResourceResult = {
   id: pulumi.Output<string>;
+  resourceName: pulumi.Output<string>;
+  rsGroup: pulumi.Output<ResourceGroupType>;
 };
 
 export type WithVaultInfo = {
@@ -33,13 +35,24 @@ export type WithVaultInfo = {
 };
 
 export type WithUserAssignedIdentity = {
-  /** UserAssignedIdentity information */
-  UserAssignedIdentity?: { id: pulumi.Input<string> };
+  /** Default User-Assigned Managed Identity that is shared across resources
+   *  to access common services like Key Vault secrets */
+  defaultUAssignedId?: { id: pulumi.Input<string> };
 };
 
 export type WithEncryptionEnabler = {
   /** this only work when vaultInfo is provided. */
   enableEncryption?: boolean;
+};
+
+export type GroupRolesArgs = {
+  admin: pulumi.Output<{ objectId: string }>;
+  contributor: pulumi.Output<{ objectId: string }>;
+  readOnly: pulumi.Output<{ objectId: string }>;
+};
+
+export type WithGroupRolesArgs = {
+  groupRoles?: GroupRolesArgs;
 };
 
 export type NetworkArgs = {

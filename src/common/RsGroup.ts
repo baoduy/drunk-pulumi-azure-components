@@ -1,7 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as resources from '@pulumi/azure-native/resources';
-import { BaseArgs, BaseResourceComponent } from '../base';
-import { RsRoleDefinitionType, RoleAssignment, rsRoleDefinitions, GroupRoleTypes } from '../azureAd';
+import * as types from '../types';
+import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+import { RsRoleDefinitionType, RoleAssignment, rsRoleDefinitions } from '../azureAd';
 
 export interface RsGroupArgs extends BaseArgs, resources.ResourceGroupArgs {
   /** if the role definition is not provided the readonly role will be added to this group by default  */
@@ -39,7 +40,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     const { groupRoles, roleAssignments } = this.args;
     if (!roleAssignments || !groupRoles) return;
 
-    const createRoles = (type: GroupRoleTypes, groupId: pulumi.Output<string>, roles: string[]) => {
+    const createRoles = (type: types.GroupRoleTypes, groupId: pulumi.Output<string>, roles: string[]) => {
       roles.forEach(
         (role) =>
           new RoleAssignment(

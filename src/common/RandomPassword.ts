@@ -1,8 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as random from '@pulumi/random';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { getComponentResourceType } from '../base/helpers';
+import { VaultSecret } from '../vault';
+import * as types from '../types';
 
-export interface RandomPasswordArgs extends BaseArgs {
+export interface RandomPasswordArgs extends types.WithVaultInfo {
   policy?: pulumi.Input<'monthly' | 'yearly' | boolean>;
   length?: pulumi.Input<number>;
   options?: {
@@ -13,16 +15,16 @@ export interface RandomPasswordArgs extends BaseArgs {
   };
 }
 
-export class RandomPassword extends BaseResourceComponent<RandomPasswordArgs> {
+export class RandomPassword extends pulumi.ComponentResource {
   public readonly value: pulumi.Output<string>;
 
   constructor(
-    name: string,
-    args: RandomPasswordArgs = { length: 50, policy: 'yearly' },
-    opts?: pulumi.ComponentResourceOptions
+    public name: string,
+    private args: RandomPasswordArgs = { length: 50, policy: 'yearly' },
+    opts?: pulumi.ComponentResourceOptions,
   ) {
-    super('RandomPassword', name, args, opts);
-
+    super(getComponentResourceType('RandomPassword'), name, args, opts);
+    const { vaultInfo } = args;
     const keepKey = this.generateKeepKey();
     const options = args.options || {
       lower: true,
@@ -44,10 +46,15 @@ export class RandomPassword extends BaseResourceComponent<RandomPasswordArgs> {
         //Exclude some special characters that are not accepted by XML and SQLServer.
         overrideSpecial: options.special == false ? '' : '#%&*+-/:<>?^_|~',
       },
-      { ...opts, parent: this }
+      { ...opts, parent: this },
     );
 
-    this.addSecret('password', randomPass.result);
+    if (vaultInfo)
+      new VaultSecret(
+        name,
+        { vaultInfo, value: randomPass.result, contentType: 'RandomPassword' },
+        { dependsOn: randomPass, parent: this },
+      );
 
     this.value = randomPass.result;
     this.registerOutputs({

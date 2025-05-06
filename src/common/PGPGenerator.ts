@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import { PGPResource } from '@drunk-pulumi/azure-providers';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
 
 type UserInfo = { name: string; email: string };
 
@@ -17,11 +17,7 @@ export class PGPGenerator extends BaseResourceComponent<PGPGeneratorArgs> {
   public readonly passphrase?: pulumi.Output<string>;
   public readonly revocationCertificate: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: PGPGeneratorArgs,
-    opts?: pulumi.ComponentResourceOptions
-  ) {
+  constructor(name: string, args: PGPGeneratorArgs, opts?: pulumi.ComponentResourceOptions) {
     super('PGPGenerator', name, args, opts);
 
     const pgp = new PGPResource(name, args, { ...opts, parent: this });

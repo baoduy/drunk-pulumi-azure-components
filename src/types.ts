@@ -1,17 +1,33 @@
 import * as pulumi from '@pulumi/pulumi';
 import { PrivateEndpointType } from './vnet';
 
+export type GroupRoleTypes = 'admin' | 'contributor' | 'readOnly';
+
+type AsInput<T> = {
+  [K in keyof T]: pulumi.Input<NonNullable<T[K]>>;
+};
+
+type AsOutput<T> = {
+  [K in keyof T]: pulumi.Output<NonNullable<T[K]>>;
+};
+
 export type ResourceGroupType = {
   resourceGroupName: string;
   location?: string;
 };
 
-export type ResourceGroupInputs = {
-  resourceGroupName: pulumi.Input<string>;
-  location?: pulumi.Input<string>;
+export type ResourceGroupInputs = AsInput<ResourceGroupType>;
+export type ResourceGroupOutputs = AsOutput<ResourceGroupType>;
+
+export type WithResourceGroup = {
+  rsGroup: ResourceGroupType;
 };
+
 export type WithResourceGroupInputs = {
   rsGroup: ResourceGroupInputs;
+};
+export type WithResourceGroupOutputs = {
+  rsGroup: ResourceGroupOutputs;
 };
 
 export type ResourceType = {
@@ -19,23 +35,15 @@ export type ResourceType = {
   id: string;
 };
 
+export type ResourceInputs = AsInput<ResourceType>;
+export type ResourceOutputs = AsOutput<ResourceType>;
+
 export type ResourceWithGroupType = ResourceType & {
   rsGroup: ResourceGroupType;
 };
 
-export type ResourceInputs = {
-  resourceName: pulumi.Input<string>;
-  rsGroup: ResourceGroupInputs;
-};
-
-export type ResourceResult = {
-  id: pulumi.Output<string>;
-  resourceName: pulumi.Output<string>;
-};
-
-export type ResourceWithGroupResult = ResourceResult & {
-  rsGroup: pulumi.Output<ResourceGroupType>;
-};
+export type ResourceWithGroupInputs = AsInput<ResourceWithGroupType>;
+export type ResourceWithGroupOutputs = AsOutput<ResourceWithGroupType>;
 
 export type WithVaultInfo = {
   vaultInfo?: ResourceInputs;
@@ -46,10 +54,19 @@ export type WithMemberOfArgs = {
   memberof?: pulumi.Input<{ objectId: string }>[];
 };
 
+export type UserAssignedIdentityType = {
+  id: string;
+  clientId: string;
+  principalId: string;
+};
+
+export type UserAssignedIdentityInputs = AsInput<UserAssignedIdentityType>;
+export type UserAssignedIdentityOutputs = AsOutput<UserAssignedIdentityType>;
+
 export type WithUserAssignedIdentity = {
   /** Default User-Assigned Managed Identity that is shared across resources
    *  to access common services like Key Vault secrets */
-  defaultUAssignedId?: { id: pulumi.Input<string> };
+  defaultUAssignedId?: UserAssignedIdentityInputs;
 };
 
 export type WithEncryptionEnabler = {
@@ -70,7 +87,12 @@ export type WithGroupRolesArgs = {
 };
 
 export type WorkspaceType = ResourceType & { customerId: string };
+export type WorkspaceInputs = AsInput<WorkspaceType>;
+export type WorkspaceOutputs = AsOutput<WorkspaceType>;
+
 export type AppInsightType = ResourceType & { instrumentationKey: string };
+export type AppInsightInputs = AsInput<AppInsightType>;
+export type AppInsightOutputs = AsOutput<AppInsightType>;
 
 export type LogsType = {
   storage?: ResourceType;
@@ -79,18 +101,15 @@ export type LogsType = {
 };
 
 export type LogsInputs = {
-  storage?: pulumi.Input<ResourceType>;
-  workspace?: pulumi.Input<WorkspaceType>;
-  readonly appInsight?: pulumi.Input<AppInsightType>;
+  storage?: ResourceInputs;
+  workspace?: WorkspaceInputs;
+  appInsight?: AppInsightInputs;
 };
 
-export type WorkspaceResult = ResourceResult & { customerId: pulumi.Output<string> };
-export type AppInsightResult = ResourceResult & { instrumentationKey: pulumi.Output<string> };
-
-export type LogsResult = {
-  storage?: ResourceResult;
-  workspace?: WorkspaceResult;
-  readonly appInsight?: AppInsightResult;
+export type LogsOutputs = {
+  storage?: ResourceOutputs;
+  workspace?: WorkspaceOutputs;
+  appInsight?: AppInsightOutputs;
 };
 
 export type NetworkArgs = {

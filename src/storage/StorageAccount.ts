@@ -27,7 +27,7 @@ export interface StorageAccountArgs
   policies?: {
     staticWebsite?: Partial<Pick<vnet.AzCdnArgs, 'endpoint'>> & {
       enabled: boolean;
-      existingProfile?: types.ResourceInputs;
+      existingProfile?: types.ResourceWithGroupType;
     };
     keyExpirationPeriodInDays?: pulumi.Input<number>;
     /**
@@ -270,8 +270,9 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     const { rsGroup, vaultInfo } = this.args;
     if (!vaultInfo) return;
 
-    return stg.id.apply((id) => {
-      if (!id) return;
+    return stg.name.apply((n) => {
+      if (!n) return;
+
       return storage
         .listStorageAccountKeysOutput({
           resourceGroupName: rsGroup.resourceGroupName,
@@ -280,7 +281,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         .apply((keys) => {
           const secrets = keys.keys
             .map((k) => ({
-              [`${this.name}-${k.keyName}`]: {
+              [`${n}-${k.keyName}`]: {
                 value: k.value,
                 contentType: `StorageAccount ${k.keyName}`,
               },

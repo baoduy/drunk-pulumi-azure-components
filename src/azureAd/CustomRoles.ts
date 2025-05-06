@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import { azureEnv } from '../helpers';
-import { getComponentResourceType } from '../base';
+import { getComponentResourceType } from '../base/helpers';
 import * as auth from '@pulumi/azure-native/authorization';
 
 export interface CustomRoleArgs {

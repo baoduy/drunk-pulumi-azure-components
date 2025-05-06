@@ -24,9 +24,9 @@ export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
 }
 
 export class Logs extends BaseResourceComponent<LogsArgs> {
-  public readonly storage?: types.ResourceResult;
-  public readonly workspace?: types.WorkspaceResult;
-  public readonly appInsight?: types.AppInsightResult;
+  public readonly storage?: types.ResourceOutputs;
+  public readonly workspace?: types.WorkspaceOutputs;
+  public readonly appInsight?: types.AppInsightOutputs;
 
   constructor(name: string, args: LogsArgs, private opts?: pulumi.ComponentResourceOptions) {
     super('Logs', name, args, opts);
@@ -122,13 +122,14 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
   }
 
   private createStorage() {
-    const { storage, rsGroup, retentionInDays } = this.args;
+    const { storage, rsGroup, retentionInDays, vaultInfo } = this.args;
     if (!storage?.enabled) return undefined;
 
     return new StorageAccount(
       this.name,
       {
         rsGroup,
+        vaultInfo,
         allowSharedKeyAccess: true,
         policies: {
           defaultManagementPolicyRules: [

@@ -1,13 +1,9 @@
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
 import * as keyvault from '@pulumi/azure-native/keyvault';
 import { azureEnv } from '../helpers';
 import { PrivateEndpoint } from '../vnet';
-import {
-  WithResourceGroupInputs,
-  ResourceGroupInputs,
-  WithNetworkArgs,
-} from '../types';
+import { WithResourceGroupInputs, ResourceGroupInputs, WithNetworkArgs } from '../types';
 
 export interface KeyVaultArgs
   extends BaseArgs,
@@ -32,11 +28,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly rsGroup: ResourceGroupInputs;
 
-  constructor(
-    name: string,
-    args: KeyVaultArgs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, args: KeyVaultArgs, opts?: pulumi.ComponentResourceOptions) {
     super('KeyVault', name, args, opts);
 
     const vault = new keyvault.Vault(
@@ -64,25 +56,21 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
           },
 
           publicNetworkAccess:
-            args.network?.publicNetworkAccess ??
-            (args.network?.privateLink ? 'disabled' : 'enabled'),
+            args.network?.publicNetworkAccess ?? (args.network?.privateLink ? 'disabled' : 'enabled'),
 
           networkAcls: {
             bypass: args.network?.bypass,
             defaultAction: args.network?.defaultAction,
 
             ipRules: args.network?.ipRules
-              ? pulumi
-                  .output(args.network.ipRules)
-                  .apply((ips) => ips.map((i) => ({ value: i })))
+              ? pulumi.output(args.network.ipRules).apply((ips) => ips.map((i) => ({ value: i })))
               : undefined,
 
             virtualNetworkRules: args.network?.vnetRules
               ? pulumi.output(args.network.vnetRules).apply((vnetRules) =>
                   vnetRules.map((v) => ({
                     id: v.id,
-                    ignoreMissingVnetServiceEndpoint:
-                      v.ignoreMissingVnetServiceEndpoint,
+                    ignoreMissingVnetServiceEndpoint: v.ignoreMissingVnetServiceEndpoint,
                   })),
                 )
               : undefined,

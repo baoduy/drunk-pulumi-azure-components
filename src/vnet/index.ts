@@ -1,4 +1,4 @@
 export * from './AzCdn';
-export * as helpers from './helpers';
+export * as vnetHelpers from './helpers';
 export * from './PrivateDnsZone';
 export * from './PrivateEndpoint';

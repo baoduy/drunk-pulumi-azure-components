@@ -1,6 +1,6 @@
 import { WithVaultInfo } from '../types';
 import * as pulumi from '@pulumi/pulumi';
-import { getComponentResourceType } from '../base';
+import { getComponentResourceType } from '../base/helpers';
 import { VaultKeyResource } from '@drunk-pulumi/azure-providers';
 
 export interface EncryptionKeyArgs extends Required<WithVaultInfo> {
@@ -14,11 +14,7 @@ export class EncryptionKey extends pulumi.ComponentResource {
   public readonly vaultUrl: pulumi.Output<string>;
   public readonly version: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: EncryptionKeyArgs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, args: EncryptionKeyArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('EncryptionKey'), name, args, opts);
     const key = new VaultKeyResource(
       `${name}-encryptKey`,
@@ -30,9 +26,7 @@ export class EncryptionKey extends pulumi.ComponentResource {
       { ...opts, parent: this, retainOnDelete: true },
     );
 
-    const urlWithoutVersion = pulumi
-      .output([key.version, key.id])
-      .apply(([v, id]) => id.replace(`/${v}`, ''));
+    const urlWithoutVersion = pulumi.output([key.version, key.id]).apply(([v, id]) => id.replace(`/${v}`, ''));
 
     this.id = key.id;
     this.keyName = key.name;

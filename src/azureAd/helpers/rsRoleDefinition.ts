@@ -1,6 +1,6 @@
-import { GroupRoleTypes } from '../GroupRole';
+import * as types from '../../types';
 
-export type RsRoleDefinitionType = Record<GroupRoleTypes, string[]>;
+export type RsRoleDefinitionType = Record<types.GroupRoleTypes, string[]>;
 
 const rsRoles = {
   rsGroup: {
@@ -9,14 +9,8 @@ const rsRoles = {
     readOnly: ['Reader'],
   },
   aks: {
-    readOnly: [
-      'Azure Kubernetes Service RBAC Reader',
-      'Azure Kubernetes Service Cluster User Role',
-    ],
-    contributor: [
-      'Azure Kubernetes Service RBAC Writer',
-      'Azure Kubernetes Service Cluster User Role',
-    ],
+    readOnly: ['Azure Kubernetes Service RBAC Reader', 'Azure Kubernetes Service Cluster User Role'],
+    contributor: ['Azure Kubernetes Service RBAC Writer', 'Azure Kubernetes Service Cluster User Role'],
     admin: ['Azure Kubernetes Service RBAC Cluster Admin'],
   },
   iotHub: {

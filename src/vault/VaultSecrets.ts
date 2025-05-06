@@ -1,6 +1,6 @@
 import { WithVaultInfo } from '../types';
 import * as pulumi from '@pulumi/pulumi';
-import { getComponentResourceType } from '../base';
+import { getComponentResourceType } from '../base/helpers';
 import { SecretItemArgs, VaultSecret } from './VaultSecret';
 
 export type VaultSecretResult = {
@@ -8,6 +8,7 @@ export type VaultSecretResult = {
   vaultUrl: pulumi.Output<string>;
   version: pulumi.Output<string>;
 };
+
 export interface VaultSecretsArgs extends Required<WithVaultInfo> {
   secrets: { [key: string]: SecretItemArgs };
 }

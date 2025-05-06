@@ -61,6 +61,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
       {
         ...props,
         ...rsGroup,
+
         minimumTlsVersion: '1.2',
         enableNonSslPort: false,
         redisVersion: props.redisVersion ?? '6.0',

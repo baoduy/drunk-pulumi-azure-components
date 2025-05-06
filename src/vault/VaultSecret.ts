@@ -1,12 +1,8 @@
 import { WithVaultInfo } from '../types';
 import * as pulumi from '@pulumi/pulumi';
-import {
-  configHelper,
-  stackInfo,
-  removeLeadingAndTrailingDash,
-} from '../helpers';
+import { configHelper, stackInfo, removeLeadingAndTrailingDash } from '../helpers';
 import { VaultSecretResource } from '@drunk-pulumi/azure-providers/VaultSecret';
-import { getComponentResourceType } from '../base';
+import { getComponentResourceType } from '../base/helpers';
 
 export type SecretItemArgs = {
   //** The value of the secret. If it is not provided the value will get from project secret. */
@@ -17,20 +13,14 @@ export type SecretItemArgs = {
   };
 };
 
-export interface VaultSecretArgs
-  extends SecretItemArgs,
-    Required<WithVaultInfo> {}
+export interface VaultSecretArgs extends SecretItemArgs, Required<WithVaultInfo> {}
 
 export class VaultSecret extends pulumi.ComponentResource {
   public readonly id: pulumi.Output<string>;
   public readonly vaultUrl: pulumi.Output<string>;
   public readonly version: pulumi.Output<string>;
 
-  constructor(
-    private name: string,
-    args: VaultSecretArgs,
-    opts?: pulumi.ComponentResourceOptions
-  ) {
+  constructor(private name: string, args: VaultSecretArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('VaultSecret'), name, args, opts);
     const secretValue = args.value ?? configHelper.getSecret(name) ?? '';
     const secretName = this.getSecretName();
@@ -44,7 +34,7 @@ export class VaultSecret extends pulumi.ComponentResource {
         contentType: args.contentType,
         tags: args.tags,
       },
-      opts
+      opts,
     );
 
     this.id = secret.id;

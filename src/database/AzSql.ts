@@ -1,10 +1,13 @@
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
 import * as types from '../types';
 import * as sql from '@pulumi/azure-native/sql';
 import { azureEnv } from '../helpers';
 import { convertToIpRange } from './helpers';
 import * as vnet from '../vnet';
+import * as vault from '../vault';
+import { RandomPassword } from '../common';
+import { storageHelpers } from '../storage';
 
 export interface AzSqlArgs
   extends BaseArgs,
@@ -18,8 +21,10 @@ export interface AzSqlArgs
     > {
   administrators: {
     azureAdOnlyAuthentication?: boolean;
+    useDefaultUAssignedIdForConnection?: boolean;
     adminGroup: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
   };
+
   elasticPool?: Pick<
     sql.ElasticPoolArgs,
     | 'autoPauseDelay'
@@ -30,6 +35,7 @@ export interface AzSqlArgs
     | 'preferredEnclaveType'
   > & {
     maxSizeGB: number;
+
     sku: {
       /**
        * Capacity of the particular SKU.
@@ -57,20 +63,48 @@ export interface AzSqlArgs
     acceptAllPublicConnection?: boolean;
     subnets?: pulumi.Input<Array<{ id: string }>>;
   };
+  vulnerabilityAssessment?: {
+    logStorage: types.ResourceInputs;
+    alertEmails: pulumi.Input<string[]>;
+    retentionDays?: number;
+  };
   lock?: boolean;
-  databases?: Record<string, FullSqlDbPropsType>;
+  databases?: Record<
+    string,
+    Omit<
+      sql.DatabaseArgs,
+      | 'resourceGroupName'
+      | 'serverName'
+      | 'elasticPoolId'
+      | 'encryptionProtector'
+      | 'encryptionProtectorAutoRotation'
+      | 'federatedClientId'
+    >
+  >;
 }
 
 export class AzSql extends BaseResourceComponent<AzSqlArgs> {
+  public readonly id: pulumi.Output<string>;
+  public readonly resourceName: pulumi.Output<string>;
+
   constructor(name: string, args: AzSqlArgs, private opts?: pulumi.ComponentResourceOptions) {
     super('AzSql', name, args, opts);
 
-    const server = this.createSql();
+    const { server, password } = this.createSql();
     const elastic = this.createElasticPool(server);
-
+    this.createVulnerabilityAssessment(server);
     this.createNetwork(server);
+    this.createDatabases(server, password, elastic);
 
     if (args.lock) this.lockFromDeleting(server);
+
+    this.id = server.id;
+    this.resourceName = server.name;
+
+    this.registerOutputs({
+      id: this.id,
+      resourceName: this.resourceName,
+    });
   }
 
   private createSql() {
@@ -79,7 +113,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
 
-    const sqlServer = new sql.Server(
+    const server = new sql.Server(
       this.name,
       {
         ...props,
@@ -120,9 +154,10 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       },
     );
 
-    this.addIdentityToRole('readOnly', sqlServer.identity);
+    this.createEncryptionProtector(server, encryptionKey);
+    this.addIdentityToRole('readOnly', server.identity);
 
-    return sqlServer;
+    return { server, password };
   }
 
   private createNetwork(server: sql.Server) {
@@ -165,7 +200,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     if (network.subnets) {
       pulumi.output(network.subnets).apply((subIds) =>
         subIds.map((s) => {
-          const subName = vnet.helpers.getSubnetNameFromId(s.id);
+          const subName = vnet.vnetHelpers.getSubnetNameFromId(s.id);
           new sql.VirtualNetworkRule(
             `${this.name}-sub-${subName}`,
             {
@@ -209,5 +244,145 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       },
       { dependsOn: server, parent: this },
     );
+  }
+
+  private createEncryptionProtector(server: sql.Server, key: vault.EncryptionKey | undefined) {
+    if (!key) return undefined;
+    const { rsGroup, vaultInfo } = this.args;
+    // Enable a server key in the SQL Server with reference to the Key Vault Key
+    const keyName = pulumi.interpolate`${vaultInfo!.resourceName}_${key.keyName}_${key.version}`;
+    //Server key maybe auto created by Azure
+    // const serverKey = new sql.ServerKey(
+    //   `${sqlName}-serverKey`,
+    //   {
+    //     resourceGroupName: group.resourceGroupName,
+    //     serverName: sqlName,
+    //     serverKeyType: sql.ServerKeyType.AzureKeyVault,
+    //     keyName,
+    //     uri: encryptKey.url,
+    //   },
+    //   { dependsOn: sqlServer, retainOnDelete: true },
+    // );
+
+    //enable the EncryptionProtector
+    return new sql.EncryptionProtector(
+      `${this.name}-encryptionProtector`,
+      {
+        encryptionProtectorName: 'current',
+        resourceGroupName: rsGroup.resourceGroupName,
+        serverName: server.name,
+        serverKeyType: sql.ServerKeyType.AzureKeyVault,
+        serverKeyName: keyName, //serverKey.name,
+        autoRotationEnabled: true,
+      },
+      { dependsOn: server, parent: this },
+    );
+  }
+
+  private createVulnerabilityAssessment(server: sql.Server) {
+    const { rsGroup, vulnerabilityAssessment } = this.args;
+    if (!vulnerabilityAssessment) return undefined;
+    //this will allows sql server to able to write log into the storage account
+    this.addIdentityToRole('contributor', server.identity);
+
+    const stgEndpoints = storageHelpers.getStorageEndpointsOutputs(vulnerabilityAssessment.logStorage);
+    const storageKey = '';
+
+    const alert = new sql.ServerSecurityAlertPolicy(
+      `${this.name}-alert`,
+      {
+        ...rsGroup,
+        securityAlertPolicyName: 'default',
+        serverName: server.name,
+        emailAccountAdmins: Boolean(vulnerabilityAssessment.alertEmails),
+        emailAddresses: vulnerabilityAssessment.alertEmails,
+        retentionDays: vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd ? 30 : 7,
+
+        storageAccountAccessKey: storageKey,
+        storageEndpoint: stgEndpoints.blob,
+        state: 'Enabled',
+      },
+      { dependsOn: server, parent: this },
+    );
+
+    //Server Audit
+    new sql.ExtendedServerBlobAuditingPolicy(
+      `${this.name}-audit`,
+      {
+        ...rsGroup,
+        auditActionsAndGroups: [
+          'SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP',
+          'FAILED_DATABASE_AUTHENTICATION_GROUP',
+          'BATCH_COMPLETED_GROUP',
+        ],
+        serverName: server.name,
+        blobAuditingPolicyName: 'default',
+        isAzureMonitorTargetEnabled: true,
+        isStorageSecondaryKeyInUse: false,
+        predicateExpression: "object_name = 'SensitiveData'",
+        queueDelayMs: 4000,
+        retentionDays: vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd ? 30 : 7,
+        state: 'Enabled',
+        isDevopsAuditEnabled: true,
+
+        storageAccountAccessKey: storageKey,
+        storageAccountSubscriptionId: azureEnv.subscriptionId,
+        storageEndpoint: stgEndpoints.blob,
+      },
+      { dependsOn: alert, parent: this },
+    );
+
+    //ServerVulnerabilityAssessment
+    new sql.ServerVulnerabilityAssessment(
+      `${this.name}-assessment`,
+      {
+        ...rsGroup,
+        vulnerabilityAssessmentName: this.name,
+        serverName: server.name,
+
+        recurringScans: {
+          isEnabled: true,
+          emailSubscriptionAdmins: !vulnerabilityAssessment.alertEmails,
+          emails: vulnerabilityAssessment.alertEmails,
+        },
+
+        storageContainerPath: pulumi.interpolate`${stgEndpoints.blob}/${server.name}`,
+        storageAccountAccessKey: storageKey,
+      },
+      { dependsOn: alert, parent: this },
+    );
+  }
+
+  private createDatabases(server: sql.Server, password: RandomPassword, elasticPool?: sql.ElasticPool) {
+    const { rsGroup, databases, administrators, defaultUAssignedId } = this.args;
+    if (!databases) return undefined;
+
+    return Object.keys(databases).map((k) => {
+      const props = databases[k];
+      const name = props.databaseName ?? k;
+
+      const db = new sql.Database(
+        `${this.name}-${name}`,
+        {
+          ...props,
+          ...rsGroup,
+          autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
+          useFreeLimit: props.useFreeLimit ?? !azureEnv.isPrd,
+          elasticPoolId: elasticPool?.id,
+          serverName: server.name,
+          databaseName: name,
+        },
+        { dependsOn: elasticPool ? [server, password, elasticPool] : [server, password], parent: this },
+      );
+
+      const connectionString = administrators?.azureAdOnlyAuthentication
+        ? administrators?.useDefaultUAssignedIdForConnection
+          ? pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${defaultUAssignedId?.principalId}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`
+          : pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; MultipleActiveResultSets=False;Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`
+        : pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; User Id=${server.administratorLogin}; Password=${password.value}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
+
+      this.addSecret(`${name}-conn`, connectionString);
+      return db;
+    });
   }
 }

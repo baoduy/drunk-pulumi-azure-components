@@ -1,21 +1,15 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
 import { stackInfo } from '../helpers';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
 
-export interface AzRoleArgs
-  extends BaseArgs,
-    Pick<azAd.GroupArgs, 'owners' | 'members' | 'preventDuplicateNames'> {}
+export interface AzRoleArgs extends BaseArgs, Pick<azAd.GroupArgs, 'owners' | 'members' | 'preventDuplicateNames'> {}
 
 export class AzRole extends BaseResourceComponent<AzRoleArgs> {
   public readonly objectId: pulumi.Output<string>;
   public readonly displayName: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: AzRoleArgs,
-    opts?: pulumi.ComponentResourceOptions
-  ) {
+  constructor(name: string, args: AzRoleArgs, opts?: pulumi.ComponentResourceOptions) {
     const n = `rol-${name.toLowerCase().replace(/\s+/g, '-')}`;
     super('AzRole', n, args, opts);
 
@@ -36,7 +30,7 @@ export class AzRole extends BaseResourceComponent<AzRoleArgs> {
         preventDuplicateNames: args.preventDuplicateNames,
         assignableToRole: false,
       },
-      { parent: this }
+      { parent: this },
     );
 
     this.addSecrets({

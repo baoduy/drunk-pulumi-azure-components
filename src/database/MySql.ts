@@ -74,6 +74,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       {
         ...this.args,
         ...rsGroup,
+
         administratorLoginPassword: password.value,
         version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
         storage: this.args.storage ?? { storageSizeGB: 30 },

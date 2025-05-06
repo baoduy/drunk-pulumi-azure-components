@@ -5,7 +5,7 @@ import {
   GroupRole,
   rsRoleDefinitions,
   KeyVault,
-  Postgres,
+  Logs,
 } from '@drunk-pulumi/azure-components';
 
 const rs = (async () => {
@@ -39,6 +39,17 @@ const rs = (async () => {
       rsGroup,
       vaultInfo: vaultInfo,
       memberof: [groupRoles.readOnly],
+    },
+    { dependsOn: [rsGroup, groupRoles, vaultInfo] },
+  );
+
+  const logs = new Logs(
+    'logs',
+    {
+      rsGroup,
+      vaultInfo,
+      retentionInDays: 7,
+      storage: { enabled: true },
     },
     { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );

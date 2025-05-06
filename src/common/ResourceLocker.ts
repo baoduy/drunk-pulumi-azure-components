@@ -6,12 +6,8 @@ export interface ResourceLockerArgs {
   level?: authorization.LockLevel;
 }
 
-export class ResourceLocker extends pulumi.ComponentResource {
-  constructor(
-    name: string,
-    args: ResourceLockerArgs,
-    opts?: pulumi.ComponentResourceOptions
-  ) {
+export class ResourceLocker extends pulumi.ComponentResource<ResourceLockerArgs> {
+  constructor(name: string, args: ResourceLockerArgs, opts?: pulumi.ComponentResourceOptions) {
     if (!args.level) args.level = authorization.LockLevel.CanNotDelete;
     super('drunk-pulumi:index:ResourceLocker', name, args, opts);
 
@@ -22,7 +18,7 @@ export class ResourceLocker extends pulumi.ComponentResource {
         scope: args.resource.id,
         notes: `Lock ${name} from ${args.level}`,
       },
-      { ...opts, parent: this }
+      { ...opts, parent: this },
     );
   }
 }

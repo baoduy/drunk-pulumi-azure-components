@@ -1,10 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as privateDns from '@pulumi/azure-native/privatedns';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { getComponentResourceType } from '../base/helpers';
 import { WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
 
-export interface PrivateDnsZoneArgs extends BaseArgs, WithResourceGroupInputs {
+export interface PrivateDnsZoneArgs extends WithResourceGroupInputs {
   aRecords?: Array<{
     name: string;
     ipv4Address: pulumi.Input<pulumi.Input<string>[]>;
@@ -13,19 +13,15 @@ export interface PrivateDnsZoneArgs extends BaseArgs, WithResourceGroupInputs {
   vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
 }
 
-export class PrivateDnsZone extends BaseResourceComponent<PrivateDnsZoneArgs> {
+export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs> {
   private _rsName: string;
 
   public readonly id: pulumi.Output<string>;
   public readonly location: pulumi.Output<string | undefined>;
   public readonly resourceGroupName: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: PrivateDnsZoneArgs,
-    opts?: pulumi.ComponentResourceOptions
-  ) {
-    super('PrivateDnsZone', name, args, opts);
+  constructor(name: string, private args: PrivateDnsZoneArgs, opts?: pulumi.ComponentResourceOptions) {
+    super(getComponentResourceType('PrivateDnsZone'), name, args, opts);
     this._rsName = name.replace(/\./g, '-');
     const group = this.getRsGroupInfo();
 
@@ -36,7 +32,7 @@ export class PrivateDnsZone extends BaseResourceComponent<PrivateDnsZoneArgs> {
         location: group.location,
         privateZoneName: name,
       },
-      { ...opts, parent: this }
+      { ...opts, parent: this },
     );
 
     this.createARecord(zone);
@@ -54,11 +50,7 @@ export class PrivateDnsZone extends BaseResourceComponent<PrivateDnsZoneArgs> {
   }
 
   private getRecordName(recordName: string) {
-    return recordName === '*'
-      ? `all-aRecord`
-      : recordName === '@'
-      ? `root-aRecord`
-      : `${recordName}-aRecord`;
+    return recordName === '*' ? `all-aRecord` : recordName === '@' ? `root-aRecord` : `${recordName}-aRecord`;
   }
 
   private createARecord(zone: privateDns.PrivateZone) {
@@ -76,12 +68,10 @@ export class PrivateDnsZone extends BaseResourceComponent<PrivateDnsZoneArgs> {
           privateZoneName: zone.name,
           relativeRecordSetName: recordName,
           recordType: 'A',
-          aRecords: pulumi
-            .output(aRecord.ipv4Address)
-            .apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
+          aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
           ttl: 3600,
         },
-        { dependsOn: zone, parent: this }
+        { dependsOn: zone, parent: this },
       );
     });
   }
@@ -99,9 +89,9 @@ export class PrivateDnsZone extends BaseResourceComponent<PrivateDnsZoneArgs> {
             registrationEnabled: false,
             virtualNetwork: { id: v.vnetId },
           },
-          { dependsOn: zone, parent: this }
+          { dependsOn: zone, parent: this },
         );
-      })
+      }),
     );
   }
 

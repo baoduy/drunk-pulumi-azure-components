@@ -1,7 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
 import * as types from '../types';
-import { UserAssignedIdentity } from '../azureAd';
+import { UserAssignedIdentity } from '../azAd';
 import { azureEnv } from '../helpers';
 import * as postgresql from '@pulumi/azure-native/dbforpostgresql';
 import { convertToIpRange } from './helpers';

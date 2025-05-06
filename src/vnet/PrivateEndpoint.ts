@@ -1,9 +1,9 @@
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base';
 import * as network from '@pulumi/azure-native/network';
 import { PrivateDnsZone } from './PrivateDnsZone';
+import { getComponentResourceType } from '../base/helpers';
 import * as helpers from './helpers';
-import { WithResourceGroupInputs } from '../types';
+import * as types from '../types';
 
 export type PrivateEndpointServices =
   | 'azApi'
@@ -19,13 +19,7 @@ export type PrivateEndpointServices =
   | 'sqlServer'
   | 'storage';
 
-export type StorageEndpointTypes =
-  | 'blob'
-  | 'dfs'
-  | 'file'
-  | 'queue'
-  | 'table'
-  | 'web';
+export type StorageEndpointTypes = 'blob' | 'dfs' | 'file' | 'queue' | 'table' | 'web';
 
 export type PrivateEndpointType = {
   subnetInfo: {
@@ -37,19 +31,13 @@ export type PrivateEndpointType = {
   vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
 };
 
-export interface PrivateEndpointArgs
-  extends BaseArgs,
-    WithResourceGroupInputs,
-    PrivateEndpointType {
+export interface PrivateEndpointArgs extends types.WithResourceGroupInputs, PrivateEndpointType {
   type: PrivateEndpointServices;
   storageType?: StorageEndpointTypes;
-  resourceInfo: {
-    name: pulumi.Input<string>;
-    id: pulumi.Input<string>;
-  };
+  resourceInfo: pulumi.CustomResource;
 }
 
-export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> {
+export class PrivateEndpoint extends pulumi.ComponentResource<PrivateEndpointArgs> {
   public readonly privateEndpoint: pulumi.Output<{
     privateIpAddresses: string[];
     id: string;
@@ -59,12 +47,8 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
     id: string;
   }>;
 
-  constructor(
-    name: string,
-    args: PrivateEndpointArgs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
-    super('PrivateEndpoint', name, args, opts);
+  constructor(name: string, private args: PrivateEndpointArgs, opts?: pulumi.ComponentResourceOptions) {
+    super(getComponentResourceType('PrivateEndpoint'), name, args, opts);
 
     const linkInfo = this.getPrivateEndpointProps();
 
@@ -104,20 +88,16 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
       },
     );
 
-    const privateIpAddresses = privateEndpoint.customDnsConfigs.apply((c) =>
-      c!.flatMap((i) => i!.ipAddresses!),
-    );
+    const privateIpAddresses = privateEndpoint.customDnsConfigs.apply((c) => c!.flatMap((i) => i!.ipAddresses!));
 
-    const zone = pulumi.output(args.resourceInfo).apply((info) => {
+    const zone = pulumi.output(args.resourceInfo.id).apply((rsId) => {
       const vnetLinks = [
         ...args.vnetLinks,
-        pulumi
-          .output(args.subnetInfo.subnetId)
-          .apply((id) => ({ vnetId: helpers.getVnetIdFromSubnetId(id) })),
+        pulumi.output(args.subnetInfo.subnetId).apply((id) => ({ vnetId: helpers.getVnetIdFromSubnetId(id) })),
       ];
 
       return new PrivateDnsZone(
-        `${info.name}.${linkInfo.privateDnsZoneName}`,
+        `${helpers.getRsNameFromId(rsId)}.${linkInfo.privateDnsZoneName}`,
         {
           rsGroup: args.rsGroup,
           vnetLinks,
@@ -135,9 +115,7 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
       privateIpAddresses,
     });
 
-    this.privateDnsZone = pulumi
-      .output([zone.id, zone.name])
-      .apply(([id, name]) => ({ id, name }));
+    this.privateDnsZone = zone.id.apply((id) => ({ id, name }));
 
     this.registerOutputs({
       privateEndpoint: this.privateEndpoint,
@@ -208,9 +186,7 @@ export class PrivateEndpoint extends BaseResourceComponent<PrivateEndpointArgs> 
         };
       case 'storage':
         if (!storageType) {
-          throw new Error(
-            'Storage type must be specified for storage private endpoints',
-          );
+          throw new Error('Storage type must be specified for storage private endpoints');
         }
         return {
           privateDnsZoneName: `privatelink.${storageType}.core.windows.net`,

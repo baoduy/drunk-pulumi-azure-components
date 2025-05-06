@@ -106,7 +106,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
       `${this.name}-private-endpoint`,
       {
         rsGroup: this.args.rsGroup,
-        resourceInfo: { id: vault.id, name: this.name },
+        resourceInfo: vault,
         type: 'keyVault',
         ...network.privateLink,
       },

@@ -7,7 +7,7 @@ export interface EncryptionKeyArgs extends Required<WithVaultInfo> {
   keySize?: 2048 | 3072 | 4096;
 }
 
-export class EncryptionKey extends pulumi.ComponentResource {
+export class EncryptionKey extends pulumi.ComponentResource<EncryptionKeyArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly keyName: pulumi.Output<string>;
   public readonly urlWithoutVersion: pulumi.Output<string>;

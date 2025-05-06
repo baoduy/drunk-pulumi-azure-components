@@ -13,7 +13,7 @@ export interface VaultSecretsArgs extends Required<WithVaultInfo> {
   secrets: { [key: string]: SecretItemArgs };
 }
 
-export class VaultSecrets extends pulumi.ComponentResource {
+export class VaultSecrets extends pulumi.ComponentResource<VaultSecretsArgs> {
   public readonly results: {
     [key: string]: VaultSecretResult;
   } = {};

@@ -15,7 +15,7 @@ export type SecretItemArgs = {
 
 export interface VaultSecretArgs extends SecretItemArgs, Required<WithVaultInfo> {}
 
-export class VaultSecret extends pulumi.ComponentResource {
+export class VaultSecret extends pulumi.ComponentResource<VaultSecretArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly vaultUrl: pulumi.Output<string>;
   public readonly version: pulumi.Output<string>;

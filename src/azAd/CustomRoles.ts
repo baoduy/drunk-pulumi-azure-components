@@ -7,7 +7,7 @@ export interface CustomRoleArgs {
   enableJustInTimeRemoteRole?: boolean;
 }
 
-export class CustomRoles extends pulumi.ComponentResource {
+export class CustomRoles extends pulumi.ComponentResource<CustomRoleArgs> {
   constructor(name: string, args: CustomRoleArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('CustomRoles'), name, args, opts);
 

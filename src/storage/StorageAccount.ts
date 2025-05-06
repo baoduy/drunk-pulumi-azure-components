@@ -2,12 +2,12 @@ import * as pulumi from '@pulumi/pulumi';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as storage from '@pulumi/azure-native/storage';
 import * as vault from '../vault';
-import { BaseArgsWithRsGroup, BaseResourceComponent } from '../base';
+import { CommonBaseArgs, BaseResourceComponent } from '../base';
 import * as types from '../types';
 import * as vnet from '../vnet';
 
 export interface StorageAccountArgs
-  extends BaseArgsWithRsGroup,
+  extends CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithUserAssignedIdentity,
     Pick<

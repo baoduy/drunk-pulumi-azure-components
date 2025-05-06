@@ -27,22 +27,14 @@ export interface AppRegistrationArgs
     > {
   info?: Pick<
     azAd.ApplicationArgs,
-    | 'description'
-    | 'displayName'
-    | 'logoImage'
-    | 'marketingUrl'
-    | 'notes'
-    | 'privacyStatementUrl'
+    'description' | 'displayName' | 'logoImage' | 'marketingUrl' | 'notes' | 'privacyStatementUrl'
   >;
   groupMembershipClaims?: pulumi.Input<GroupMembershipClaimsTypes[]>;
   identifierUris?: pulumi.Input<pulumi.Input<string>[]>;
   enableClientSecret?: pulumi.Input<boolean>;
   servicePrincipal?: Pick<
     azAd.ServicePrincipalArgs,
-    | 'notificationEmailAddresses'
-    | 'preferredSingleSignOnMode'
-    | 'samlSingleSignOn'
-    | 'appRoleAssignmentRequired'
+    'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn' | 'appRoleAssignmentRequired'
   > & {
     enabled: boolean;
   };
@@ -60,7 +52,7 @@ export interface AppRegistrationArgs
   }>;
 }
 
-export class AppRegistration extends pulumi.ComponentResource {
+export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArgs> {
   public readonly clientId: pulumi.Output<string>;
   public readonly clientSecret?: pulumi.Output<string>;
   public readonly servicePrincipalId?: pulumi.Output<string>;
@@ -110,9 +102,7 @@ export class AppRegistration extends pulumi.ComponentResource {
               }
             : undefined,
         singlePageApplication:
-          args.appType == 'singlePageApplication'
-            ? { redirectUris: args.redirectUris }
-            : undefined,
+          args.appType == 'singlePageApplication' ? { redirectUris: args.redirectUris } : undefined,
       },
       { ...opts, parent: this },
     );

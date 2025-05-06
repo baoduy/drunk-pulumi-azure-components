@@ -14,13 +14,13 @@ import { getComponentResourceType } from './helpers';
  */
 export interface BaseArgs extends types.WithVaultInfo, types.WithGroupRolesArgs {}
 
-export interface BaseArgsWithRsGroup extends BaseArgs, types.WithResourceGroupInputs {}
+export interface CommonBaseArgs extends BaseArgs, types.WithResourceGroupInputs {}
 
 /**
  * Extended base component that handles Azure resources with vault integration
  * Provides secret management and resource group handling capabilities
  */
-export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulumi.ComponentResource {
+export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulumi.ComponentResource<TArgs> {
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
   public vaultSecrets?: { [key: string]: VaultSecretResult };

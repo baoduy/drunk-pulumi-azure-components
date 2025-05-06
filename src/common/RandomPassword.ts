@@ -15,7 +15,7 @@ export interface RandomPasswordArgs extends types.WithVaultInfo {
   };
 }
 
-export class RandomPassword extends pulumi.ComponentResource {
+export class RandomPassword extends pulumi.ComponentResource<RandomPasswordArgs> {
   public readonly value: pulumi.Output<string>;
 
   constructor(

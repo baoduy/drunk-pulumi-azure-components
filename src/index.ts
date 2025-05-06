@@ -1,4 +1,4 @@
-export * from './azureAd';
+export * from './azAd';
 export * from './common';
 export * from './database';
 export * as helpers from './helpers';

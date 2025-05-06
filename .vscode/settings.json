@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["Burstable", "operationalinsights", "pulumi", "vnet"]
+  "cSpell.words": ["Burstable", "operationalinsights", "pulumi", "vnet"],
+  "git.ignoreLimitWarning": true
 }

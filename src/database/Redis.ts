@@ -7,21 +7,19 @@ import { PrivateEndpointType } from '../vnet';
 import * as vnet from '../vnet';
 import * as vault from '../vault';
 
-export interface RedisArgs
-  extends BaseArgs,
-    types.WithResourceGroupInputs,
-    Pick<
-      redis.RedisArgs,
-      | 'sku'
-      | 'zones'
-      | 'disableAccessKeyAuthentication'
-      | 'redisVersion'
-      | 'replicasPerMaster'
-      | 'replicasPerPrimary'
-      | 'tenantSettings'
-      | 'redisConfiguration'
-      | 'identity'
-    > {
+export interface RedisArgs extends BaseArgs, types.WithResourceGroupInputs {
+  redisProps: Pick<
+    redis.RedisArgs,
+    | 'sku'
+    | 'zones'
+    | 'disableAccessKeyAuthentication'
+    | 'redisVersion'
+    | 'replicasPerMaster'
+    | 'replicasPerPrimary'
+    | 'tenantSettings'
+    | 'redisConfiguration'
+    | 'identity'
+  >;
   network?: {
     subnetId: pulumi.Input<string>;
     staticIP?: pulumi.Input<string>;
@@ -51,19 +49,20 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   }
 
   private createRedis() {
-    const { rsGroup, network } = this.args;
+    const { rsGroup, network, redisProps } = this.args;
 
     const server = new redis.Redis(
       this.name,
       {
-        ...this.args,
+        ...redisProps,
         ...rsGroup,
         minimumTlsVersion: '1.2',
         enableNonSslPort: false,
-        redisVersion: this.args.redisVersion ?? '6.0',
+        redisVersion: redisProps.redisVersion ?? '6.0',
         subnetId: network?.subnetId,
         staticIP: network?.staticIP,
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
+        updateChannel: 'Stable',
       },
       { ...this.opts, parent: this },
     );

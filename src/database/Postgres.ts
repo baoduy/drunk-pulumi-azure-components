@@ -18,7 +18,6 @@ export interface PostgresArgs
     Pick<
       postgresql.ServerArgs,
       | 'version'
-      | 'sku'
       | 'storage'
       | 'administratorLogin'
       | 'maintenanceWindow'
@@ -26,6 +25,14 @@ export interface PostgresArgs
       | 'highAvailability'
       | 'availabilityZone'
     > {
+  sku: {
+    /** The name of postgres: Standard_B2ms,  */
+    name: pulumi.Input<string>;
+    /**
+     * The tier of the particular SKU, e.g. Burstable.
+     */
+    tier: postgresql.SkuTier;
+  };
   enableAzureADAdmin?: boolean;
   databases?: Array<{ name: string }>;
 }
@@ -60,26 +67,23 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     const server = new postgresql.Server(
       this.name,
       {
+        ...this.args,
         ...rsGroup,
         version: this.args.version ?? postgresql.ServerVersion.ServerVersion_16,
-        sku: this.args.sku ?? { name: 'Standard_B2ms', tier: 'Burstable' },
-        storage: this.args.storage,
-
+        administratorLoginPassword: password.value,
+        storage: this.args.storage ?? { storageSizeGB: 32 },
         identity: {
           type: postgresql.IdentityType.UserAssigned,
           userAssignedIdentities: pulumi.output(uAssignedId.id).apply((id) => ({ [id]: {} })),
         },
 
-        administratorLogin: this.args.administratorLogin,
-        administratorLoginPassword: password.value,
-
-        dataEncryption: encryptionKey
+        dataEncryption: encryptionKey?.id
           ? {
               type: postgresql.DataEncryptionType.AzureKeyVault,
               primaryUserAssignedIdentityId: uAssignedId.id,
               primaryKeyURI: encryptionKey.id,
             }
-          : { type: postgresql.DataEncryptionType.SystemAssigned },
+          : { type: 'SystemManaged' },
 
         maintenanceWindow: this.args.maintenanceWindow ?? {
           customWindow: 'Enabled',
@@ -99,10 +103,14 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
           backupRetentionDays: azureEnv.isPrd ? 30 : 7,
         },
 
-        highAvailability: this.args.highAvailability ?? {
-          mode: azureEnv.isPrd ? 'ZoneRedundant' : 'Disabled',
-          standbyAvailabilityZone: '3',
-        },
+        highAvailability:
+          this.args.sku?.tier !== 'Burstable'
+            ? this.args.highAvailability ?? {
+                mode: azureEnv.isPrd ? 'ZoneRedundant' : 'SameZone',
+                standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
+              }
+            : undefined,
+
         availabilityZone: this.args.availabilityZone ?? azureEnv.isPrd ? '3' : '1',
 
         network: {

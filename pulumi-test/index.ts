@@ -5,74 +5,63 @@ import {
   GroupRole,
   rsRoleDefinitions,
   KeyVault,
-  StorageAccount,
-  Logs,
+  Postgres,
 } from '@drunk-pulumi/azure-components';
 
 const rs = (async () => {
-  const envRole = new GroupRole('az-test', { preventDuplicateNames: true });
-  const group = new RsGroup(
+  const groupRoles = new GroupRole('az-test', {
+    admin: { members: ['ffea11ca-4e3f-476e-bc59-9fbc7b5768e4', '1415bde0-bd92-413b-a352-5f9d7af441c9'] },
+    owners: ['ffea11ca-4e3f-476e-bc59-9fbc7b5768e4', '1415bde0-bd92-413b-a352-5f9d7af441c9'],
+    preventDuplicateNames: true,
+  });
+
+  const rsGroup = new RsGroup(
     'common',
     {
       lock: false,
-      groupRoles: envRole,
+      groupRoles,
       roleAssignments: [rsRoleDefinitions.rsGroup.getReadOnly(), rsRoleDefinitions.keyVault],
     },
-    { dependsOn: envRole },
+    { dependsOn: groupRoles },
   );
 
-  const vault = new KeyVault(
+  const vaultInfo = new KeyVault(
     'vault',
     {
-      rsGroup: group,
+      rsGroup,
     },
-    { dependsOn: group },
+    { dependsOn: rsGroup },
   );
 
   const userAssignedId = new UserAssignedIdentity(
     'azure-test',
     {
-      rsGroup: group,
-      vaultInfo: vault,
-      memberof: [envRole.readOnly],
+      rsGroup,
+      vaultInfo: vaultInfo,
+      memberof: [groupRoles.readOnly],
     },
-    { dependsOn: [group, envRole, vault] },
+    { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );
 
-  const logs = new Logs(
-    'log',
+  const postgres = new Postgres(
+    'db',
     {
-      rsGroup: group,
-      retentionInDays: 30,
-      storage: { enabled: true },
-      workspace: { enabled: true, appInsightEnabled: true, sku: 'PerGB2018' },
-      vaultInfo: vault,
-    },
-    { dependsOn: [group, vault] },
-  );
-
-  const storage = new StorageAccount(
-    'storage',
-    {
-      rsGroup: group,
-      groupRoles: envRole,
-      defaultUAssignedId: userAssignedId,
-      vaultInfo: vault,
-      //only able to enable after storage account is created
+      rsGroup,
+      sku: { name: 'Standard_B2ms', tier: 'Burstable' },
+      administratorLogin: 'postgres4admin',
+      enableAzureADAdmin: true,
       enableEncryption: true,
-      policies: { staticWebsite: { enabled: true } },
-      containers: {
-        containers: [{ name: 'test' }],
-        fileShares: ['test'],
-        queues: ['test'],
-      },
+      defaultUAssignedId: userAssignedId,
+      groupRoles,
+      vaultInfo,
+      databases: [{ name: 'test-db' }],
     },
-    { dependsOn: [group, envRole, userAssignedId, vault] },
+    { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );
 
   return {
-    rsGroup: group.PickOutputs('resourceGroupName', 'location'),
-    envRole: envRole.PickOutputs('admin', 'contributor', 'readOnly'),
+    rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),
+    envRole: groupRoles.PickOutputs('admin', 'contributor', 'readOnly'),
   };
 })();
 

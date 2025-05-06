@@ -17,6 +17,8 @@ config:
               pattern: ${stack}-${name}-${alphanum(6)}
             'azure-native:storage:StorageAccount':
               pattern: ${stack}${name}drunkstg${alphanum(3)}
+            'azure-native:redis:Redis':
+              pattern: ${stack}-${name}-redis
 
   pulumi:tags:
     value:

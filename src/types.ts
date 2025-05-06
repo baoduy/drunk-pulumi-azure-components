@@ -53,7 +53,9 @@ export type WithUserAssignedIdentity = {
 };
 
 export type WithEncryptionEnabler = {
-  /** this only work when vaultInfo is provided. */
+  /** this only work when vaultInfo is provided.
+   * for MySql and Postgres the feature 'CMK Encryption' need to be enabled on the subscription.
+   */
   enableEncryption?: boolean;
 };
 

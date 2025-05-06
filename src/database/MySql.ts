@@ -18,7 +18,6 @@ export interface MySqlArgs
     Pick<
       mysql.ServerArgs,
       | 'version'
-      | 'sku'
       | 'storage'
       | 'administratorLogin'
       | 'maintenanceWindow'
@@ -26,6 +25,16 @@ export interface MySqlArgs
       | 'highAvailability'
       | 'availabilityZone'
     > {
+  sku: {
+    /**
+     * The name of the sku, e.g. Standard_D32s_v3.
+     */
+    name: pulumi.Input<string>;
+    /**
+     * The tier of the particular SKU, e.g. GeneralPurpose.
+     */
+    tier: mysql.ServerSkuTier;
+  };
   enableAzureADAdmin?: boolean;
   databases?: Array<{ name: string }>;
 }
@@ -61,18 +70,16 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     const server = new mysql.Server(
       this.name,
       {
+        ...this.args,
         ...rsGroup,
+        administratorLoginPassword: password.value,
         version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
-        sku: this.args.sku ?? { name: 'Standard_B2ms', tier: 'Burstable' },
-        storage: this.args.storage,
+        storage: this.args.storage ?? { storageSizeGB: 30 },
 
         identity: {
           type: mysql.ManagedServiceIdentityType.UserAssigned,
           userAssignedIdentities: [uAssignedId.id],
         },
-
-        administratorLogin: this.args.administratorLogin,
-        administratorLoginPassword: password.value,
 
         dataEncryption: encryptionKey
           ? {
@@ -80,7 +87,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
               primaryUserAssignedIdentityId: uAssignedId.id,
               primaryKeyURI: encryptionKey.id,
             }
-          : { type: mysql.DataEncryptionType.SystemManaged },
+          : { type: 'SystemManaged' },
 
         maintenanceWindow: this.args.maintenanceWindow ?? {
           customWindow: 'Enabled',
@@ -94,10 +101,13 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
           backupRetentionDays: azureEnv.isPrd ? 30 : 7,
         },
 
-        highAvailability: this.args.highAvailability ?? {
-          mode: azureEnv.isPrd ? 'ZoneRedundant' : 'Disabled',
-          standbyAvailabilityZone: '3',
-        },
+        highAvailability:
+          this.args.sku.tier !== 'Burstable'
+            ? this.args.highAvailability ?? {
+                mode: azureEnv.isPrd ? 'ZoneRedundant' : 'SameZone',
+                standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
+              }
+            : undefined,
         availabilityZone: this.args.availabilityZone ?? azureEnv.isPrd ? '3' : '1',
 
         network: {

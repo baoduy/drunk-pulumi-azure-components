@@ -28,7 +28,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
   public readonly workspace?: types.WorkspaceOutputs;
   public readonly appInsight?: types.AppInsightOutputs;
 
-  constructor(name: string, args: LogsArgs, private opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: LogsArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Logs', name, args, opts);
 
     const storage = this.createStorage();
@@ -152,7 +152,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
           ],
         },
       },
-      { parent: this },
+      { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 }

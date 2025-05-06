@@ -43,7 +43,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(name: string, args: MySqlArgs, private opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: MySqlArgs, opts?: pulumi.ComponentResourceOptions) {
     super('MySql', name, args, opts);
 
     const server = this.createMySql();
@@ -220,7 +220,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     return new UserAssignedIdentity(
       this.name,
       { rsGroup, groupRoles, vaultInfo, memberof: groupRoles ? [groupRoles.readOnly] : undefined },
-      { parent: this },
+      { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 }

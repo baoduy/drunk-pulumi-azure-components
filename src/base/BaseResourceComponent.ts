@@ -36,7 +36,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
     private type: string,
     public name: string,
     protected args: TArgs,
-    opts?: pulumi.ComponentResourceOptions,
+    protected opts?: pulumi.ComponentResourceOptions,
   ) {
     super(getComponentResourceType(type), name, args, opts);
   }
@@ -65,7 +65,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
         vaultInfo,
         secrets: se,
       },
-      { parent: this },
+      { dependsOn: this.opts?.dependsOn, parent: this },
     );
 
     this.vaultSecrets = rs.results;
@@ -105,7 +105,11 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
    */
   protected getEncryptionKey() {
     if (!this.args.vaultInfo) return undefined;
-    return new EncryptionKey(this.name, { vaultInfo: this.args.vaultInfo }, { parent: this });
+    return new EncryptionKey(
+      this.name,
+      { vaultInfo: this.args.vaultInfo },
+      { dependsOn: this.opts?.dependsOn, parent: this },
+    );
   }
 
   /**

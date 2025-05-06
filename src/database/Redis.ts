@@ -35,7 +35,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(name: string, args: RedisArgs, private opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: RedisArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Redis', name, args, opts);
 
     const server = this.createRedis();

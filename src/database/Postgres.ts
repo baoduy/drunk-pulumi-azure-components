@@ -41,7 +41,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(name: string, args: PostgresArgs, private opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: PostgresArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Postgres', name, args, opts);
 
     const server = this.createPostgres();
@@ -202,7 +202,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     return new UserAssignedIdentity(
       this.name,
       { rsGroup, groupRoles, vaultInfo, memberof: groupRoles ? [groupRoles.readOnly] : undefined },
-      { parent: this },
+      { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 }

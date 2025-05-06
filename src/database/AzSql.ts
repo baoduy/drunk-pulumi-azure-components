@@ -87,7 +87,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(name: string, args: AzSqlArgs, private opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: AzSqlArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzSql', name, args, opts);
 
     const { server, password } = this.createSql();

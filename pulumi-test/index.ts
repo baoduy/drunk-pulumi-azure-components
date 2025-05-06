@@ -43,22 +43,6 @@ const rs = (async () => {
     { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );
 
-  const postgres = new Postgres(
-    'db',
-    {
-      rsGroup,
-      sku: { name: 'Standard_B2ms', tier: 'Burstable' },
-      administratorLogin: 'postgres4admin',
-      enableAzureADAdmin: true,
-      enableEncryption: true,
-      defaultUAssignedId: userAssignedId,
-      groupRoles,
-      vaultInfo,
-      databases: [{ name: 'test-db' }],
-    },
-    { dependsOn: [rsGroup, groupRoles, vaultInfo] },
-  );
-
   return {
     rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),
     envRole: groupRoles.PickOutputs('admin', 'contributor', 'readOnly'),

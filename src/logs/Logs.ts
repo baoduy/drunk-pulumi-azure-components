@@ -4,9 +4,6 @@ import { BaseArgs, BaseResourceComponent } from '../base';
 import * as az from '@pulumi/azure-native';
 import { StorageAccount } from '../storage';
 
-export type WorkspaceResult = types.ResourceResult & { customerId: pulumi.Output<string> };
-export type AppInsightResult = types.ResourceResult & { instrumentationKey: pulumi.Output<string> };
-
 export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
   retentionInDays?: pulumi.Input<number>;
 
@@ -28,8 +25,8 @@ export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
 
 export class Logs extends BaseResourceComponent<LogsArgs> {
   public readonly storage?: types.ResourceResult;
-  public readonly workspace?: WorkspaceResult;
-  public readonly appInsight?: AppInsightResult;
+  public readonly workspace?: types.WorkspaceResult;
+  public readonly appInsight?: types.AppInsightResult;
 
   constructor(name: string, args: LogsArgs, private opts?: pulumi.ComponentResourceOptions) {
     super('Logs', name, args, opts);

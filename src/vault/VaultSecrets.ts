@@ -17,21 +17,17 @@ export class VaultSecrets extends pulumi.ComponentResource {
     [key: string]: VaultSecretResult;
   } = {};
 
-  constructor(
-    name: string,
-    args: VaultSecretsArgs,
-    opts?: pulumi.ComponentResourceOptions
-  ) {
+  constructor(name: string, args: VaultSecretsArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('VaultSecrets'), name, args, opts);
 
     Object.keys(args.secrets).forEach((key) => {
       const secret = new VaultSecret(
-        `${name}-${key}`,
+        key.includes(name) ? key : `${name}-${key}`,
         {
           ...args.secrets[key],
           vaultInfo: args.vaultInfo,
         },
-        opts
+        opts,
       );
 
       this.results[key] = {

@@ -2,7 +2,6 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
 import * as types from '../types';
 import { UserAssignedIdentity } from '../azureAd';
-import { RandomPassword } from '../common';
 import { azureEnv } from '../helpers';
 import * as postgresql from '@pulumi/azure-native/dbforpostgresql';
 import { convertToIpRange } from './helpers';
@@ -35,6 +34,7 @@ export interface PostgresArgs
   };
   enableAzureADAdmin?: boolean;
   databases?: Array<{ name: string }>;
+  lock?: boolean;
 }
 
 export class Postgres extends BaseResourceComponent<PostgresArgs> {
@@ -47,6 +47,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     const server = this.createPostgres();
     this.createNetwork(server);
     this.createDatabases(server);
+    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -145,7 +146,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
               `${this.name}-firewall-${i}`,
               {
                 ...rsGroup,
-                firewallRuleName: `${this.name}-firewall-${i}`,
+                //firewallRuleName: `${this.name}-firewall-${i}`,
                 serverName: server.name,
                 startIpAddress: f.start,
                 endIpAddress: f.end,
@@ -193,13 +194,6 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     });
   }
 
-  private createPassword() {
-    return new RandomPassword(
-      this.name,
-      { length: 20, policy: 'yearly', options: { special: false } },
-      { parent: this },
-    );
-  }
   private getUAssignedId() {
     const { defaultUAssignedId, rsGroup, groupRoles, vaultInfo } = this.args;
     if (defaultUAssignedId) return defaultUAssignedId;

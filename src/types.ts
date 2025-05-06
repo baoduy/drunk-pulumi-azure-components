@@ -69,6 +69,30 @@ export type WithGroupRolesArgs = {
   groupRoles?: GroupRolesArgs;
 };
 
+export type WorkspaceType = ResourceType & { customerId: string };
+export type AppInsightType = ResourceType & { instrumentationKey: string };
+
+export type LogsType = {
+  storage?: ResourceType;
+  workspace?: WorkspaceType;
+  readonly appInsight?: AppInsightType;
+};
+
+export type LogsInputs = {
+  storage?: pulumi.Input<ResourceType>;
+  workspace?: pulumi.Input<WorkspaceType>;
+  readonly appInsight?: pulumi.Input<AppInsightType>;
+};
+
+export type WorkspaceResult = ResourceResult & { customerId: pulumi.Output<string> };
+export type AppInsightResult = ResourceResult & { instrumentationKey: pulumi.Output<string> };
+
+export type LogsResult = {
+  storage?: ResourceResult;
+  workspace?: WorkspaceResult;
+  readonly appInsight?: AppInsightResult;
+};
+
 export type NetworkArgs = {
   publicNetworkAccess?: 'disabled' | 'enabled';
   bypass?: 'AzureServices' | 'None' | string;

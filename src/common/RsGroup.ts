@@ -1,13 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as resources from '@pulumi/azure-native/resources';
 import { BaseArgs, BaseResourceComponent } from '../base';
-import {
-  RsRoleDefinitionType,
-  RoleAssignment,
-  rsRoleDefinitions,
-  GroupRoleTypes,
-} from '../azureAd';
-import { ResourceLocker } from './ResourceLocker';
+import { RsRoleDefinitionType, RoleAssignment, rsRoleDefinitions, GroupRoleTypes } from '../azureAd';
 
 export interface RsGroupArgs extends BaseArgs, resources.ResourceGroupArgs {
   /** if the role definition is not provided the readonly role will be added to this group by default  */
@@ -20,11 +14,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
   public readonly location: pulumi.Output<string>;
   public readonly resourceGroupName: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: RsGroupArgs = {},
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, args: RsGroupArgs = {}, opts?: pulumi.ComponentResourceOptions) {
     super('RsGroup', name, args, opts);
 
     const group = new resources.ResourceGroup(name, args, {
@@ -37,7 +27,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     this.id = group.id;
 
     this.createRoleAssignment();
-    this.createLock(group);
+    if (args.lock) this.lockFromDeleting(group);
 
     this.registerOutputs({
       location: this.location,
@@ -49,11 +39,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     const { groupRoles, roleAssignments } = this.args;
     if (!roleAssignments || !groupRoles) return;
 
-    const createRoles = (
-      type: GroupRoleTypes,
-      groupId: pulumi.Output<string>,
-      roles: string[],
-    ) => {
+    const createRoles = (type: GroupRoleTypes, groupId: pulumi.Output<string>, roles: string[]) => {
       roles.forEach(
         (role) =>
           new RoleAssignment(
@@ -74,23 +60,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     roles.forEach((role) => {
       createRoles('readOnly', groupRoles.readOnly.objectId, role.readOnly);
       createRoles('admin', groupRoles.admin.objectId, role.admin);
-      createRoles(
-        'contributor',
-        groupRoles.contributor.objectId,
-        role.contributor,
-      );
+      createRoles('contributor', groupRoles.contributor.objectId, role.contributor);
     });
-  }
-
-  private createLock(resource: pulumi.CustomResource) {
-    if (!this.args.lock) return;
-    new ResourceLocker(
-      `${this.name}-lock`,
-      {
-        resource,
-        level: 'CanNotDelete',
-      },
-      { dependsOn: resource, parent: this },
-    );
   }
 }

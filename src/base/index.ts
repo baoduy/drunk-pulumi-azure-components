@@ -2,6 +2,8 @@ import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
 import * as types from '../types';
 import { GroupRoleTypes } from '../azureAd';
+import { ResourceLocker } from '../common/ResourceLocker';
+import { RandomPasswordArgs, RandomPassword } from '../common';
 import { VaultSecrets, SecretItemArgs, VaultSecretResult, EncryptionKey } from '../vault';
 
 /**
@@ -103,11 +105,39 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
     super.registerOutputs({ ...outputs, vaultSecrets: this.vaultSecrets });
   }
 
+  /**
+   * Creates a new encryption key in the Azure Key Vault
+   * @returns A new EncryptionKey instance if vaultInfo is provided, undefined otherwise
+   */
   protected getEncryptionKey() {
     if (!this.args.vaultInfo) return undefined;
     return new EncryptionKey(this.name, { vaultInfo: this.args.vaultInfo }, { parent: this });
   }
 
+  /**
+   * Generates a new random password with predefined settings
+   * @returns A new RandomPassword instance with 20 characters length, yearly rotation policy, and no special characters
+   */
+  protected createPassword(props: RandomPasswordArgs = { length: 20, policy: 'yearly', options: { special: false } }) {
+    return new RandomPassword(this.name, props, { parent: this });
+  }
+
+  protected lockFromDeleting(resource: pulumi.CustomResource) {
+    return new ResourceLocker(
+      `${this.name}-lock`,
+      {
+        resource,
+        level: 'CanNotDelete',
+      },
+      { dependsOn: resource, parent: this },
+    );
+  }
+  /**
+   * Adds a managed identity to a specified Azure AD group role
+   * @param type - The type of group role to add the identity to (from GroupRoleTypes enum)
+   * @param identity - A Pulumi output containing the managed identity with its principal ID
+   * @returns A new GroupMember resource if successful, undefined if groupRoles not configured or identity invalid
+   */
   public addIdentityToRole(type: GroupRoleTypes, identity: pulumi.Output<{ principalId: string } | undefined>) {
     const { groupRoles } = this.args;
     if (!groupRoles) return;

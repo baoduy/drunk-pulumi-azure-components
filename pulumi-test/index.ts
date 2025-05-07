@@ -55,19 +55,19 @@ const rs = (async () => {
     { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );
 
-  const bus = new ServiceBus(
-    'bus',
-    {
-      rsGroup,
-      vaultInfo,
-      defaultUAssignedId: userAssignedId,
-      sku: { name: 'Standard' },
-      enableEncryption: true,
-      queues: { 'test-queue': {} },
-      topics: { 'test-tp': { subscriptions: { 'test-sub': {} } } },
-    },
-    { dependsOn: [rsGroup, groupRoles, vaultInfo, userAssignedId] },
-  );
+  // const bus = new ServiceBus(
+  //   'bus',
+  //   {
+  //     rsGroup,
+  //     vaultInfo,
+  //     defaultUAssignedId: userAssignedId,
+  //     sku: { name: 'Standard' },
+  //     enableEncryption: true,
+  //     queues: { 'test-queue': {} },
+  //     topics: { 'test-tp': { subscriptions: { 'test-sub': {} } } },
+  //   },
+  //   { dependsOn: [rsGroup, groupRoles, vaultInfo, userAssignedId] },
+  // );
 
   return {
     rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),

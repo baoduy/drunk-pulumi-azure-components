@@ -3,3 +3,4 @@ export * from './AppConfig';
 export * from './AppService';
 export * from './IoTHub';
 export * from './LogicApp';
+export * from './SignalR';

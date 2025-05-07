@@ -134,6 +134,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       [`${this.name}-port`]: '5432',
       [`${this.name}-login`]: this.args.administratorLogin!,
       [`${this.name}-pass`]: password.value,
+      [`${this.name}-username`]: adminLogin,
     });
 
     return server;

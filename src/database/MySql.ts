@@ -132,6 +132,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       [`${this.name}-port`]: '3306',
       [`${this.name}-login`]: this.args.administratorLogin!,
       [`${this.name}-pass`]: password.value,
+      [`${this.name}-username`]: adminLogin,
     });
 
     return server;

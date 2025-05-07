@@ -104,10 +104,10 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
    * Creates a new encryption key in the Azure Key Vault
    * @returns A new EncryptionKey instance if vaultInfo is provided, undefined otherwise
    */
-  protected getEncryptionKey(keySize: 2048 | 3072 | 4096 = 4096) {
-    if (!this.args.vaultInfo) return undefined;
+  protected getEncryptionKey({ name, keySize }: { name?: string; keySize?: 2048 | 3072 | 4096 } = { keySize: 4096 }) {
+    if (!this.args.vaultInfo) throw new Error(`the "vaultInfo" is required to create "EncryptionKey"`);
     return new EncryptionKey(
-      this.name,
+      name ? `${this.name}-${name}` : this.name,
       { vaultInfo: this.args.vaultInfo, keySize },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );

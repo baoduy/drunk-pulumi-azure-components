@@ -123,7 +123,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
-    const encryptionKey = enableEncryption ? this.getEncryptionKey(3072) : undefined;
+    const encryptionKey = enableEncryption ? this.getEncryptionKey({ keySize: 3072 }) : undefined;
 
     const server = new sql.Server(
       this.name,

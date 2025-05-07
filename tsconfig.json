@@ -29,6 +29,7 @@
     "src/app/AppService.ts",
     "src/app/IoTHub.ts",
     "src/app/LogicApp.ts",
+    "src/app/SignalR.ts",
     "src/app/index.ts",
     "src/azAd/AppRegistration.ts",
     "src/azAd/AzRole.ts",
@@ -82,10 +83,15 @@
     "src/vault/VaultSecrets.ts",
     "src/vault/helpers.ts",
     "src/vault/index.ts",
+    "src/vm/DiskEncryptionSet.ts",
+    "src/vm/VirtualMachine.ts",
+    "src/vm/helpers.ts",
+    "src/vm/index.ts",
     "src/vnet/AzCdn.ts",
     "src/vnet/DnsZone.ts",
     "src/vnet/PrivateDnsZone.ts",
     "src/vnet/PrivateEndpoint.ts",
+    "src/vnet/VirtualNetwork.ts",
     "src/vnet/helpers.ts",
     "src/vnet/index.ts"
   ]

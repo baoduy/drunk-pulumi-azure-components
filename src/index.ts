@@ -8,5 +8,7 @@ export * from './logs';
 export * from './services';
 export * from './storage';
 export * from './vault';
+export * from './vm';
+export * from './vnet';
 
 export type * as types from './types';

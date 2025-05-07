@@ -1,7 +1,7 @@
-import { WithVaultInfo } from '../types';
+import { VaultKeyResource } from '@drunk-pulumi/azure-providers';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
-import { VaultKeyResource } from '@drunk-pulumi/azure-providers';
+import { WithVaultInfo } from '../types';
 
 export interface EncryptionKeyArgs extends Required<WithVaultInfo> {
   keySize?: 2048 | 3072 | 4096;

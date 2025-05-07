@@ -1,5 +1,5 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as authorization from '@pulumi/azure-native/authorization';
+import * as pulumi from '@pulumi/pulumi';
 
 export interface ResourceLockerArgs {
   resource: pulumi.CustomResource;

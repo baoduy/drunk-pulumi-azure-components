@@ -1,0 +1,324 @@
+import * as bus from '@pulumi/azure-native/servicebus';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { azureEnv } from '../helpers';
+import * as types from '../types';
+import * as vault from '../vault';
+import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+
+const defaultQueueOptions: Partial<bus.QueueArgs> = {
+  //duplicateDetectionHistoryTimeWindow: 'P10M',
+  //maxMessageSizeInKilobytes: 1024,
+  //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
+  maxDeliveryCount: 10,
+  enableBatchedOperations: true,
+  enablePartitioning: false,
+  maxSizeInMegabytes: azureEnv.isPrd ? 10 * 1024 : 1024,
+  //Default is 'PT1M' (1 minute) and max is 5 minutes.
+  lockDuration: 'PT1M',
+  defaultMessageTimeToLive: azureEnv.isPrd ? 'P90D' : 'P5D',
+  deadLetteringOnMessageExpiration: true,
+};
+
+const defaultTopicOptions: Partial<bus.TopicArgs> = {
+  //duplicateDetectionHistoryTimeWindow: 'P10M',
+  //maxMessageSizeInKilobytes: 1024,
+  //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
+  defaultMessageTimeToLive: azureEnv.isPrd ? 'P30D' : 'P5D',
+  enablePartitioning: false,
+  maxSizeInMegabytes: azureEnv.isPrd ? 10 * 1024 : 1024,
+  enableBatchedOperations: true,
+};
+
+const defaultSubOptions: Partial<bus.SubscriptionArgs> = {
+  duplicateDetectionHistoryTimeWindow: 'P10M',
+  //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
+  defaultMessageTimeToLive: azureEnv.isPrd ? 'P90D' : 'P5D',
+  enableBatchedOperations: true,
+  deadLetteringOnMessageExpiration: true,
+  lockDuration: 'PT1M',
+  maxDeliveryCount: 10,
+};
+
+type SubscriptionsType = Record<
+  string,
+  Omit<bus.SubscriptionArgs, 'namespaceName' | 'topicName' | 'subscriptionName' | 'resourceGroupName' | 'status'>
+>;
+
+export interface ServiceBusArgs
+  extends CommonBaseArgs,
+    types.WithUserAssignedIdentity,
+    types.WithEncryptionEnabler,
+    types.WithNetworkArgs,
+    Pick<
+      bus.NamespaceArgs,
+      'sku' | 'zoneRedundant' | 'alternateName' | 'disableLocalAuth' | 'premiumMessagingPartitions'
+    > {
+  sku: {
+    /**
+     * Messaging units for your service bus premium namespace. Valid capacities are {1, 2, 4, 8, 16} multiples of your properties.premiumMessagingPartitions setting. For example, If properties.premiumMessagingPartitions is 1 then possible capacity values are 1, 2, 4, 8, and 16. If properties.premiumMessagingPartitions is 4 then possible capacity values are 4, 8, 16, 32 and 64
+     */
+    capacity?: pulumi.Input<number>;
+    /**
+     * Name of this SKU.
+     */
+    name: bus.SkuName;
+    /**
+     * The billing tier of this particular SKU.
+     */
+    tier?: bus.SkuTier;
+  };
+
+  queues?: Record<string, Omit<bus.QueueArgs, 'namespaceName' | 'queueName' | 'resourceGroupName' | 'status'>>;
+  topics?: Record<
+    string,
+    Omit<bus.TopicArgs, 'namespaceName' | 'topicName' | 'resourceGroupName' | 'status'> & {
+      subscriptions?: SubscriptionsType;
+    }
+  >;
+}
+
+export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
+  public readonly id: pulumi.Output<string>;
+  public readonly resourceName: pulumi.Output<string>;
+
+  constructor(name: string, args: ServiceBusArgs, opts?: pulumi.ComponentResourceOptions) {
+    super('ServiceBus', name, args, opts);
+
+    const service = this.createBusNamespace();
+    this.createNetwork(service);
+    this.createConnectionStrings(service);
+
+    this.createQueues(service);
+    this.createTopics(service);
+
+    this.id = service.id;
+    this.resourceName = service.name;
+    this.registerOutputs({
+      id: this.id,
+      resourceName: this.resourceName,
+    });
+  }
+
+  private createBusNamespace() {
+    const { rsGroup, defaultUAssignedId, vaultInfo, enableEncryption, network, ...props } = this.args;
+    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
+
+    const service = new bus.Namespace(
+      this.name,
+      {
+        ...props,
+        ...rsGroup,
+        minimumTlsVersion: '1.2',
+
+        identity: {
+          type: defaultUAssignedId
+            ? bus.ManagedServiceIdentityType.SystemAssigned_UserAssigned
+            : bus.ManagedServiceIdentityType.SystemAssigned,
+          //all uuid must assign here before use
+          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+        },
+
+        encryption:
+          encryptionKey && props.sku.name === 'Premium'
+            ? {
+                keySource: bus.KeySource.Microsoft_KeyVault,
+                keyVaultProperties: [
+                  {
+                    ...encryptionKey,
+                    identity: defaultUAssignedId ? { userAssignedIdentity: defaultUAssignedId.id } : undefined,
+                  },
+                ],
+                requireInfrastructureEncryption: true,
+              }
+            : undefined,
+
+        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+      },
+      {
+        ...this.opts,
+        parent: this,
+      },
+    );
+
+    this.addSecret('hostname', pulumi.interpolate`${service.name}.servicebus.windows.net`);
+
+    return service;
+  }
+
+  private createNetwork(service: bus.Namespace) {
+    const { rsGroup, network } = this.args;
+    if (!network) return;
+
+    new bus.NamespaceNetworkRuleSet(
+      this.name,
+      {
+        ...rsGroup,
+        namespaceName: service.name,
+        defaultAction: network.defaultAction ? network.defaultAction : 'Allow',
+        trustedServiceAccessEnabled: true,
+
+        ipRules: network.ipRules
+          ? pulumi.output(network.ipRules).apply((ips) =>
+              ips.map((i) => ({
+                ipMask: i,
+                action: bus.NetworkRuleIPAction.Allow,
+              })),
+            )
+          : undefined,
+        virtualNetworkRules: network.vnetRules
+          ? pulumi.output(network.vnetRules).apply((vIds) =>
+              vIds.map((v) => ({
+                ignoreMissingVnetServiceEndpoint: v.ignoreMissingVnetServiceEndpoint,
+                subnet: { id: v.subnetId },
+              })),
+            )
+          : undefined,
+      },
+      { dependsOn: service, parent: this },
+    );
+
+    if (network.privateLink) {
+      return new PrivateEndpoint(
+        this.name,
+        { ...network.privateLink, resourceInfo: service, rsGroup, type: 'serviceBus' },
+        { dependsOn: service, parent: this },
+      );
+    }
+  }
+
+  private createConnectionStrings(service: bus.Namespace) {
+    const { disableLocalAuth, rsGroup } = this.args;
+    if (disableLocalAuth) return;
+
+    // const manageRule = new bus.NamespaceAuthorizationRule(
+    //   `${this.name}-manage`,
+    //   {
+    //     ...rsGroup,
+    //     namespaceName: service.name,
+    //     rights: ['Listen', 'Send', 'Manage'],
+    //   },
+    //   { dependsOn: service, parent: this },
+    // );
+
+    const listenRule = new bus.NamespaceAuthorizationRule(
+      `${this.name}-listen`,
+      {
+        ...rsGroup,
+        namespaceName: service.name,
+        rights: ['Listen'],
+      },
+      { dependsOn: service, parent: this },
+    );
+
+    const sendRule = new bus.NamespaceAuthorizationRule(
+      `${this.name}-send`,
+      {
+        ...rsGroup,
+        namespaceName: service.name,
+        rights: ['Listen'],
+      },
+      { dependsOn: service, parent: this },
+    );
+
+    this.addConnectionsToVault(service);
+    this.addConnectionsToVault(service, listenRule);
+    this.addConnectionsToVault(service, sendRule);
+  }
+
+  private addConnectionsToVault(service: bus.Namespace, rule?: bus.NamespaceAuthorizationRule) {
+    const { rsGroup, vaultInfo } = this.args;
+    if (!vaultInfo) return;
+
+    const ruleName = rule ? rule.name : 'RootManageSharedAccessKey';
+    pulumi.output([service.name, ruleName, rsGroup.resourceGroupName]).apply(async ([svName, rName, rsName]) => {
+      const keys = await bus.listNamespaceKeys({
+        resourceGroupName: rsName,
+        authorizationRuleName: rName,
+        namespaceName: svName,
+      });
+
+      new vault.VaultSecrets(
+        `${this.name}-${rName}`,
+        {
+          vaultInfo,
+          secrets: {
+            [`${this.name}-${rName}-primary-conn`]: {
+              value: keys.primaryConnectionString,
+              contentType: 'ServiceBus Primary ConnectionString',
+            },
+            [`${this.name}-${rName}-secondary-conn`]: {
+              value: keys.secondaryConnectionString,
+              contentType: 'ServiceBus Secondary ConnectionString',
+            },
+          },
+        },
+        { dependsOn: rule ? [service, rule] : [service], parent: this },
+      );
+    });
+  }
+
+  private createQueues(service: bus.Namespace) {
+    const { queues, rsGroup } = this.args;
+    if (!queues) return;
+
+    Object.keys(queues).map((k) => {
+      const queueOps = queues[k];
+      return new bus.Queue(
+        `${this.name}-${k}`,
+        {
+          ...rsGroup,
+          queueName: k,
+          namespaceName: service.name,
+          ...defaultQueueOptions,
+          ...queueOps,
+        },
+        { dependsOn: service, parent: this },
+      );
+    });
+  }
+
+  private createTopics(service: bus.Namespace) {
+    const { topics, rsGroup } = this.args;
+    if (!topics) return;
+
+    Object.keys(topics).map((k) => {
+      const topicOps = topics[k];
+      const topic = new bus.Topic(
+        `${this.name}-${k}`,
+        {
+          ...rsGroup,
+          topicName: k,
+          namespaceName: service.name,
+          ...defaultTopicOptions,
+          ...topicOps,
+        },
+        { dependsOn: service, parent: this },
+      );
+
+      if (topicOps.subscriptions) this.createSubscriptions(service, topic, topicOps.subscriptions);
+      return topic;
+    });
+  }
+
+  private createSubscriptions(service: bus.Namespace, topic: bus.Topic, subscriptions: SubscriptionsType) {
+    const { rsGroup } = this.args;
+    topic.name.apply((topicName) =>
+      Object.keys(subscriptions).map((k) => {
+        const subOps = subscriptions[k];
+        return new bus.Subscription(
+          `${this.name}-${topicName}-${k}`,
+          {
+            ...rsGroup,
+            topicName: topicName,
+            namespaceName: service.name,
+            subscriptionName: k,
+            ...defaultTopicOptions,
+            ...subOps,
+          },
+          { dependsOn: [service, topic], parent: this },
+        );
+      }),
+    );
+  }
+}

@@ -1,8 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
-import * as types from '../types';
-import { BaseArgs, BaseResourceComponent } from '../base';
 import * as az from '@pulumi/azure-native';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseArgs, BaseResourceComponent } from '../base';
 import { StorageAccount } from '../storage';
+import * as types from '../types';
 
 export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
   retentionInDays?: pulumi.Input<number>;

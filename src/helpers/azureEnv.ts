@@ -1,7 +1,7 @@
-import * as pulumi from '@pulumi/pulumi';
 import { authorization } from '@pulumi/azure-native';
-import { stack } from './stackEnv';
+import * as pulumi from '@pulumi/pulumi';
 import { getCountryCode, getRegionCode } from './Location';
+import { stack } from './stackEnv';
 
 export enum Environments {
   Global = 'global',
@@ -13,13 +13,10 @@ export enum Environments {
 const azEnv = JSON.parse(process.env.PULUMI_CONFIG ?? '{}');
 const config = authorization.getClientConfigOutput();
 
-export const tenantId =
-  azEnv['azure-native:config:tenantId'] ?? config.tenantId;
-export const subscriptionId =
-  azEnv['azure-native:config:subscriptionId'] ?? config.subscriptionId;
+export const tenantId = azEnv['azure-native:config:tenantId'] ?? config.tenantId;
+export const subscriptionId = azEnv['azure-native:config:subscriptionId'] ?? config.subscriptionId;
 export const currentPrincipal = config.objectId;
-export const currentRegionName = (azEnv['azure-native:config:location'] ??
-  'SoutheastAsia') as string;
+export const currentRegionName = (azEnv['azure-native:config:location'] ?? 'SoutheastAsia') as string;
 export const currentRegionCode = getRegionCode(currentRegionName);
 export const currentCountryCode = getCountryCode(currentRegionName);
 export const defaultSubScope = pulumi.interpolate`/subscriptions/${subscriptionId}`;

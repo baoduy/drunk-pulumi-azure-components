@@ -1,11 +1,11 @@
-import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base';
-import * as types from '../types';
-import { UserAssignedIdentity } from '../azAd';
-import { azureEnv } from '../helpers';
 import * as mysql from '@pulumi/azure-native/dbformysql';
-import { convertToIpRange } from './helpers';
+import * as pulumi from '@pulumi/pulumi';
+import { UserAssignedIdentity } from '../azAd';
+import { BaseArgs, BaseResourceComponent } from '../base';
+import { azureEnv } from '../helpers';
+import * as types from '../types';
 import * as vnet from '../vnet';
+import { convertToIpRange } from './helpers';
 
 export interface MySqlArgs
   extends BaseArgs,
@@ -63,8 +63,9 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   }
 
   private createMySql() {
-    const { rsGroup, enableEncryption, lock } = this.args;
+    const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
 
+    const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
     const uAssignedId = this.getUAssignedId();
@@ -75,6 +76,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         ...this.args,
         ...rsGroup,
 
+        administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
         storage: this.args.storage ?? { storageSizeGB: 30 },

@@ -1,6 +1,7 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
 import { RandomPassword, RandomPasswordArgs } from '../common/RandomPassword';
+import { RandomString, RandomStringArgs } from '../common/RandomString';
 import { ResourceLocker } from '../common/ResourceLocker';
 import * as types from '../types';
 import { EncryptionKey } from '../vault/EncryptionKey';
@@ -118,6 +119,10 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
    */
   protected createPassword(props: RandomPasswordArgs = { length: 20, policy: 'yearly', options: { special: false } }) {
     return new RandomPassword(this.name, props, { parent: this });
+  }
+
+  protected createRandomString(props: RandomStringArgs = { type: 'string', length: 10, options: { special: false } }) {
+    return new RandomString(this.name, props, { parent: this });
   }
 
   protected lockFromDeleting(resource: pulumi.CustomResource) {

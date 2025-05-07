@@ -110,8 +110,18 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createSql() {
-    const { rsGroup, enableEncryption, defaultUAssignedId, administrators, network, lock, ...props } = this.args;
+    const {
+      rsGroup,
+      enableEncryption,
+      defaultUAssignedId,
+      administrators,
+      network,
+      lock,
+      administratorLogin,
+      ...props
+    } = this.args;
 
+    const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey(3072) : undefined;
 
@@ -129,7 +139,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         },
 
         primaryUserAssignedIdentityId: defaultUAssignedId?.id,
-        administratorLogin: this.args.administratorLogin,
+        administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         keyId: encryptionKey?.id,
 

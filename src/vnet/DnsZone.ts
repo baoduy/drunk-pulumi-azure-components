@@ -2,7 +2,6 @@ import * as dns from '@pulumi/azure-native/dns';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import { WithResourceGroupInputs } from '../types';
-import * as helpers from './helpers';
 
 type DnsZoneRecordArgs = Omit<dns.RecordSetArgs, 'zoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl'> & {
   name: string;

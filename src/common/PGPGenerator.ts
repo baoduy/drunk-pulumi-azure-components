@@ -1,5 +1,5 @@
-import * as pulumi from '@pulumi/pulumi';
 import { PGPResource } from '@drunk-pulumi/azure-providers';
+import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
 
 type UserInfo = { name: string; email: string };

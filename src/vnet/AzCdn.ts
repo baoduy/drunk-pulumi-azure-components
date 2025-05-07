@@ -1,10 +1,10 @@
-import * as pulumi from '@pulumi/pulumi';
-import * as types from '../types';
-import { azureEnv } from '../helpers';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import CdnHttpsEnable from '@drunk-pulumi/azure-providers/CdnHttpsEnable';
 import * as cdn from '@pulumi/azure-native/cdn';
 import * as inputs from '@pulumi/azure-native/types/input';
-import CdnHttpsEnable from '@drunk-pulumi/azure-providers/CdnHttpsEnable';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseArgs, BaseResourceComponent } from '../base';
+import { azureEnv } from '../helpers';
+import * as types from '../types';
 
 type ProfileResourceType = { resourceName: pulumi.Input<string> };
 type ResourceType = { resourceName: string; id: string };

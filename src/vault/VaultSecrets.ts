@@ -1,6 +1,6 @@
-import { WithVaultInfo } from '../types';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
+import { WithVaultInfo } from '../types';
 import { SecretItemArgs, VaultSecret } from './VaultSecret';
 
 export type VaultSecretResult = {

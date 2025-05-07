@@ -1,5 +1,5 @@
-import * as pulumi from '@pulumi/pulumi';
 import { SshKeyResource } from '@drunk-pulumi/azure-providers';
+import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
 
 export interface SshGeneratorArgs extends BaseArgs {
@@ -11,11 +11,7 @@ export class SshGenerator extends BaseResourceComponent<SshGeneratorArgs> {
   public readonly privateKey: pulumi.Output<string>;
   public readonly password?: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: SshGeneratorArgs,
-    opts?: pulumi.ComponentResourceOptions
-  ) {
+  constructor(name: string, args: SshGeneratorArgs, opts?: pulumi.ComponentResourceOptions) {
     super('SshGenerator', name, args, opts);
 
     const ssh = new SshKeyResource(name, args, { ...opts, parent: this });

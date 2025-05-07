@@ -1,9 +1,9 @@
+import * as keyvault from '@pulumi/azure-native/keyvault';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
-import * as keyvault from '@pulumi/azure-native/keyvault';
 import { azureEnv } from '../helpers';
+import { ResourceGroupInputs, WithNetworkArgs, WithResourceGroupInputs } from '../types';
 import { PrivateEndpoint } from '../vnet';
-import { WithResourceGroupInputs, ResourceGroupInputs, WithNetworkArgs } from '../types';
 
 export interface KeyVaultArgs
   extends BaseArgs,
@@ -69,7 +69,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
             virtualNetworkRules: args.network?.vnetRules
               ? pulumi.output(args.network.vnetRules).apply((vnetRules) =>
                   vnetRules.map((v) => ({
-                    id: v.id,
+                    id: v.subnetId,
                     ignoreMissingVnetServiceEndpoint: v.ignoreMissingVnetServiceEndpoint,
                   })),
                 )

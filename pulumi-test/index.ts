@@ -1,10 +1,10 @@
 import {
-  AzSql,
   GroupRole,
   KeyVault,
   Logs,
   RsGroup,
   rsRoleDefinitions,
+  ServiceBus,
   UserAssignedIdentity,
 } from '@drunk-pulumi/azure-components';
 import * as pulumi from '@pulumi/pulumi';
@@ -55,25 +55,19 @@ const rs = (async () => {
     { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );
 
-  // const sql = new AzSql(
-  //   'sql',
-  //   {
-  //     rsGroup,
-  //     vaultInfo,
-  //     defaultUAssignedId: userAssignedId,
-  //     administratorLogin: 'azure-test-sql-admin',
-  //     administrators: { adminGroup: groupRoles.contributor, useDefaultUAssignedIdForConnection: true },
-  //     enableEncryption: true,
-  //     vulnerabilityAssessment: {
-  //       alertEmails: ['steven@drunkcoding.net'],
-  //       logStorage: { id: logs.storage!.id, resourceName: logs.storage!.resourceName, rsGroup },
-  //     },
-  //     elasticPool: { sku: { name: 'BasicPool', tier: 'Basic', capacity: 50 } },
-  //     databases: { 'test-db': { autoPauseDelay: 10, sku: { name: 'Basic', capacity: 0 } } },
-  //     lock: false,
-  //   },
-  //   { dependsOn: [rsGroup, groupRoles, vaultInfo, logs] },
-  // );
+  const bus = new ServiceBus(
+    'bus',
+    {
+      rsGroup,
+      vaultInfo,
+      defaultUAssignedId: userAssignedId,
+      sku: { name: 'Standard' },
+      enableEncryption: true,
+      queues: { 'test-queue': {} },
+      topics: { 'test-tp': { subscriptions: { 'test-sub': {} } } },
+    },
+    { dependsOn: [rsGroup, groupRoles, vaultInfo, userAssignedId] },
+  );
 
   return {
     rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),

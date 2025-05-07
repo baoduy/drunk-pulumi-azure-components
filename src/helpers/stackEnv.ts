@@ -1,20 +1,17 @@
-import * as pulumi from "@pulumi/pulumi";
+import * as pulumi from '@pulumi/pulumi';
 import { registerAutoTags } from './autoTags';
 
 export const isDryRun = Boolean(process.env.PULUMI_NODEJS_DRY_RUN);
 export const organization = process.env.PULUMI_NODEJS_ORGANIZATION!;
-export const projectName =
-  process.env.PULUMI_NODEJS_PROJECT ?? pulumi.getProject().toLowerCase();
-export const stack =
-  process.env.PULUMI_NODEJS_STACK ?? pulumi.getStack().toLowerCase();
+export const projectName = process.env.PULUMI_NODEJS_PROJECT ?? pulumi.getProject().toLowerCase();
+export const stack = process.env.PULUMI_NODEJS_STACK ?? pulumi.getStack().toLowerCase();
 
-console.log("Pulumi Environments:", {
+console.log('Pulumi Environments:', {
   organization,
   projectName,
   stack,
   isDryRun,
 });
-
 
 registerAutoTags({
   environment: stack,

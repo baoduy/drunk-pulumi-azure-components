@@ -1,9 +1,9 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as network from '@pulumi/azure-native/network';
-import { PrivateDnsZone } from './PrivateDnsZone';
+import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
-import * as helpers from './helpers';
 import * as types from '../types';
+import * as helpers from './helpers';
+import { PrivateDnsZone } from './PrivateDnsZone';
 
 export type PrivateEndpointServices =
   | 'azApi'

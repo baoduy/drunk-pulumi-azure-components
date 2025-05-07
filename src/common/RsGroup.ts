@@ -1,8 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as resources from '@pulumi/azure-native/resources';
-import * as types from '../types';
+import * as pulumi from '@pulumi/pulumi';
+import { RoleAssignment, rsRoleDefinitions, RsRoleDefinitionType } from '../azAd';
 import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
-import { RsRoleDefinitionType, RoleAssignment, rsRoleDefinitions } from '../azAd';
+import * as types from '../types';
 
 export interface RsGroupArgs extends BaseArgs, resources.ResourceGroupArgs {
   /** if the role definition is not provided the readonly role will be added to this group by default  */

@@ -1,11 +1,11 @@
-import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base';
-import * as types from '../types';
-import { UserAssignedIdentity } from '../azAd';
-import { azureEnv } from '../helpers';
 import * as postgresql from '@pulumi/azure-native/dbforpostgresql';
-import { convertToIpRange } from './helpers';
+import * as pulumi from '@pulumi/pulumi';
+import { UserAssignedIdentity } from '../azAd';
+import { BaseArgs, BaseResourceComponent } from '../base';
+import { azureEnv } from '../helpers';
+import * as types from '../types';
 import * as vnet from '../vnet';
+import { convertToIpRange } from './helpers';
 
 export interface PostgresArgs
   extends BaseArgs,
@@ -59,8 +59,9 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
   }
 
   private createPostgres() {
-    const { rsGroup, enableEncryption, lock } = this.args;
+    const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
 
+    const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
     const uAssignedId = this.getUAssignedId();
@@ -72,6 +73,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         ...rsGroup,
 
         version: this.args.version ?? postgresql.ServerVersion.ServerVersion_16,
+        administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         storage: this.args.storage ?? { storageSizeGB: 32 },
         identity: {

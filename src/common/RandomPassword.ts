@@ -1,8 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as random from '@pulumi/random';
 import { getComponentResourceType } from '../base/helpers';
-import { VaultSecret } from '../vault/VaultSecret';
 import * as types from '../types';
+import { VaultSecret } from '../vault/VaultSecret';
 
 export interface RandomPasswordArgs extends types.WithVaultInfo {
   policy?: pulumi.Input<'monthly' | 'yearly' | boolean>;
@@ -49,12 +49,13 @@ export class RandomPassword extends pulumi.ComponentResource<RandomPasswordArgs>
       { ...opts, parent: this },
     );
 
-    if (vaultInfo)
+    if (vaultInfo) {
       new VaultSecret(
         name,
         { vaultInfo, value: randomPass.result, contentType: 'RandomPassword' },
         { dependsOn: randomPass, parent: this },
       );
+    }
 
     this.value = randomPass.result;
     this.registerOutputs({

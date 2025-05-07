@@ -152,7 +152,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
           virtualNetworkRules: args.network?.vnetRules
             ? pulumi.output(args.network.vnetRules).apply((vnetRules) =>
                 vnetRules.map((v) => ({
-                  virtualNetworkResourceId: v.id,
+                  virtualNetworkResourceId: v.subnetId,
                   action: storage.Action.Allow,
                 })),
               )

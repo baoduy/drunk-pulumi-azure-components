@@ -1,8 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as random from '@pulumi/random';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { getComponentResourceType } from '../base/helpers';
+import * as types from '../types';
+import { VaultSecret } from '../vault/VaultSecret';
 
-export interface RandomStringArgs extends BaseArgs {
+export interface RandomStringArgs extends types.WithVaultInfo {
   type: 'string' | 'uuId';
   length?: pulumi.Input<number>;
   options?: {
@@ -13,15 +15,15 @@ export interface RandomStringArgs extends BaseArgs {
   };
 }
 
-export class RandomString extends BaseResourceComponent<RandomStringArgs> {
+export class RandomString extends pulumi.ComponentResource<RandomStringArgs> {
   public readonly value: pulumi.Output<string>;
 
   constructor(
     name: string,
     args: RandomStringArgs = { length: 25, type: 'string' },
-    opts?: pulumi.ComponentResourceOptions
+    opts?: pulumi.ComponentResourceOptions,
   ) {
-    super('RandomString', name, args, opts);
+    super(getComponentResourceType('RandomString'), name, args, opts);
 
     const options = args.options || {
       lower: true,
@@ -42,11 +44,17 @@ export class RandomString extends BaseResourceComponent<RandomStringArgs> {
               minSpecial: options.special ? 2 : 0,
               ...options,
             },
-            { ...opts, parent: this }
+            { ...opts, parent: this },
           )
         : new random.RandomUuid(name, {}, opts);
 
-    this.addSecret('value', randomString.result);
+    if (args.vaultInfo) {
+      new VaultSecret(
+        name,
+        { vaultInfo: args.vaultInfo, value: randomString.result, contentType: 'RandomString' },
+        { dependsOn: randomString, parent: this },
+      );
+    }
 
     this.value = randomString.result;
     this.registerOutputs({

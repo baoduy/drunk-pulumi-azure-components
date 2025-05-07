@@ -127,8 +127,7 @@ export type NetworkArgs = {
 
   //subnet?: { id: pulumi.Input<string> };
   ipRules?: pulumi.Input<pulumi.Input<string>[]>;
-  vnetRules?: pulumi.Input<pulumi.Input<{ id: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]>;
-
+  vnetRules?: pulumi.Input<pulumi.Input<{ subnetId: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]>;
   privateLink?: PrivateEndpointType;
 };
 

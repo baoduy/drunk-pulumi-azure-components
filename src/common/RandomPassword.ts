@@ -1,7 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as random from '@pulumi/random';
 import { getComponentResourceType } from '../base/helpers';
-import { VaultSecret } from '../vault';
+import { VaultSecret } from '../vault/VaultSecret';
 import * as types from '../types';
 
 export interface RandomPasswordArgs extends types.WithVaultInfo {

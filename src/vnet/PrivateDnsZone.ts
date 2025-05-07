@@ -1,5 +1,5 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as privateDns from '@pulumi/azure-native/privatedns';
+import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import { WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
@@ -17,8 +17,7 @@ export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs>
   private _rsName: string;
 
   public readonly id: pulumi.Output<string>;
-  public readonly location: pulumi.Output<string | undefined>;
-  public readonly resourceGroupName: pulumi.Output<string>;
+  public readonly resourceName: pulumi.Output<string>;
 
   constructor(name: string, private args: PrivateDnsZoneArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('PrivateDnsZone'), name, args, opts);
@@ -35,17 +34,16 @@ export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs>
       { ...opts, parent: this },
     );
 
-    this.createARecord(zone);
     this.createVnetLinks(zone);
 
     this.id = zone.id;
-    this.location = zone.location;
-    this.resourceGroupName = pulumi.output(group.resourceGroupName);
+    this.resourceName = zone.name;
+
+    this.createARecord(zone);
 
     this.registerOutputs({
       id: this.id,
-      location: this.location,
-      resourceGroupName: this.resourceGroupName,
+      resourceName: this.resourceName,
     });
   }
 
@@ -57,23 +55,35 @@ export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs>
     const { aRecords } = this.args;
     if (!aRecords) return;
 
-    const group = this.getRsGroupInfo();
     aRecords.map((aRecord) => {
       const recordName = this.getRecordName(aRecord.name);
 
-      return new privateDns.PrivateRecordSet(
-        `${this._rsName}-${recordName}`,
-        {
-          ...group,
-          privateZoneName: zone.name,
-          relativeRecordSetName: recordName,
-          recordType: 'A',
-          aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
-          ttl: 3600,
-        },
-        { dependsOn: zone, parent: this },
-      );
+      return this.addRecordSet(recordName, {
+        recordType: 'A',
+        aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
+      });
     });
+  }
+
+  public addRecordSet(
+    name: string,
+    props: Omit<
+      privateDns.PrivateRecordSetArgs,
+      'privateZoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl'
+    >,
+  ) {
+    const group = this.getRsGroupInfo();
+    return new privateDns.PrivateRecordSet(
+      `${this._rsName}-${name}`,
+      {
+        ...props,
+        ...group,
+        privateZoneName: this.resourceName,
+        relativeRecordSetName: name,
+        ttl: 3600,
+      },
+      { parent: this },
+    );
   }
 
   private createVnetLinks(zone: privateDns.PrivateZone) {

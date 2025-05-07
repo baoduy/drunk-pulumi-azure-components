@@ -59,7 +59,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
   }
 
   private createPostgres() {
-    const { rsGroup, enableEncryption } = this.args;
+    const { rsGroup, enableEncryption, lock } = this.args;
 
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
@@ -122,6 +122,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       },
       {
         ...this.opts,
+        protect: lock ?? this.opts?.protect,
         parent: this,
       },
     );

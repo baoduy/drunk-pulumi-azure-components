@@ -78,6 +78,7 @@
     "src/vault/KeyVault.ts",
     "src/vault/VaultSecret.ts",
     "src/vault/VaultSecrets.ts",
+    "src/vault/helpers.ts",
     "src/vault/index.ts",
     "src/vnet/AzCdn.ts",
     "src/vnet/DnsZone.ts",

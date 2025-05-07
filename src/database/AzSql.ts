@@ -1,13 +1,37 @@
+import * as sql from '@pulumi/azure-native/sql';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
-import * as types from '../types';
-import * as sql from '@pulumi/azure-native/sql';
-import { azureEnv } from '../helpers';
-import { convertToIpRange } from './helpers';
-import * as vnet from '../vnet';
-import * as vault from '../vault';
 import { RandomPassword } from '../common';
+import { azureEnv } from '../helpers';
 import { storageHelpers } from '../storage';
+import { getStorageAccessKeyOutputs } from '../storage/helpers';
+import * as types from '../types';
+import * as vault from '../vault';
+import * as vnet from '../vnet';
+import { convertToIpRange } from './helpers';
+
+export type AzSqlSkuType = {
+  /**
+   * Capacity of the particular SKU.
+   */
+  capacity?: 0 | 50 | 100 | 200 | 300 | 400 | 800 | 1200 | number;
+  /**
+   * If the service has different generations of hardware, for the same SKU, then that can be captured here.
+   */
+  family?: pulumi.Input<string>;
+  /**
+   * The name of the SKU, typically, a letter + Number code, e.g. P3.
+   */
+  name: pulumi.Input<string>;
+  /**
+   * Size of the particular SKU
+   */
+  size?: pulumi.Input<string>;
+  /**
+   * The tier or edition of the particular SKU, e.g. Basic, Premium.
+   */
+  tier?: 'Standard' | 'Basic';
+};
 
 export interface AzSqlArgs
   extends BaseArgs,
@@ -19,7 +43,7 @@ export interface AzSqlArgs
       sql.ServerArgs,
       'administratorLogin' | 'federatedClientId' | 'isIPv6Enabled' | 'restrictOutboundNetworkAccess' | 'version'
     > {
-  administrators: {
+  administrators?: {
     azureAdOnlyAuthentication?: boolean;
     useDefaultUAssignedIdForConnection?: boolean;
     adminGroup: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
@@ -27,44 +51,17 @@ export interface AzSqlArgs
 
   elasticPool?: Pick<
     sql.ElasticPoolArgs,
-    | 'autoPauseDelay'
-    | 'availabilityZone'
-    | 'highAvailabilityReplicaCount'
-    | 'licenseType'
-    | 'perDatabaseSettings'
-    | 'preferredEnclaveType'
+    'autoPauseDelay' | 'availabilityZone' | 'highAvailabilityReplicaCount' | 'licenseType' | 'perDatabaseSettings'
   > & {
-    maxSizeGB: number;
-
-    sku: {
-      /**
-       * Capacity of the particular SKU.
-       */
-      capacity?: 50 | 100 | 200 | 300 | 400 | 800 | 1200;
-      /**
-       * If the service has different generations of hardware, for the same SKU, then that can be captured here.
-       */
-      family?: pulumi.Input<string>;
-      /**
-       * The name of the SKU, typically, a letter + Number code, e.g. P3.
-       */
-      name: pulumi.Input<string>;
-      /**
-       * Size of the particular SKU
-       */
-      size?: pulumi.Input<string>;
-      /**
-       * The tier or edition of the particular SKU, e.g. Basic, Premium.
-       */
-      tier?: 'Standard' | 'Basic';
-    };
+    maxSizeGB?: number;
+    sku: AzSqlSkuType;
   };
   network?: Omit<types.NetworkArgs, 'bypass' | 'defaultAction' | 'vnetRules'> & {
     acceptAllPublicConnection?: boolean;
     subnets?: pulumi.Input<Array<{ id: string }>>;
   };
   vulnerabilityAssessment?: {
-    logStorage: types.ResourceInputs;
+    logStorage: types.ResourceWithGroupInputs;
     alertEmails: pulumi.Input<string[]>;
     retentionDays?: number;
   };
@@ -79,7 +76,12 @@ export interface AzSqlArgs
       | 'encryptionProtector'
       | 'encryptionProtectorAutoRotation'
       | 'federatedClientId'
-    >
+      | 'preferredEnclaveType'
+      | 'sku'
+    > & {
+      /** sample: sku: { name: 'Basic', tier: 'Basic', capacity: 0 } */
+      sku?: AzSqlSkuType;
+    }
   >;
 }
 
@@ -92,10 +94,10 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
     const { server, password } = this.createSql();
     const elastic = this.createElasticPool(server);
+
     this.createVulnerabilityAssessment(server);
     this.createNetwork(server);
     this.createDatabases(server, password, elastic);
-
     if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
@@ -108,10 +110,10 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createSql() {
-    const { rsGroup, enableEncryption, defaultUAssignedId, administrators, network, ...props } = this.args;
+    const { rsGroup, enableEncryption, defaultUAssignedId, administrators, network, lock, ...props } = this.args;
 
     const password = this.createPassword();
-    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
+    const encryptionKey = enableEncryption ? this.getEncryptionKey(3072) : undefined;
 
     const server = new sql.Server(
       this.name,
@@ -131,17 +133,21 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         administratorLoginPassword: password.value,
         keyId: encryptionKey?.id,
 
-        administrators: {
-          administratorType: administrators.adminGroup?.objectId ? sql.AdministratorType.ActiveDirectory : undefined,
-          azureADOnlyAuthentication: administrators.adminGroup?.objectId
-            ? administrators.azureAdOnlyAuthentication ?? true
-            : false,
+        administrators: administrators
+          ? {
+              administratorType: administrators.adminGroup?.objectId
+                ? sql.AdministratorType.ActiveDirectory
+                : undefined,
+              azureADOnlyAuthentication: administrators.adminGroup?.objectId
+                ? administrators.azureAdOnlyAuthentication ?? true
+                : false,
 
-          principalType: sql.PrincipalType.Group,
-          tenantId: azureEnv.tenantId,
-          sid: administrators.adminGroup?.objectId,
-          login: administrators.adminGroup?.displayName,
-        },
+              principalType: sql.PrincipalType.Group,
+              tenantId: azureEnv.tenantId,
+              sid: administrators.adminGroup?.objectId,
+              login: administrators.adminGroup?.displayName,
+            }
+          : undefined,
 
         publicNetworkAccess: network?.privateLink
           ? sql.ServerNetworkAccessFlag.Disabled
@@ -149,6 +155,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       },
       {
         ...this.opts,
+        protect: lock ?? this.opts?.protect,
         dependsOn: this.opts?.dependsOn ? this.opts.dependsOn : password,
         parent: this,
       },
@@ -239,8 +246,11 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       {
         ...elasticPool,
         ...rsGroup,
+        //autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
+        preferredEnclaveType: sql.AlwaysEncryptedEnclaveType.VBS,
+
         serverName: server.name,
-        maxSizeBytes: elasticPool.maxSizeGB * 1024 * 1024 * 1024,
+        maxSizeBytes: elasticPool.maxSizeGB ? elasticPool.maxSizeGB * 1024 * 1024 * 1024 : undefined,
       },
       { dependsOn: server, parent: this },
     );
@@ -280,13 +290,13 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createVulnerabilityAssessment(server: sql.Server) {
-    const { rsGroup, vulnerabilityAssessment } = this.args;
+    const { rsGroup, vulnerabilityAssessment, vaultInfo } = this.args;
     if (!vulnerabilityAssessment) return undefined;
     //this will allows sql server to able to write log into the storage account
     this.addIdentityToRole('contributor', server.identity);
 
     const stgEndpoints = storageHelpers.getStorageEndpointsOutputs(vulnerabilityAssessment.logStorage);
-    const storageKey = '';
+    const storageKey = getStorageAccessKeyOutputs(vulnerabilityAssessment.logStorage, vaultInfo);
 
     const alert = new sql.ServerSecurityAlertPolicy(
       `${this.name}-alert`,
@@ -294,7 +304,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         ...rsGroup,
         securityAlertPolicyName: 'default',
         serverName: server.name,
-        emailAccountAdmins: Boolean(vulnerabilityAssessment.alertEmails),
+        emailAccountAdmins: true,
         emailAddresses: vulnerabilityAssessment.alertEmails,
         retentionDays: vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd ? 30 : 7,
 
@@ -342,7 +352,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
         recurringScans: {
           isEnabled: true,
-          emailSubscriptionAdmins: !vulnerabilityAssessment.alertEmails,
+          emailSubscriptionAdmins: true,
           emails: vulnerabilityAssessment.alertEmails,
         },
 
@@ -366,9 +376,11 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         {
           ...props,
           ...rsGroup,
-          autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
-          useFreeLimit: props.useFreeLimit ?? !azureEnv.isPrd,
+          //autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
+          preferredEnclaveType: sql.AlwaysEncryptedEnclaveType.VBS,
+
           elasticPoolId: elasticPool?.id,
+          sku: elasticPool?.id ? undefined : props.sku,
           serverName: server.name,
           databaseName: name,
         },

@@ -4,11 +4,19 @@ import { PrivateEndpointType } from './vnet';
 export type GroupRoleTypes = 'admin' | 'contributor' | 'readOnly';
 
 type AsInput<T> = {
-  [K in keyof T]: pulumi.Input<NonNullable<T[K]>>;
+  [K in keyof T]: T[K] extends object
+    ? T[K] extends Array<any>
+      ? pulumi.Input<NonNullable<T[K]>>
+      : AsInput<NonNullable<T[K]>>
+    : pulumi.Input<NonNullable<T[K]>>;
 };
 
 type AsOutput<T> = {
-  [K in keyof T]: pulumi.Output<NonNullable<T[K]>>;
+  [K in keyof T]: T[K] extends object
+    ? T[K] extends Array<any>
+      ? pulumi.Output<NonNullable<T[K]>>
+      : AsOutput<NonNullable<T[K]>>
+    : pulumi.Output<NonNullable<T[K]>>;
 };
 
 export type ResourceGroupType = {

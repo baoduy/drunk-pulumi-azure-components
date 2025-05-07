@@ -1,12 +1,13 @@
-import * as pulumi from '@pulumi/pulumi';
 import {
-  RsGroup,
-  UserAssignedIdentity,
+  AzSql,
   GroupRole,
-  rsRoleDefinitions,
   KeyVault,
   Logs,
+  RsGroup,
+  rsRoleDefinitions,
+  UserAssignedIdentity,
 } from '@drunk-pulumi/azure-components';
+import * as pulumi from '@pulumi/pulumi';
 
 const rs = (async () => {
   const groupRoles = new GroupRole('az-test', {
@@ -53,6 +54,26 @@ const rs = (async () => {
     },
     { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );
+
+  // const sql = new AzSql(
+  //   'sql',
+  //   {
+  //     rsGroup,
+  //     vaultInfo,
+  //     defaultUAssignedId: userAssignedId,
+  //     administratorLogin: 'azure-test-sql-admin',
+  //     administrators: { adminGroup: groupRoles.contributor, useDefaultUAssignedIdForConnection: true },
+  //     enableEncryption: true,
+  //     vulnerabilityAssessment: {
+  //       alertEmails: ['steven@drunkcoding.net'],
+  //       logStorage: { id: logs.storage!.id, resourceName: logs.storage!.resourceName, rsGroup },
+  //     },
+  //     elasticPool: { sku: { name: 'BasicPool', tier: 'Basic', capacity: 50 } },
+  //     databases: { 'test-db': { autoPauseDelay: 10, sku: { name: 'Basic', capacity: 0 } } },
+  //     lock: false,
+  //   },
+  //   { dependsOn: [rsGroup, groupRoles, vaultInfo, logs] },
+  // );
 
   return {
     rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),

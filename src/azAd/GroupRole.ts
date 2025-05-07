@@ -14,7 +14,7 @@ export interface GroupRoleArgs
 
 export interface GroupRoleOutput {
   objectId: string;
-  name: string;
+  displayName: string;
 }
 export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
   public readonly admin: pulumi.Output<GroupRoleOutput>;
@@ -44,17 +44,17 @@ export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
 
     this.admin = pulumi.output({
       objectId: roleInstances.admin.objectId,
-      name: roleInstances.admin.displayName,
+      displayName: roleInstances.admin.displayName,
     });
 
     this.contributor = pulumi.output({
       objectId: roleInstances.contributor.objectId,
-      name: roleInstances.contributor.displayName,
+      displayName: roleInstances.contributor.displayName,
     });
 
     this.readOnly = pulumi.output({
       objectId: roleInstances.readOnly.objectId,
-      name: roleInstances.readOnly.displayName,
+      displayName: roleInstances.readOnly.displayName,
     });
 
     this.configHierarchyRoles();

@@ -1,11 +1,11 @@
+import * as redis from '@pulumi/azure-native/redis';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
-import * as redis from '@pulumi/azure-native/redis';
 import * as types from '../types';
-import { convertToIpRange } from './helpers';
-import { PrivateEndpointType } from '../vnet';
-import * as vnet from '../vnet';
 import * as vault from '../vault';
+import * as vnet from '../vnet';
+import { PrivateEndpointType } from '../vnet';
+import { convertToIpRange } from './helpers';
 
 export interface RedisArgs
   extends BaseArgs,
@@ -54,7 +54,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   }
 
   private createRedis() {
-    const { rsGroup, network, ...props } = this.args;
+    const { rsGroup, network, lock, ...props } = this.args;
 
     const server = new redis.Redis(
       this.name,
@@ -70,7 +70,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
         updateChannel: 'Stable',
       },
-      { ...this.opts, parent: this },
+      { ...this.opts, protect: lock ?? this.opts?.protect, parent: this },
     );
 
     return server;

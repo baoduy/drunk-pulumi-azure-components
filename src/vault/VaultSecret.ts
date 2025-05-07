@@ -1,8 +1,9 @@
-import { WithVaultInfo } from '../types';
-import * as pulumi from '@pulumi/pulumi';
-import { configHelper, stackInfo, removeLeadingAndTrailingDash } from '../helpers';
 import { VaultSecretResource } from '@drunk-pulumi/azure-providers/VaultSecret';
+import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
+import { configHelper } from '../helpers';
+import { WithVaultInfo } from '../types';
+import * as vaultHelpers from './helpers';
 
 export type SecretItemArgs = {
   //** The value of the secret. If it is not provided the value will get from project secret. */
@@ -23,7 +24,7 @@ export class VaultSecret extends pulumi.ComponentResource<VaultSecretArgs> {
   constructor(private name: string, args: VaultSecretArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('VaultSecret'), name, args, opts);
     const secretValue = args.value ?? configHelper.getSecret(name) ?? '';
-    const secretName = this.getSecretName();
+    const secretName = vaultHelpers.getSecretName(this.name);
 
     const secret = new VaultSecretResource(
       name,
@@ -46,15 +47,5 @@ export class VaultSecret extends pulumi.ComponentResource<VaultSecretArgs> {
       vaultUrl: this.vaultUrl,
       version: this.version,
     });
-  }
-
-  private getSecretName() {
-    const name = this.name
-      .replace(new RegExp(stackInfo.stack, 'g'), '') // Replace occurrences of "stack" variable with "-"
-      .replace(/\.|_|\s/g, '-') // Replace ".", "_", and spaces with "-"
-      .replace(/-+/g, '-') // Replace multiple dashes with a single dash
-      .toLowerCase(); // Convert the result to lowercase
-
-    return removeLeadingAndTrailingDash(name);
   }
 }

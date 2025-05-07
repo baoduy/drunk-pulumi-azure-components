@@ -1,0 +1,25 @@
+import * as search from '@pulumi/azure-native/search';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
+import * as vault from '../vault';
+import { PrivateEndpoint } from './PrivateEndpoint';
+
+export interface FirewallArgs
+  extends CommonBaseArgs,
+    types.WithUserAssignedIdentity,
+    types.WithEncryptionEnabler,
+    Pick<search.ServiceArgs, 'authOptions' | 'hostingMode' | 'partitionCount' | 'replicaCount' | 'semanticSearch'> {
+  sku: search.SkuName;
+  disableLocalAuth?: boolean;
+  network?: Pick<types.NetworkArgs, 'publicNetworkAccess' | 'ipRules' | 'privateLink'>;
+}
+
+export class Firewall extends BaseResourceComponent<FirewallArgs> {
+  //public readonly id: pulumi.Output<string>;
+  //public readonly resourceName: pulumi.Output<string>;
+
+  constructor(name: string, args: FirewallArgs, opts?: pulumi.ComponentResourceOptions) {
+    super('Firewall', name, args, opts);
+  }
+}

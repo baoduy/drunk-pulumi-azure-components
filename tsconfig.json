@@ -18,9 +18,7 @@
     "importsNotUsedAsValues": "remove",
     "verbatimModuleSyntax": false
   },
-  "exclude": [
-    "node_modules"
-  ],
+  "exclude": ["node_modules"],
   "files": [
     "src/aks/ContainerRegistry.ts",
     "src/aks/index.ts",
@@ -88,7 +86,10 @@
     "src/vm/helpers.ts",
     "src/vm/index.ts",
     "src/vnet/AzCdn.ts",
+    "src/vnet/Basion.ts",
     "src/vnet/DnsZone.ts",
+    "src/vnet/Firewall.ts",
+    "src/vnet/IpAddresses.ts",
     "src/vnet/PrivateDnsZone.ts",
     "src/vnet/PrivateEndpoint.ts",
     "src/vnet/VirtualNetwork.ts",

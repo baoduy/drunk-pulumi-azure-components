@@ -5,7 +5,7 @@ import * as types from '../types';
 import * as vault from '../vault';
 import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
 
-export interface VirtualNetworkArgs
+export interface NatGatewayArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
@@ -15,11 +15,11 @@ export interface VirtualNetworkArgs
   network?: Pick<types.NetworkArgs, 'publicNetworkAccess' | 'ipRules' | 'privateLink'>;
 }
 
-export class VirtualNetwork extends BaseResourceComponent<VirtualNetworkArgs> {
+export class NatGateway extends BaseResourceComponent<NatGatewayArgs> {
   //public readonly id: pulumi.Output<string>;
   //public readonly resourceName: pulumi.Output<string>;
 
-  constructor(name: string, args: VirtualNetworkArgs, opts?: pulumi.ComponentResourceOptions) {
-    super('VirtualNetwork', name, args, opts);
+  constructor(name: string, args: NatGatewayArgs, opts?: pulumi.ComponentResourceOptions) {
+    super('NatGateway', name, args, opts);
   }
 }

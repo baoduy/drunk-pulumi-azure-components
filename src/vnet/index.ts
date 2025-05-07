@@ -6,4 +6,4 @@ export * as vnetHelpers from './helpers';
 export * from './IpAddresses';
 export * from './PrivateDnsZone';
 export * from './PrivateEndpoint';
-export * from './VirtualNetwork';
+export * from './HubVnet';

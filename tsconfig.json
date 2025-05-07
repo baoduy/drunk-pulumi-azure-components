@@ -92,7 +92,7 @@
     "src/vnet/IpAddresses.ts",
     "src/vnet/PrivateDnsZone.ts",
     "src/vnet/PrivateEndpoint.ts",
-    "src/vnet/VirtualNetwork.ts",
+    "src/vnet/HubVnet.ts",
     "src/vnet/helpers.ts",
     "src/vnet/index.ts"
   ]

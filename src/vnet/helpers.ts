@@ -19,3 +19,23 @@ export const getRsNameFromId = (resourceId: string) => {
   //If not just get last 25 character
   return resourceId.slice(-25);
 };
+
+export enum AzureSubnetNames {
+  AppGatewaySubnetName = 'app-gateway',
+  GatewaySubnetName = 'GatewaySubnet',
+  AzFirewallSubnet = 'AzureFirewallSubnet',
+  AzFirewallManagementSubnet = 'AzureFirewallManagementSubnet',
+  AzBastionSubnetName = 'AzureBastionSubnet',
+}
+
+export const defaultServicesEndpoints = [
+  'Microsoft.AzureActiveDirectory',
+  'Microsoft.AzureCosmosDB',
+  'Microsoft.ContainerRegistry',
+  'Microsoft.EventHub',
+  'Microsoft.KeyVault',
+  'Microsoft.ServiceBus',
+  'Microsoft.Sql',
+  'Microsoft.Storage',
+  'Microsoft.Web',
+];

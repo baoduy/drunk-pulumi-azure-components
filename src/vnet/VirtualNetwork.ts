@@ -6,6 +6,7 @@ import * as types from '../types';
 import { Basion, BasionArgs } from './Basion';
 import { Firewall, FirewallArgs } from './Firewall';
 import { RouteTable, RouteTableArgs } from './RouteTable';
+import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import * as helpers from './helpers';
 
 export type SubnetArgs = Pick<
@@ -37,6 +38,7 @@ export interface HubVnetArgs extends CommonBaseArgs {
   };
   routeTable?: Omit<RouteTableArgs, 'rsGroup'>;
   natGateway?: Pick<network.NatGatewayArgs, 'idleTimeoutInMinutes' | 'zones'> & { sku: network.NatGatewaySkuName };
+  vpnGateway?: Omit<VpnGatewayArgs, 'rsGroup' | 'subnetId'> & { subnetPrefix: pulumi.Input<string> };
   basion?: Omit<BasionArgs, 'rsGroup' | 'subnetId'> & {
     subnetPrefix: pulumi.Input<string>;
   };
@@ -69,6 +71,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
   public readonly securityGroup?: types.ResourceOutputs;
   public readonly routeTable: types.ResourceOutputs;
   public readonly natGateway?: types.ResourceOutputs;
+  public readonly vpnGateway?: types.ResourceOutputs;
   public readonly firewall?: types.ResourceOutputs;
   public readonly vnet: types.ResourceOutputs;
   public readonly subnets: Record<string, types.ResourceOutputs>;
@@ -82,6 +85,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     const { vnet, subnets } = this.createVnet({ natGateway, routeTable, securityGroup });
     const firewall = this.createFirewall(subnets);
     const basion = this.createBasion(subnets);
+    const vpnGateway = this.createVpnGateway(subnets);
 
     this.createOutboundRoute({ router: routeTable!, natGateway, firewall });
 
@@ -89,6 +93,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     if (securityGroup) this.securityGroup = { id: securityGroup.id, resourceName: securityGroup.name };
     this.routeTable = { id: routeTable.id, resourceName: routeTable.resourceName };
     if (natGateway) this.natGateway = { id: natGateway.id, resourceName: natGateway.name };
+    if (vpnGateway) this.vpnGateway = { id: vpnGateway.id, resourceName: vpnGateway.resourceName };
     if (firewall) this.firewall = firewall.firewall;
     this.vnet = { id: vnet.id, resourceName: vnet.name };
 
@@ -104,6 +109,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
       securityGroup: this.securityGroup,
       routeTable: this.routeTable,
       natGateway: this.natGateway,
+      vpnGateway: this.vpnGateway,
       firewall: this.firewall,
       vnet: this.vnet,
       subnets: this.subnets,
@@ -166,6 +172,22 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
         publicIpAddresses,
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
+    );
+  }
+
+  private createVpnGateway(subnets: Record<string, network.Subnet>) {
+    const { rsGroup, vpnGateway } = this.args;
+    if (!vpnGateway) return undefined;
+
+    const vpnSubnet = subnets[helpers.AzureSubnetNames.GatewaySubnetName];
+    return new VpnGateway(
+      `${this.name}-vpn`,
+      {
+        ...vpnGateway,
+        rsGroup,
+        subnetId: vpnSubnet.id,
+      },
+      { dependsOn: vpnSubnet, parent: this },
     );
   }
 
@@ -237,7 +259,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     routeTable: RouteTable;
     securityGroup?: network.NetworkSecurityGroup;
   }) {
-    const { rsGroup, firewall, basion, vnet } = this.args;
+    const { rsGroup, firewall, basion, vpnGateway, vnet } = this.args;
     const subnets = vnet.subnets ?? [];
     const dependsOn: pulumi.Input<pulumi.Resource>[] = [];
 
@@ -272,6 +294,15 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
         subnetName: helpers.AzureSubnetNames.AzBastionSubnetName,
         addressPrefix: basion.subnetPrefix,
         disableSecurityGroup: false,
+        disableRouteTable: true,
+        disableNatGateway: true,
+      });
+    }
+    if (vpnGateway) {
+      subnets.push({
+        subnetName: helpers.AzureSubnetNames.GatewaySubnetName,
+        addressPrefix: vpnGateway.subnetPrefix,
+        disableSecurityGroup: true,
         disableRouteTable: true,
         disableNatGateway: true,
       });

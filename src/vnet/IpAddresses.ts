@@ -2,23 +2,26 @@ import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
+type IpSku = {
+  /**
+   * Name of a public IP address SKU.
+   */
+  name: network.PublicIPAddressSkuName;
+  /**
+   * Tier of a public IP address SKU.
+   */
+  tier?: network.PublicIPAddressSkuTier;
+};
+
 export interface IpAddressesArgs extends CommonBaseArgs {
-  sku: {
-    /**
-     * Name of a public IP address SKU.
-     */
-    name?: network.PublicIPAddressSkuName;
-    /**
-     * Tier of a public IP address SKU.
-     */
-    tier?: network.PublicIPAddressSkuTier;
-  };
+  sku: IpSku;
   prefix?: { length: 28 | 29 | 30 | 31 | number };
-  config?: Omit<
+  /** The default config for all Ip address. */
+  defaultConfig?: Omit<
     network.PublicIPAddressArgs,
     'id' | 'ipAddress' | 'publicIPPrefix' | 'resourceGroupName' | 'location' | 'sku' | 'publicIPAllocationMethod'
   >;
-  ipAddresses: Array<{ name: string }>;
+  ipAddresses: Array<Pick<network.PublicIPAddressArgs, 'zones'> & { name: string; sku?: IpSku }>;
 }
 
 export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
@@ -34,18 +37,19 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
   constructor(name: string, args: IpAddressesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('IpAddresses', name, args, opts);
 
-    const { rsGroup, sku, config, ipAddresses } = this.args;
+    const { rsGroup, sku, defaultConfig, ipAddresses } = this.args;
     const prefix = this.createIpPrefix();
 
     ipAddresses.map((ip) => {
       const ipAddress = new network.PublicIPAddress(
         `${name}-${ip.name}`,
         {
-          ...config,
+          ...defaultConfig,
           ...rsGroup,
-          sku,
+          sku: ip.sku ?? sku,
           publicIPPrefix: prefix ? { id: prefix.id } : undefined,
           publicIPAllocationMethod: network.IPAllocationMethod.Static,
+          zones: ip.zones ?? defaultConfig?.zones,
         },
         { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this },
       );

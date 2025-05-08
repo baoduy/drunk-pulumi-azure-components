@@ -7,12 +7,12 @@ runtime:
 config:
   pulumi:autonaming:
     value:
-      pattern: ${project}-${stack}-${name}-${alphanum(6)}
+      pattern: ${stack}-${name}-${project}-${alphanum(6)}
       providers:
         azure-native:
           resources:
             'azure-native:resources:ResourceGroup':
-              pattern: ${project}-${stack}-${name}
+              pattern: ${stack}-${name}-${project}
             'azure-native:keyvault:Vault':
               pattern: ${stack}-${name}-${alphanum(6)}
             'azure-native:storage:StorageAccount':

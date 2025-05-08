@@ -2,6 +2,7 @@ import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
+import { rsHelpers } from '../helpers';
 import * as helpers from './helpers';
 import { PrivateDnsZone } from './PrivateDnsZone';
 
@@ -97,7 +98,7 @@ export class PrivateEndpoint extends pulumi.ComponentResource<PrivateEndpointArg
       ];
 
       return new PrivateDnsZone(
-        `${helpers.getRsNameFromId(rsId)}.${linkInfo.privateDnsZoneName}`,
+        `${rsHelpers.getRsNameFromId(rsId)}.${linkInfo.privateDnsZoneName}`,
         {
           rsGroup: args.rsGroup,
           vnetLinks,

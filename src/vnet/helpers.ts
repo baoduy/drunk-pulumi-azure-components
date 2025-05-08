@@ -12,18 +12,6 @@ export const getSubnetNameFromId = (subnetId: string) => {
   return subnetId.split('/subnets')[1];
 };
 
-export const getRsNameFromId = (resourceId: string) => {
-  resourceId = resourceId.trim();
-  //Resource ID
-  if (resourceId.includes('/')) {
-    return resourceId.split('/').pop();
-  }
-  //Domain
-  if (resourceId.includes('.')) return resourceId.split('.')[0];
-  //If not just get last 25 character
-  return resourceId.slice(-25);
-};
-
 export const getDnsRecordName = (recordName: string) => {
   return recordName === '*' ? `all-aRecord` : recordName === '@' ? `root-aRecord` : `${recordName}-aRecord`;
 };

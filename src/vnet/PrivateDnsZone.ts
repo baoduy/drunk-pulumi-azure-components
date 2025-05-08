@@ -3,6 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
+import { rsHelpers } from '../helpers';
 
 export type DnsRecordArgs = Omit<
   privateDns.PrivateRecordSetArgs,
@@ -90,7 +91,7 @@ export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs>
     const group = this.getRsGroupInfo();
     pulumi.output(this.args.vnetLinks).apply((vids) =>
       vids.map((v) => {
-        const vnetName = helpers.getRsNameFromId(v.vnetId);
+        const vnetName = rsHelpers.getRsNameFromId(v.vnetId);
         return new privateDns.VirtualNetworkLink(
           `${this._rsName}-${vnetName}`,
           {

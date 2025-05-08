@@ -1,71 +1,68 @@
-import * as nw from '@pulumi/azure-native/network';
+import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
+import { rsHelpers } from '../helpers';
 
-export interface NetworkPeeringArgs
-  extends types.WithResourceGroupInputs,
-    Pick<
-      nw.BastionHostArgs,
-      | 'disableCopyPaste'
-      | 'dnsName'
-      | 'enableFileCopy'
-      | 'enableIpConnect'
-      | 'enableKerberos'
-      | 'enablePrivateOnlyBastion'
-      | 'enableSessionRecording'
-      | 'enableShareableLink'
-      | 'enableTunneling'
-      | 'scaleUnits'
-      | 'zones'
-      | 'tags'
-    > {
-  sku: nw.BastionHostSkuName;
-  publicIPAddress: types.SubResourceInputs;
-  subnetId: pulumi.Input<string>;
-  network?: Pick<types.NetworkArgs, 'ipRules'>;
+export type PeeringDirectionType = 'Unidirectional' | 'Bidirectional';
+
+type NetworkPeeringProps = Omit<
+  network.VirtualNetworkPeeringArgs,
+  | 'id'
+  | 'name'
+  | 'peeringState'
+  | 'resourceGroupName'
+  | 'virtualNetworkName'
+  | 'virtualNetworkPeeringName'
+  | 'syncRemoteAddressSpace'
+> & { syncRemoteAddressSpace: 'true' | 'false' };
+
+const defaultProps: NetworkPeeringProps = {
+  allowForwardedTraffic: true,
+  allowVirtualNetworkAccess: true,
+  allowGatewayTransit: true,
+  syncRemoteAddressSpace: 'true',
+  doNotVerifyRemoteGateways: true,
+};
+
+export interface NetworkPeeringArgs {
+  options?: NetworkPeeringProps;
+  firstVnet: types.ResourceInputs;
+  secondVnet: types.ResourceInputs;
+  direction: PeeringDirectionType;
 }
 
 export class NetworkPeering extends pulumi.ComponentResource<NetworkPeeringArgs> {
-  public readonly id: pulumi.Output<string>;
-  public readonly resourceName: pulumi.Output<string>;
-
-  constructor(name: string, args: NetworkPeeringArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(private name: string, private args: NetworkPeeringArgs, private opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('NetworkPeering'), name, args, opts);
 
-    const { rsGroup, sku, network, publicIPAddress, subnetId, ...props } = args;
+    const { firstVnet, secondVnet, direction } = args;
+    pulumi.all([firstVnet, secondVnet]).apply(([first, second]) => {
+      this.createPeering(first, second);
+      if (direction === 'Bidirectional') this.createPeering(second, first);
+    });
+  }
 
-    const bs = new nw.BastionHost(
-      name,
+  private createPeering(from: types.ResourceType, to: types.ResourceType) {
+    const { options } = this.args;
+    const vnetInfo = rsHelpers.getRsInfoFromId(from.id);
+
+    return new network.VirtualNetworkPeering(
+      `${this.name}-${from.resourceName}-to-${to.resourceName}`,
       {
-        ...props,
-        ...rsGroup,
-        sku: { name: sku },
-        ipConfigurations: [
-          {
-            name: 'IpConfig',
-            publicIPAddress: sku !== 'Developer' ? publicIPAddress : undefined,
-            subnet: { id: subnetId },
-            privateIPAllocationMethod: nw.IPAllocationMethod.Dynamic,
-          },
-        ],
-
-        networkAcls: network?.ipRules
-          ? { ipRules: pulumi.output(network.ipRules).apply((ips) => ips.map((ip) => ({ addressPrefix: ip }))) }
-          : undefined,
+        ...defaultProps,
+        ...options,
+        virtualNetworkName: vnetInfo.resourceName,
+        resourceGroupName: vnetInfo.rsGroup.resourceGroupName,
+        peeringSyncLevel: 'FullyInSync',
+        remoteVirtualNetwork: {
+          id: to.id,
+        },
       },
       {
-        ...opts,
+        dependsOn: this.opts?.dependsOn,
         parent: this,
       },
     );
-
-    this.id = bs.id;
-    this.resourceName = bs.name;
-
-    this.registerOutputs({
-      id: this.id,
-      resourceName: this.resourceName,
-    });
   }
 }

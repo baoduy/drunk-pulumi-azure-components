@@ -8,6 +8,7 @@ import { Firewall, FirewallArgs } from './Firewall';
 import { RouteTable, RouteTableArgs } from './RouteTable';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import * as helpers from './helpers';
+import { NetworkPeering, NetworkPeeringArgs } from './NetworkPeering';
 
 export type SubnetArgs = Pick<
   network.SubnetArgs,
@@ -47,7 +48,9 @@ export interface HubVnetArgs extends CommonBaseArgs {
     managementSubnetPrefix?: pulumi.Input<string>;
     managementPublicIpAddress?: types.SubResourceInputs;
   };
-
+  vnetPeering?: Omit<NetworkPeeringArgs, 'firstVnet' | 'secondVnet'> & {
+    vnet: types.ResourceInputs;
+  };
   vnet: Omit<
     network.VirtualNetworkArgs,
     | 'addressSpace'
@@ -88,6 +91,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     const vpnGateway = this.createVpnGateway(subnets);
 
     this.createOutboundRoute({ router: routeTable!, natGateway, firewall });
+    this.createPeering(vnet);
 
     if (basion) this.basion = { id: basion.id, resourceName: basion.resourceName };
     if (securityGroup) this.securityGroup = { id: securityGroup.id, resourceName: securityGroup.name };
@@ -402,5 +406,20 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     if (natGateway && !firewall) {
       return router.addRoute('Internet-via-Gateway', helpers.defaultRouteRules.defaultGatewayRoute);
     }
+  }
+
+  private createPeering(vnet: network.VirtualNetwork) {
+    const { vnetPeering } = this.args;
+    if (!vnetPeering) return undefined;
+
+    return new NetworkPeering(
+      `${this.name}-peering`,
+      {
+        ...vnetPeering,
+        firstVnet: { id: vnet.id, resourceName: vnet.name },
+        secondVnet: vnetPeering.vnet,
+      },
+      { dependsOn: vnet, parent: this },
+    );
   }
 }

@@ -388,9 +388,10 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
                 : undefined,
               natGateway: s.disableNatGateway ? undefined : natGateway ? { id: natGateway.id } : undefined,
             },
-            { dependsOn: vnet, parent: this },
+            { dependsOn: vnet, deleteBeforeReplace: true, parent: this },
           )),
       );
+
     return rs;
   }
 

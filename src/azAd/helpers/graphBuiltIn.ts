@@ -4,8 +4,7 @@ const graph = {
 };
 
 const principals = {
-  'odata.metadata':
-    'https://graph.windows.net/myorganization/$metadata#directoryObjects',
+  'odata.metadata': 'https://graph.windows.net/myorganization/$metadata#directoryObjects',
   value: [
     {
       'odata.type': 'Microsoft.DirectoryServices.ServicePrincipal',
@@ -42,8 +41,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read, create, edit, and delete all the short notes without a signed-in user.',
+          description: 'Allows the app to read, create, edit, and delete all the short notes without a signed-in user.',
           displayName: "Read, create, edit, and delete all users' short notes",
           id: '842c284c-763d-4a97-838d-79787d129bab',
           isEnabled: true,
@@ -53,8 +51,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all the short notes without a signed-in user.',
+          description: 'Allows the app to read all the short notes without a signed-in user.',
           displayName: "Read all users' short notes",
           id: '0c7d31ec-31ca-4f58-b6ec-9950b6b0de69',
           isEnabled: true,
@@ -110,8 +107,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Add and remove members from all teams, without a signed-in user. Does not allow adding or removing a member with the owner role. Additionally, does not allow the app to elevate an existing member to the owner role.',
-          displayName:
-            'Add and remove members with non-owner role for all teams',
+          displayName: 'Add and remove members with non-owner role for all teams',
           id: '4437522e-9a86-4a41-a7da-e380edd4a97d',
           isEnabled: true,
           lang: null,
@@ -120,8 +116,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to create teams without a signed-in user. ',
+          description: 'Allows the app to create teams without a signed-in user. ',
           displayName: 'Create teams',
           id: '23fc2474-f741-46ce-8465-674744c5c361',
           isEnabled: true,
@@ -232,8 +227,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Allows the app to create chat and channel messages, without a signed in user. The app specifies which user appears as the sender, and can backdate the message to appear as if it was sent long ago. The messages can be sent to any chat or channel in the organization.',
-          displayName:
-            "Create chat and channel messages with anyone's identity and with any timestamp",
+          displayName: "Create chat and channel messages with anyone's identity and with any timestamp",
           id: 'dfb0dd15-61de-45b2-be36-d6a69fba3c79',
           isEnabled: true,
           lang: null,
@@ -242,8 +236,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the application to read and update print task definitions without a signed-in user. ',
+          description: 'Allows the application to read and update print task definitions without a signed-in user. ',
           displayName: 'Read, write and update print task definitions',
           id: '456b71a7-0ee0-4588-9842-c123fcc8f664',
           isEnabled: true,
@@ -319,8 +312,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the application to read printers without a signed-in user. ',
+          description: 'Allows the application to read printers without a signed-in user. ',
           displayName: 'Read printers',
           id: '9709bb33-4549-49d4-8ed9-a8f65e45bb0f',
           isEnabled: true,
@@ -365,8 +357,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             "Allows the app to read and write your organization's authorization policy without a signed in user. For example, authorization policies can control some of the permissions that the out-of-the-box user role has by default.",
-          displayName:
-            "Read and write your organization's authorization policy",
+          displayName: "Read and write your organization's authorization policy",
           id: 'fb221be6-99f2-473f-bd32-01c6a0e9ca3b',
           isEnabled: true,
           lang: null,
@@ -408,8 +399,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Read the members of all channels, without a signed-in user.',
+          description: 'Read the members of all channels, without a signed-in user.',
           displayName: 'Read the members of all channels',
           id: '3b55498e-47ec-484f-8136-9013221c06a9',
           isEnabled: true,
@@ -430,8 +420,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Read the members of all teams, without a signed-in user.',
+          description: 'Read the members of all teams, without a signed-in user.',
           displayName: 'Read the members of all teams',
           id: '660b7406-55f1-41ca-a0ed-0b035e182f3e',
           isEnabled: true,
@@ -451,8 +440,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            "Read and change all teams' settings, without a signed-in user.",
+          description: "Read and change all teams' settings, without a signed-in user.",
           displayName: "Read and change all teams' settings",
           id: 'bdd80a03-d9bc-451d-b7c4-ce7c63fe3c8f',
           isEnabled: true,
@@ -462,8 +450,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Read all channel names and channel descriptions, without a signed-in user.',
+          description: 'Read all channel names and channel descriptions, without a signed-in user.',
           displayName: 'Read the names and descriptions  of all channels',
           id: '59a6b24b-4225-4393-8165-ebaec5f55d7a',
           isEnabled: true,
@@ -485,8 +472,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Read and write the names, descriptions, and settings of all channels, without a signed-in user.',
-          displayName:
-            'Read and write the names, descriptions, and settings of all channels',
+          displayName: 'Read and write the names, descriptions, and settings of all channels',
           id: '243cded2-bd16-4fd6-a953-ff8177894c3d',
           isEnabled: true,
           lang: null,
@@ -495,10 +481,8 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Read all channel names, channel descriptions, and channel settings, without a signed-in user.',
-          displayName:
-            'Read the names, descriptions, and settings of all channels',
+          description: 'Read all channel names, channel descriptions, and channel settings, without a signed-in user.',
+          displayName: 'Read the names, descriptions, and settings of all channels',
           id: 'c97b873f-f59f-49aa-8a0e-52b32d762124',
           isEnabled: true,
           lang: null,
@@ -551,8 +535,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Allows the app to create or delete document libraries and lists in all site collections without a signed in user.',
-          displayName:
-            'Create, edit, and delete items and lists in all site collections',
+          displayName: 'Create, edit, and delete items and lists in all site collections',
           id: '0c0bf378-bf22-4481-8f81-9e89a9b4960a',
           isEnabled: true,
           lang: null,
@@ -561,8 +544,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to have full control of all site collections without a signed in user.',
+          description: 'Allows the app to have full control of all site collections without a signed in user.',
           displayName: 'Have full control of all site collections',
           id: 'a82116e5-55eb-4c41-a434-62fe8a61c773',
           isEnabled: true,
@@ -583,8 +565,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            "Allows the app to manage all users' shift schedule preferences without a signed-in user.",
+          description: "Allows the app to manage all users' shift schedule preferences without a signed-in user.",
           displayName: 'Read and write all user shift preferences',
           id: 'd1eec298-80f3-49b0-9efb-d90e224798ac',
           isEnabled: true,
@@ -594,8 +575,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            "Allows the app to read all users' shift schedule preferences without a signed-in user.",
+          description: "Allows the app to read all users' shift schedule preferences without a signed-in user.",
           displayName: 'Read all user shift preferences',
           id: 'de023814-96df-4f53-9376-1e2891ef5a18',
           isEnabled: true,
@@ -629,8 +609,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             "Allows the app to read and write your organization's application configuration policies, without a signed-in user.  This includes policies such as activityBasedTimeoutPolicy, claimsMappingPolicy, homeRealmDiscoveryPolicy, tokenIssuancePolicy  and tokenLifetimePolicy.",
-          displayName:
-            "Read and write your organization's application configuration policies",
+          displayName: "Read and write your organization's application configuration policies",
           id: 'be74164b-cff1-491c-8741-e671cb536e13',
           isEnabled: true,
           lang: null,
@@ -639,8 +618,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all domain properties without a signed-in user.',
+          description: 'Allows the app to read all domain properties without a signed-in user.',
           displayName: 'Read domains',
           id: 'dbb9058a-0e50-45d7-ae91-66909b5d4664',
           isEnabled: true,
@@ -707,8 +685,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             "Allows the app to read and write your organization's conditional access policies, without a signed-in user.",
-          displayName:
-            "Read and write your organization's conditional access policies",
+          displayName: "Read and write your organization's conditional access policies",
           id: '01c0a623-fc9b-48e9-b794-0756f8e8f067',
           isEnabled: true,
           lang: null,
@@ -761,8 +738,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to create groups without a signed-in user.',
+          description: 'Allows the app to create groups without a signed-in user.',
           displayName: 'Create groups',
           id: 'bf7b1a76-6e77-406b-b258-bf5c7720e98f',
           isEnabled: true,
@@ -816,8 +792,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all applications and service principals without a signed-in user.',
+          description: 'Allows the app to read all applications and service principals without a signed-in user.',
           displayName: 'Read all applications',
           id: '9a5d68dd-52b0-4cc2-bd40-abcf44ac3a30',
           isEnabled: true,
@@ -884,8 +859,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Allows the app to read and write entitlement management requests, business flows, and governance policy templates without a signed-in user.',
-          displayName:
-            'Read and write all entitlement management approval requests',
+          displayName: 'Read and write all entitlement management approval requests',
           id: 'fbfdecc9-4b78-4882-bb98-7decbddcbddf',
           isEnabled: true,
           lang: null,
@@ -949,8 +923,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all the indicators for your organization, without a signed-in user.',
+          description: 'Allows the app to read all the indicators for your organization, without a signed-in user.',
           displayName: 'Read all threat indicators',
           id: '197ee4e9-b993-4066-898f-d6aecc55125b',
           isEnabled: true,
@@ -1037,8 +1010,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            "Allows the app to read all users' teamwork activity feed, without a signed-in user.",
+          description: "Allows the app to read all users' teamwork activity feed, without a signed-in user.",
           displayName: "Read all users' teamwork activity feed",
           id: '70dec828-f620-4914-aa83-a29117306807',
           isEnabled: true,
@@ -1105,8 +1077,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Allows the app to perform remote high impact actions such as wiping the device or resetting the passcode on devices managed by Microsoft Intune, without a signed-in user.',
-          displayName:
-            'Perform user-impacting remote actions on Microsoft Intune devices',
+          displayName: 'Perform user-impacting remote actions on Microsoft Intune devices',
           id: '5b07b0dd-2377-4e44-a38d-703f09a0dc3c',
           isEnabled: true,
           lang: null,
@@ -1117,8 +1088,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Allows the app to read and write properties of Microsoft Intune-managed device configuration and device compliance policies and their assignment to groups, without a signed-in user.',
-          displayName:
-            'Read and write Microsoft Intune device configuration and policies',
+          displayName: 'Read and write Microsoft Intune device configuration and policies',
           id: '9241abd9-d0e6-425a-bd4f-47ba86e767a4',
           isEnabled: true,
           lang: null,
@@ -1193,8 +1163,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to get direct access to media streams in a call, without a signed-in user.',
+          description: 'Allows the app to get direct access to media streams in a call, without a signed-in user.',
           displayName: 'Access media streams in a call as an app',
           id: 'a7a681dc-756e-4909-b988-f160edc6655f',
           isEnabled: true,
@@ -1204,8 +1173,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read online meeting details in your organization, without a signed-in user.',
+          description: 'Allows the app to read online meeting details in your organization, without a signed-in user.',
           displayName: 'Read online meeting details',
           id: 'c1684f21-1984-47fa-9d61-2dc8c296bb70',
           isEnabled: true,
@@ -1215,8 +1183,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read and create online meetings as an application in your organization.',
+          description: 'Allows the app to read and create online meetings as an application in your organization.',
           displayName: 'Read and create online meetings',
           id: 'b8bb2037-6e08-44ac-a4ea-4674e010e2a4',
           isEnabled: true,
@@ -1226,8 +1193,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            "Allows the app to read or write your organization's user flows, without a signed-in user.",
+          description: "Allows the app to read or write your organization's user flows, without a signed-in user.",
           displayName: 'Read and write all identity user flows',
           id: '65319a09-a2be-469d-8782-f6b07debf789',
           isEnabled: true,
@@ -1237,8 +1203,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            "Allows the app to read your organization's user flows, without a signed-in user.",
+          description: "Allows the app to read your organization's user flows, without a signed-in user.",
           displayName: 'Read all identity user flows',
           id: '1b0c317f-dd31-4305-9932-259a8b6e8099',
           isEnabled: true,
@@ -1259,8 +1224,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read events of all calendars without a signed-in user.',
+          description: 'Allows the app to read events of all calendars without a signed-in user.',
           displayName: 'Read calendars in all mailboxes',
           id: '798ee544-9d2d-430c-a058-570e29e34338',
           isEnabled: true,
@@ -1336,8 +1300,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all contacts in all mailboxes without a signed-in user.',
+          description: 'Allows the app to read all contacts in all mailboxes without a signed-in user.',
           displayName: 'Read contacts in all mailboxes',
           id: '089fe4d0-434a-44c5-8827-41ba8a0b17f5',
           isEnabled: true,
@@ -1347,8 +1310,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to send mail as any user without a signed-in user.',
+          description: 'Allows the app to send mail as any user without a signed-in user.',
           displayName: 'Send mail as any user',
           id: 'b633e1c5-b582-4048-a93e-9f11b44c7e96',
           isEnabled: true,
@@ -1369,8 +1331,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read mail in all mailboxes without a signed-in user.',
+          description: 'Allows the app to read mail in all mailboxes without a signed-in user.',
           displayName: 'Read mail in all mailboxes',
           id: '810c84a8-4a9e-49e6-bf7d-12d183f40d01',
           isEnabled: true,
@@ -1435,8 +1396,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all channel messages in Microsoft Teams',
+          description: 'Allows the app to read all channel messages in Microsoft Teams',
           displayName: 'Read all channel messages',
           id: '7b2449af-6ccd-4f4d-9f78-e550c193f0d1',
           isEnabled: true,
@@ -1446,8 +1406,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all 1-to-1 or group chat messages in Microsoft Teams.',
+          description: 'Allows the app to read all 1-to-1 or group chat messages in Microsoft Teams.',
           displayName: 'Read all chat messages',
           id: '6b7d71aa-70aa-4810-a8d9-5d9fb2830017',
           isEnabled: true,
@@ -1556,8 +1515,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read and query your audit log activities, without a signed-in user.',
+          description: 'Allows the app to read and query your audit log activities, without a signed-in user.',
           displayName: 'Read all audit log data',
           id: 'b0afded3-3588-46d8-8b3d-9842eff778da',
           isEnabled: true,
@@ -1567,8 +1525,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read user profiles without a signed in user.',
+          description: 'Allows the app to read user profiles without a signed in user.',
           displayName: "Read all users' full profiles",
           id: 'df021288-bdef-4463-88db-98f22de89214',
           isEnabled: true,
@@ -1578,8 +1535,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read and update user profiles without a signed in user.',
+          description: 'Allows the app to read and update user profiles without a signed in user.',
           displayName: "Read and write all users' full profiles",
           id: '741f803b-c850-494e-b5df-cde7c675a1ca',
           isEnabled: true,
@@ -1600,8 +1556,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Manage the state and settings of all Microsoft education apps.',
+          description: 'Manage the state and settings of all Microsoft education apps.',
           displayName: 'Manage education app settings',
           id: '9bc431c3-b8bc-4a8d-a219-40f10f92eff6',
           isEnabled: true,
@@ -1611,8 +1566,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Read the state and settings of all Microsoft education apps.',
+          description: 'Read the state and settings of all Microsoft education apps.',
           displayName: 'Read Education app settings',
           id: '7c9db06a-ec2d-4e7b-a592-5a1e30992566',
           isEnabled: true,
@@ -1622,8 +1576,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read and write assignments and their grades for all users.',
+          description: 'Allows the app to read and write assignments and their grades for all users.',
           displayName: 'Read and write class assignments with grades',
           id: '0d22204b-6cad-4dd0-8362-3e3f2ae699d9',
           isEnabled: true,
@@ -1633,8 +1586,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read assignments and their grades for all users.',
+          description: 'Allows the app to read assignments and their grades for all users.',
           displayName: 'Read class assignments with grades',
           id: '4c37e1b6-35a1-43bf-926a-6f30f2cdf585',
           isEnabled: true,
@@ -1644,8 +1596,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read and write assignments without grades for all users.',
+          description: 'Allows the app to read and write assignments without grades for all users.',
           displayName: 'Read and write class assignments without grades',
           id: 'f431cc63-a2de-48c4-8054-a34bc093af84',
           isEnabled: true,
@@ -1655,8 +1606,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read assignments without grades for all users.',
+          description: 'Allows the app to read assignments without grades for all users.',
           displayName: 'Read class assignments without grades',
           id: '6e0a958b-b7fc-4348-b7c4-a6ab9fd3dd0e',
           isEnabled: true,
@@ -1710,8 +1660,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read all files in all site collections without a signed in user.',
+          description: 'Allows the app to read all files in all site collections without a signed in user.',
           displayName: 'Read files in all site collections',
           id: '01d4889c-1287-42c6-ac1f-5d1e02578ef6',
           isEnabled: true,
@@ -1754,8 +1703,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read your organization’s security events without a signed-in user.',
+          description: 'Allows the app to read your organization’s security events without a signed-in user.',
           displayName: 'Read your organization’s security events',
           id: 'bf394140-e372-4bf9-a898-299cfc7564e5',
           isEnabled: true,
@@ -1787,8 +1735,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read security actions, without a signed-in user.',
+          description: 'Allows the app to read security actions, without a signed-in user.',
           displayName: "Read your organization's security actions",
           id: '5e0edab9-c148-49d0-b423-ac253e121825',
           isEnabled: true,
@@ -1798,8 +1745,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read or update security actions, without a signed-in user.',
+          description: 'Allows the app to read or update security actions, without a signed-in user.',
           displayName: "Read and update your organization's security actions",
           id: 'f2bf083f-0179-402a-bedb-b2784de8a49b',
           isEnabled: true,
@@ -1831,8 +1777,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to invite guest users to the organization, without a signed-in user.',
+          description: 'Allows the app to invite guest users to the organization, without a signed-in user.',
           displayName: 'Invite guest users to the organization',
           id: '09850681-111b-4a89-9bed-3f2cae46d706',
           isEnabled: true,
@@ -1855,8 +1800,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Allows an app to read published sensitivity labels and label policy settings for the entire organization or a specific user, without a signed in user.',
-          displayName:
-            'Read all published labels and label policies for an organization.',
+          displayName: 'Read all published labels and label policies for an organization.',
           id: '19da66cb-0fb0-4390-b071-ebc76a349482',
           isEnabled: true,
           lang: null,
@@ -1909,8 +1853,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            "Allows the app to read all your organization's policies without a signed in user.",
+          description: "Allows the app to read all your organization's policies without a signed in user.",
           displayName: "Read your organization's policies",
           id: '246dd0d5-5bd0-4def-940b-0421030a5b68',
           isEnabled: true,
@@ -1922,8 +1865,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             "Allows the app to read and write your organization's trust framework policies without a signed in user.",
-          displayName:
-            "Read and write your organization's trust framework policies",
+          displayName: "Read and write your organization's trust framework policies",
           id: '79a677f7-b79d-40d0-a36a-3e6f8688dd7a',
           isEnabled: true,
           lang: null,
@@ -1932,8 +1874,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read trust framework key set properties without a signed-in user.',
+          description: 'Allows the app to read trust framework key set properties without a signed-in user.',
           displayName: 'Read trust framework key sets',
           id: 'fff194f1-7dce-4428-8301-1badb5518201',
           isEnabled: true,
@@ -1943,8 +1884,7 @@ const principals = {
         },
         {
           allowedMemberTypes: ['Application'],
-          description:
-            'Allows the app to read and write trust framework key set properties without a signed-in user.',
+          description: 'Allows the app to read and write trust framework key set properties without a signed-in user.',
           displayName: 'Read and write trust framework key sets',
           id: '4a771c9a-1cf2-4609-b88e-3d3e02d539cd',
           isEnabled: true,
@@ -2011,8 +1951,7 @@ const principals = {
           allowedMemberTypes: ['Application'],
           description:
             'Allows the app to read properties of Microsoft Intune-managed device configuration and device compliance policies and their assignment to groups, without a signed-in user.',
-          displayName:
-            'Read Microsoft Intune device configuration and policies',
+          displayName: 'Read Microsoft Intune device configuration and policies',
           id: 'dc377aa6-52d8-4e23-b271-2a7ae04cedf3',
           isEnabled: true,
           lang: null,
@@ -2165,8 +2104,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read the role-based access control (RBAC) settings for all RBAC providers, on behalf of the signed-in user.  This includes reading role definitions and role assignments.',
-          adminConsentDisplayName:
-            'Read role management data for all RBAC providers',
+          adminConsentDisplayName: 'Read role management data for all RBAC providers',
           id: '48fec646-b2ba-4019-8681-8eb31435aded',
           isEnabled: true,
           lang: null,
@@ -2174,15 +2112,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read the role-based access control (RBAC) settings for all RBAC providers, on your behalf.  This includes reading role definitions and role assignments.',
-          userConsentDisplayName:
-            'Read role management data for all RBAC providers',
+          userConsentDisplayName: 'Read role management data for all RBAC providers',
           value: 'RoleManagement.Read.All',
         },
         {
           adminConsentDescription:
             "Allows the app to read your organization's conditional access policies on behalf of the signed-in user.",
-          adminConsentDisplayName:
-            "Read your organization's conditional access policies",
+          adminConsentDisplayName: "Read your organization's conditional access policies",
           id: '633e0fce-8c58-4cfb-9495-12bbd5a24f7c',
           isEnabled: true,
           lang: null,
@@ -2190,29 +2126,23 @@ const principals = {
           type: 'User',
           userConsentDescription:
             "Allows the app to read your organization's conditional access policies on your behalf.",
-          userConsentDisplayName:
-            "Read your organization's conditional access policies",
+          userConsentDisplayName: "Read your organization's conditional access policies",
           value: 'Policy.Read.ConditionalAccess',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read, create, edit, and delete short notes of a signed-in user.',
-          adminConsentDisplayName:
-            'Read, create, edit, and delete short notes of the signed-in user',
+          adminConsentDescription: 'Allows the app to read, create, edit, and delete short notes of a signed-in user.',
+          adminConsentDisplayName: 'Read, create, edit, and delete short notes of the signed-in user',
           id: '328438b7-4c01-4c07-a840-e625a749bb89',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read, create, edit, and delete your short notes.',
-          userConsentDisplayName:
-            'Read, create, edit, and delete your short notes',
+          userConsentDescription: 'Allows the app to read, create, edit, and delete your short notes.',
+          userConsentDisplayName: 'Read, create, edit, and delete your short notes',
           value: 'ShortNotes.ReadWrite',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read all the short notes a sign-in user has access to.',
+          adminConsentDescription: 'Allows the app to read all the short notes a sign-in user has access to.',
           adminConsentDisplayName: 'Read short notes of the signed-in user',
           id: '50f66e47-eb56-45b7-aaa2-75057d9afe08',
           isEnabled: true,
@@ -2282,8 +2212,7 @@ const principals = {
         {
           adminConsentDescription:
             'Add and remove members from all teams, on behalf of the signed-in user. Does not allow adding or removing a member with the owner role. Additionally, does not allow the app to elevate an existing member to the owner role.',
-          adminConsentDisplayName:
-            'Add and remove members with non-owner role for all teams',
+          adminConsentDisplayName: 'Add and remove members with non-owner role for all teams',
           id: '2104a4db-3a2f-4ea0-9dba-143d457dc666',
           isEnabled: true,
           lang: null,
@@ -2291,21 +2220,18 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Add and remove members from all teams, on your behalf. Does not allow adding or removing a member with the owner role. Additionally, does not allow the app to elevate an existing member to the owner role.',
-          userConsentDisplayName:
-            'Add and remove members with non-owner role for all teams',
+          userConsentDisplayName: 'Add and remove members with non-owner role for all teams',
           value: 'TeamMember.ReadWriteNonOwnerRole.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to create teams on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to create teams on behalf of the signed-in user.',
           adminConsentDisplayName: 'Create teams',
           id: '7825d5d6-6049-4ce7-bdf6-3b8d53f4bcd0',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to create teams on your behalf. ',
+          userConsentDescription: 'Allows the app to create teams on your behalf. ',
           userConsentDisplayName: 'Create teams',
           value: 'Team.Create',
         },
@@ -2326,17 +2252,14 @@ const principals = {
         {
           adminConsentDescription:
             'Allows a Teams app to read, install, upgrade, and uninstall itself for the signed-in user.',
-          adminConsentDisplayName:
-            'Allow the Teams app to manage itself for a user',
+          adminConsentDisplayName: 'Allow the Teams app to manage itself for a user',
           id: '207e0cb1-3ce7-4922-b991-5a760c346ebc',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows a Teams app to read, install, upgrade, and uninstall itself for you.',
-          userConsentDisplayName:
-            'Allow the Teams app to manage itself for you',
+          userConsentDescription: 'Allows a Teams app to read, install, upgrade, and uninstall itself for you.',
+          userConsentDisplayName: 'Allow the Teams app to manage itself for you',
           value: 'TeamsAppInstallation.ReadWriteSelfForUser',
         },
         {
@@ -2356,8 +2279,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows a Teams app to read, install, upgrade, and uninstall itself in chats the signed-in user can access.',
-          adminConsentDisplayName:
-            'Allow the Teams app to manage itself in chats',
+          adminConsentDisplayName: 'Allow the Teams app to manage itself in chats',
           id: '0ce33576-30e8-43b7-99e5-62f8569a4002',
           isEnabled: true,
           lang: null,
@@ -2365,8 +2287,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows a Teams app to read, install, upgrade, and uninstall itself in chats you can access.',
-          userConsentDisplayName:
-            'Allow the Teams app to manage itself in chats',
+          userConsentDisplayName: 'Allow the Teams app to manage itself in chats',
           value: 'TeamsAppInstallation.ReadWriteSelfForChat',
         },
         {
@@ -2442,8 +2363,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to submit application packages to the catalog and cancel submissions that are pending review on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Submit application packages to the catalog and cancel pending submissions',
+          adminConsentDisplayName: 'Submit application packages to the catalog and cancel pending submissions',
           id: '3db89e36-7fa6-4012-b281-85f3d9d9fd2e',
           isEnabled: true,
           lang: null,
@@ -2458,8 +2378,7 @@ const principals = {
         {
           adminConsentDescription:
             "Allows the app to read and write your organization's device configuration policies on behalf of the signed-in user.  For example, device registration policy can limit initial provisioning controls using quota restrictions, additional authentication and authorization checks.",
-          adminConsentDisplayName:
-            "Read and write your organization's device configuration policies",
+          adminConsentDisplayName: "Read and write your organization's device configuration policies",
           id: '40b534c3-9552-4550-901b-23879c90bcf9',
           isEnabled: true,
           lang: null,
@@ -2467,15 +2386,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             "Allows the app to read and write your organization's device configuration policies on your behalf.  For example, device registration policy can limit initial provisioning controls using quota restrictions, additional authentication and authorization checks.",
-          userConsentDisplayName:
-            "Read and write your organization's device configuration policies",
+          userConsentDisplayName: "Read and write your organization's device configuration policies",
           value: 'Policy.ReadWrite.DeviceConfiguration',
         },
         {
           adminConsentDescription:
             'Allows the application to read and update the metadata of print jobs on behalf of the signed-in user. Does not allow access to print job document content.',
-          adminConsentDisplayName:
-            'Read and write basic information of print jobs',
+          adminConsentDisplayName: 'Read and write basic information of print jobs',
           id: '3a0db2f6-0d2a-4c19-971b-49109b19ad3d',
           isEnabled: true,
           lang: null,
@@ -2483,15 +2400,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the application to read and update the metadata of print jobs on your behalf. Does not allow access to print job document content.',
-          userConsentDisplayName:
-            'Read and write basic information of print jobs',
+          userConsentDisplayName: 'Read and write basic information of print jobs',
           value: 'PrintJob.ReadWriteBasic.All',
         },
         {
           adminConsentDescription:
             'Allows the application to read and update the metadata of print jobs that the signed-in user created. Does not allow access to print job document content.',
-          adminConsentDisplayName:
-            "Read and write basic information of user's print jobs",
+          adminConsentDisplayName: "Read and write basic information of user's print jobs",
           id: '6f2d22f2-1cb6-412c-a17c-3336817eaa82',
           isEnabled: true,
           lang: null,
@@ -2499,8 +2414,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allows the application to read and update the metadata of print jobs that you created. Does not allow access to print job document content.',
-          userConsentDisplayName:
-            'Read and write basic information of your print jobs',
+          userConsentDisplayName: 'Read and write basic information of your print jobs',
           value: 'PrintJob.ReadWriteBasic',
         },
         {
@@ -2548,8 +2462,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the application to read the metadata of print jobs that the signed-in user created. Does not allow access to print job document content.',
-          adminConsentDisplayName:
-            "Read basic information of user's print jobs",
+          adminConsentDisplayName: "Read basic information of user's print jobs",
           id: '6a71a747-280f-4670-9ca0-a9cbf882b274',
           isEnabled: true,
           lang: null,
@@ -2597,22 +2510,19 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the application to read and update printer shares on your behalf. ',
+          userConsentDescription: 'Allows the application to read and update printer shares on your behalf. ',
           userConsentDisplayName: 'Read and update printer shares',
           value: 'PrinterShare.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the application to read printer shares on behalf of the signed-in user. ',
+          adminConsentDescription: 'Allows the application to read printer shares on behalf of the signed-in user. ',
           adminConsentDisplayName: 'Read printer shares',
           id: 'ed11134d-2f3f-440d-a2e1-411efada2502',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the application to read printer shares on your behalf. ',
+          userConsentDescription: 'Allows the application to read printer shares on your behalf. ',
           userConsentDisplayName: 'Read printer shares',
           value: 'PrinterShare.Read.All',
         },
@@ -2631,24 +2541,21 @@ const principals = {
           value: 'Printer.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the application to read printers on behalf of the signed-in user. ',
+          adminConsentDescription: 'Allows the application to read printers on behalf of the signed-in user. ',
           adminConsentDisplayName: 'Read printers',
           id: '3a736c8a-018e-460a-b60c-863b2683e8bf',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the application to read printers on your behalf. ',
+          userConsentDescription: 'Allows the application to read printers on your behalf. ',
           userConsentDisplayName: 'Read printers',
           value: 'Printer.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the application to create (register), read, update, and delete (unregister) printers on behalf of the signed-in user. ',
-          adminConsentDisplayName:
-            'Register, read, update, and unregister printers',
+          adminConsentDisplayName: 'Register, read, update, and unregister printers',
           id: '93dae4bd-43a1-4a23-9a1a-92957e1d9121',
           isEnabled: true,
           lang: null,
@@ -2656,8 +2563,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the application to create (register), read, update, and delete (unregister) printers on your behalf.  ',
-          userConsentDisplayName:
-            'Register, read, update, and unregister printers',
+          userConsentDisplayName: 'Register, read, update, and unregister printers',
           value: 'Printer.FullControl.All',
         },
         {
@@ -2669,16 +2575,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the application to create (register) printers on your behalf. ',
+          userConsentDescription: 'Allows the application to create (register) printers on your behalf. ',
           userConsentDisplayName: 'Register printers  ',
           value: 'Printer.Create',
         },
         {
           adminConsentDescription:
             'Allows the app to manage policies related to consent and permission grants for applications, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Manage consent and permission grant policies',
+          adminConsentDisplayName: 'Manage consent and permission grant policies',
           id: '2672f8bb-fd5e-42e0-85e1-ec764dd2614e',
           isEnabled: true,
           lang: null,
@@ -2686,8 +2590,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to manage policies related to consent and permission grants for applications, on behalf of the signed-in user.',
-          userConsentDisplayName:
-            'Manage consent and permission grant policies',
+          userConsentDisplayName: 'Manage consent and permission grant policies',
           value: 'Policy.ReadWrite.PermissionGrant',
         },
         {
@@ -2721,8 +2624,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows an app to read the members and descriptions of one-to-one and group chat threads, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read names and members of user chat threads',
+          adminConsentDisplayName: 'Read names and members of user chat threads',
           id: '9547fcb5-d03f-419d-9948-5928bbf71b0f',
           isEnabled: true,
           lang: null,
@@ -2736,8 +2638,7 @@ const principals = {
         {
           adminConsentDescription:
             "Allows the app to read and write your organization's authorization policy on behalf of the signed-in user.  For example, authorization policies can control some of the permissions that the out-of-the-box user role has by default.",
-          adminConsentDisplayName:
-            "Read and write your organization's authorization policy",
+          adminConsentDisplayName: "Read and write your organization's authorization policy",
           id: 'edd3c878-b384-41fd-95ad-e7407dd775be',
           isEnabled: true,
           lang: null,
@@ -2745,15 +2646,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             "Allows the app to read and write your organization's authorization policy on your behalf. For example, authorization policies can control some of the permissions that the out-of-the-box user role has by default.",
-          userConsentDisplayName:
-            "Read and write your organization's authorization policy",
+          userConsentDisplayName: "Read and write your organization's authorization policy",
           value: 'Policy.ReadWrite.Authorization',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write the authentication method policies, on behalf of the signed-in user. ',
-          adminConsentDisplayName:
-            'Read and write authentication method policies',
+          adminConsentDisplayName: 'Read and write authentication method policies',
           id: '7e823077-d88e-468f-a337-e18f1f0e6c7c',
           isEnabled: true,
           lang: null,
@@ -2761,21 +2660,18 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write the authentication method policies for your tenant, on your behalf.',
-          userConsentDisplayName:
-            'Read and write your authentication method policies ',
+          userConsentDisplayName: 'Read and write your authentication method policies ',
           value: 'Policy.ReadWrite.AuthenticationMethod',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read the apps in the app catalogs.',
+          adminConsentDescription: 'Allows the app to read the apps in the app catalogs.',
           adminConsentDisplayName: 'Read all app catalogs',
           id: '88e58d74-d3df-44f3-ad47-e89edf4472e4',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read apps in the app catalogs.',
+          userConsentDescription: 'Allows the app to read apps in the app catalogs.',
           userConsentDisplayName: 'Read all app catalogs',
           value: 'AppCatalog.Read.All',
         },
@@ -2788,16 +2684,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            "Allows the app to read a channel's messages in Microsoft Teams, on your behalf.",
+          userConsentDescription: "Allows the app to read a channel's messages in Microsoft Teams, on your behalf.",
           userConsentDisplayName: 'Read your channel messages',
           value: 'ChannelMessage.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write the authentication flow policies, on behalf of the signed-in user. ',
-          adminConsentDisplayName:
-            'Read and write authentication flow policies',
+          adminConsentDisplayName: 'Read and write authentication flow policies',
           id: 'edb72de9-4252-4d03-a925-451deef99db7',
           isEnabled: true,
           lang: null,
@@ -2805,8 +2699,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write the authentication flow policies for your tenant, on your behalf.',
-          userConsentDisplayName:
-            'Read and write your authentication flow policies',
+          userConsentDisplayName: 'Read and write your authentication flow policies',
           value: 'Policy.ReadWrite.AuthenticationFlows',
         },
         {
@@ -2820,29 +2713,25 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             "Add and remove members from channels, on your behalf. Also allows changing a member's role, for example from owner to non-owner.",
-          userConsentDisplayName:
-            'Add and remove members from teams and channels',
+          userConsentDisplayName: 'Add and remove members from teams and channels',
           value: 'ChannelMember.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Read the members of channels, on behalf of the signed-in user.',
+          adminConsentDescription: 'Read the members of channels, on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read the members of channels',
           id: '2eadaff8-0bce-4198-a6b9-2cfc35a30075',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Read the members of channels, on your behalf.',
+          userConsentDescription: 'Read the members of channels, on your behalf.',
           userConsentDisplayName: 'Read the members of teams and channels',
           value: 'ChannelMember.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read presence information of all users in the directory on behalf of the signed-in user. Presence information includes activity, availability, status note, calendar out-of-office message, timezone and location.',
-          adminConsentDisplayName:
-            'Read presence information of all users in your organization',
+          adminConsentDisplayName: 'Read presence information of all users in your organization',
           id: '9c7a330d-35b3-4aa1-963d-cb2b9f927841',
           isEnabled: true,
           lang: null,
@@ -2850,8 +2739,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allows the app to read presence information of all users in the directory on your behalf. Presence information includes activity, availability, status note, calendar out-of-office message, timezone and location.',
-          userConsentDisplayName:
-            'Read presence information of all users in your organization',
+          userConsentDisplayName: 'Read presence information of all users in your organization',
           value: 'Presence.Read.All',
         },
         {
@@ -2905,8 +2793,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read consent requests and approvals, on your behalf.',
+          userConsentDescription: 'Allows the app to read consent requests and approvals, on your behalf.',
           userConsentDisplayName: 'Read consent requests',
           value: 'ConsentRequest.Read.All',
         },
@@ -2921,13 +2808,11 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             "Add and remove members from teams, on your behalf. Also allows changing a member's role, for example from owner to non-owner.",
-          userConsentDisplayName:
-            'Add and remove members from teams and channels',
+          userConsentDisplayName: 'Add and remove members from teams and channels',
           value: 'TeamMember.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Read the members of teams, on behalf of the signed-in user.',
+          adminConsentDescription: 'Read the members of teams, on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read the members of teams',
           id: '2497278c-d82d-46a2-b1ce-39d4cdde5570',
           isEnabled: true,
@@ -2939,50 +2824,43 @@ const principals = {
           value: 'TeamMember.Read.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read and write approvals on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read and write approvals on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read and write approvals',
           id: '1d3d0bc7-4b3a-427a-ae9f-6de4e1edc95f',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read and write approvals on your behalf.',
+          userConsentDescription: 'Allows the app to read and write approvals on your behalf.',
           userConsentDisplayName: 'Read and write approvals',
           value: 'Approval.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read approvals on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read approvals on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read approvals',
           id: '1196552e-b226-4363-b01e-b8901fe10a11',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read approvals on your behalf.',
+          userConsentDescription: 'Allows the app to read approvals on your behalf.',
           userConsentDisplayName: 'Read approvals',
           value: 'Approval.Read.All',
         },
         {
-          adminConsentDescription:
-            "Read and change all teams' settings, on behalf of the signed-in user.",
+          adminConsentDescription: "Read and change all teams' settings, on behalf of the signed-in user.",
           adminConsentDisplayName: "Read and change teams' settings",
           id: '39d65650-9d3e-4223-80db-a335590d027e',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            "Read and change all teams' settings, on your behalf.",
+          userConsentDescription: "Read and change all teams' settings, on your behalf.",
           userConsentDisplayName: "Read and change teams' settings",
           value: 'TeamSettings.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            "Read all teams' settings, on behalf of the signed-in user.",
+          adminConsentDescription: "Read all teams' settings, on behalf of the signed-in user.",
           adminConsentDisplayName: "Read teams' settings",
           id: '48638b3c-ad68-4383-8ac4-e6880ee6ca57',
           isEnabled: true,
@@ -2994,53 +2872,45 @@ const principals = {
           value: 'TeamSettings.Read.All',
         },
         {
-          adminConsentDescription:
-            'Read channel names and channel descriptions, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read the names and descriptions of channels',
+          adminConsentDescription: 'Read channel names and channel descriptions, on behalf of the signed-in user.',
+          adminConsentDisplayName: 'Read the names and descriptions of channels',
           id: '9d8982ae-4365-4f57-95e9-d6032a4c0b87',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Read channel names and channel descriptions, on your behalf.',
+          userConsentDescription: 'Read channel names and channel descriptions, on your behalf.',
           userConsentDisplayName: 'Read the names and descriptions of channels',
           value: 'Channel.ReadBasic.All',
         },
         {
-          adminConsentDescription:
-            'Read the names and  descriptions of teams, on behalf of the signed-in user.',
+          adminConsentDescription: 'Read the names and  descriptions of teams, on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read the names and descriptions of teams',
           id: '485be79e-c497-4b35-9400-0e3fa7f2a5d4',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Read the names and  descriptions of teams, on your behalf.',
+          userConsentDescription: 'Read the names and  descriptions of teams, on your behalf.',
           userConsentDisplayName: 'Read the names and descriptions of teams',
           value: 'Team.ReadBasic.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read all webhook subscriptions on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read all webhook subscriptions on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read all webhook subscriptions ',
           id: '5f88184c-80bb-4d52-9ff2-757288b2e9b7',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read all webhook subscriptions on your behalf.',
+          userConsentDescription: 'Allows the app to read all webhook subscriptions on your behalf.',
           userConsentDisplayName: 'Read all webhook subscriptions ',
           value: 'Subscription.Read.All',
         },
         {
           adminConsentDescription:
             'Read and write the names, descriptions, and settings of all channels, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and write the names, descriptions, and settings of channels',
+          adminConsentDisplayName: 'Read and write the names, descriptions, and settings of channels',
           id: 'd649fb7c-72b4-4eec-b2b4-b15acf79e378',
           isEnabled: true,
           lang: null,
@@ -3048,51 +2918,43 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Read and write the names, descriptions, and settings of all channels, on your behalf.',
-          userConsentDisplayName:
-            'Read and write the names, descriptions, and settings of channels',
+          userConsentDisplayName: 'Read and write the names, descriptions, and settings of channels',
           value: 'ChannelSettings.ReadWrite.All',
         },
         {
           adminConsentDescription:
             'Read all channel names, channel descriptions, and channel settings, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read the names, descriptions, and settings of channels',
+          adminConsentDisplayName: 'Read the names, descriptions, and settings of channels',
           id: '233e0cf1-dd62-48bc-b65b-b38fe87fcf8e',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Read all channel names, channel descriptions, and channel settings, on your behalf.',
-          userConsentDisplayName:
-            'Read the names, descriptions, and settings of channels',
+          userConsentDescription: 'Read all channel names, channel descriptions, and channel settings, on your behalf.',
+          userConsentDisplayName: 'Read the names, descriptions, and settings of channels',
           value: 'ChannelSettings.Read.All',
         },
         {
-          adminConsentDescription:
-            'Delete channels in any team, on behalf of the signed-in user.',
+          adminConsentDescription: 'Delete channels in any team, on behalf of the signed-in user.',
           adminConsentDisplayName: 'Delete channels',
           id: 'cc83893a-e232-4723-b5af-bd0b01bcfe65',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Delete channels in any team, on your behalf.',
+          userConsentDescription: 'Delete channels in any team, on your behalf.',
           userConsentDisplayName: 'Delete channels',
           value: 'Channel.Delete.All',
         },
         {
-          adminConsentDescription:
-            'Create channels in any team, on behalf of the signed-in user.',
+          adminConsentDescription: 'Create channels in any team, on behalf of the signed-in user.',
           adminConsentDisplayName: 'Create channels',
           id: '101147cf-4178-4455-9d58-02b5c164e759',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Create channels in any team, on your behalf.',
+          userConsentDescription: 'Create channels in any team, on your behalf.',
           userConsentDisplayName: 'Create channels',
           value: 'Channel.Create',
         },
@@ -3133,16 +2995,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            "Allows the app to read devices' configuration information on your behalf.",
+          userConsentDescription: "Allows the app to read devices' configuration information on your behalf.",
           userConsentDisplayName: 'Read all devices',
           value: 'Device.Read.All',
         },
         {
           adminConsentDescription:
             "Allows the app to read and write your organization's application configuration policies on behalf of the signed-in user.  This includes policies such as activityBasedTimeoutPolicy, claimsMappingPolicy, homeRealmDiscoveryPolicy,  tokenIssuancePolicy and tokenLifetimePolicy.",
-          adminConsentDisplayName:
-            "Read and write your organization's application configuration policies",
+          adminConsentDisplayName: "Read and write your organization's application configuration policies",
           id: 'b27add92-efb2-4f16-84f5-8108ba77985c',
           isEnabled: true,
           lang: null,
@@ -3150,8 +3010,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             "Allows the app to read and write your organization's application configuration policies on your behalf.  This includes policies such as activityBasedTimeoutPolicy, claimsMappingPolicy, homeRealmDiscoveryPolicy, tokenIssuancePolicy  and tokenLifetimePolicy.",
-          userConsentDisplayName:
-            "Read and write your organization's application configuration policies",
+          userConsentDisplayName: "Read and write your organization's application configuration policies",
           value: 'Policy.ReadWrite.ApplicationConfiguration',
         },
         {
@@ -3169,39 +3028,34 @@ const principals = {
           value: 'Domain.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read all domain properties on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read all domain properties on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read domains.',
           id: '2f9ee017-59c1-4f1d-9472-bd5529a7b311',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read all domain properties on your behalf.',
+          userConsentDescription: 'Allows the app to read all domain properties on your behalf.',
           userConsentDisplayName: 'Read domains.',
           value: 'Domain.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to be able to send emails from the user’s mailbox using the SMTP AUTH client submission protocol.',
-          adminConsentDisplayName:
-            'Send emails from mailboxes using SMTP AUTH.',
+          adminConsentDisplayName: 'Send emails from mailboxes using SMTP AUTH.',
           id: '258f6531-6087-4cc4-bb90-092c5fb3ed3f',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to send emails on your behalf from your mailbox.',
+          userConsentDescription: 'Allows the app to send emails on your behalf from your mailbox.',
           userConsentDisplayName: 'Access to sending emails from your mailbox.',
           value: 'SMTP.Send',
         },
         {
           adminConsentDescription:
             'Allows the app to have the same access to mailboxes as the signed-in user via POP protocol.',
-          adminConsentDisplayName:
-            'Read and write access to mailboxes via POP.',
+          adminConsentDisplayName: 'Read and write access to mailboxes via POP.',
           id: 'd7b7f2d9-0f45-4ea1-9d42-e50810c06991',
           isEnabled: true,
           lang: null,
@@ -3215,8 +3069,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to have the same access to mailboxes as the signed-in user via IMAP protocol.',
-          adminConsentDisplayName:
-            'Read and write access to mailboxes via IMAP.',
+          adminConsentDisplayName: 'Read and write access to mailboxes via IMAP.',
           id: '652390e4-393a-48de-9484-05f9b1212954',
           isEnabled: true,
           lang: null,
@@ -3342,8 +3195,7 @@ const principals = {
         {
           adminConsentDescription:
             ' Allows the app to read and write authentication methods of all users in your organization that the signed-in user has access to.                       Authentication methods include things like a user’s phone numbers and Authenticator app settings. This                      does not allow the app to see secret information like passwords, or to sign-in or otherwise use the authentication methods.',
-          adminConsentDisplayName:
-            "Read and write all users' authentication methods.",
+          adminConsentDisplayName: "Read and write all users' authentication methods.",
           id: 'b7887744-6746-4312-813d-72daeaee7e2d',
           isEnabled: true,
           lang: null,
@@ -3351,8 +3203,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write authentication methods of all users you have access to in your organization.                       Authentication methods include things like a user’s phone numbers and Authenticator app settings. This does not allow                      the app to see secret information like passwords, or to sign-in or otherwise use the authentication methods.',
-          userConsentDisplayName:
-            "Read and write all users' authentication methods",
+          userConsentDisplayName: "Read and write all users' authentication methods",
           value: 'UserAuthenticationMethod.ReadWrite.All',
         },
         {
@@ -3476,30 +3327,26 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read applications and service principals on your behalf.',
+          userConsentDescription: 'Allows the app to read applications and service principals on your behalf.',
           userConsentDisplayName: 'Read applications',
           value: 'Application.Read.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to send, read, update and delete user’s notifications.',
+          adminConsentDescription: 'Allows the app to send, read, update and delete user’s notifications.',
           adminConsentDisplayName: "Deliver and manage user's notifications",
           id: '26e2f3e8-b2a1-47fc-9620-89bb5b042024',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to send, read, update and delete your app-specific notifications.',
+          userConsentDescription: 'Allows the app to send, read, update and delete your app-specific notifications.',
           userConsentDisplayName: 'Deliver and manage your notifications',
           value: 'UserNotification.ReadWrite.CreatedByApp',
         },
         {
           adminConsentDescription:
             'Allows the app to request access to and management of access packages and related entitlement management resources on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and write entitlement management resources',
+          adminConsentDisplayName: 'Read and write entitlement management resources',
           id: 'ae7a573d-81d7-432b-ad44-4ed5c9d89038',
           isEnabled: true,
           lang: null,
@@ -3507,8 +3354,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to request access to and management of access packages and related entitlement management resources that you have access to.',
-          userConsentDisplayName:
-            'Read and write entitlement management resources',
+          userConsentDisplayName: 'Read and write entitlement management resources',
           value: 'EntitlementManagement.ReadWrite.All',
         },
         {
@@ -3540,30 +3386,26 @@ const principals = {
           value: 'Place.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to create, read, and update the signed-in user’s personal places.',
+          adminConsentDescription: 'Allows the app to create, read, and update the signed-in user’s personal places.',
           adminConsentDisplayName: 'Read and write user places',
           id: '012ba4a5-ca82-4a76-95ba-6c27f44364c3',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to create, read, and update personal places on your behalf.',
+          userConsentDescription: 'Allows the app to create, read, and update personal places on your behalf.',
           userConsentDisplayName: 'Read and write your places',
           value: 'Place.ReadWrite',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read the signed-in user’s personal places.',
+          adminConsentDescription: 'Allows the app to read the signed-in user’s personal places.',
           adminConsentDisplayName: 'Read user places',
           id: '40f6bacc-b201-40da-90a5-09775cc4a863',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read your personal places.',
+          userConsentDescription: 'Allows the app to read your personal places.',
           userConsentDisplayName: 'Read your places',
           value: 'Place.Read',
         },
@@ -3604,8 +3446,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to send channel messages in Microsoft Teams, on your behalf.',
+          userConsentDescription: 'Allows the app to send channel messages in Microsoft Teams, on your behalf.',
           userConsentDisplayName: 'Send channel messages',
           value: 'ChannelMessage.Send',
         },
@@ -3618,8 +3459,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to edit channel messages in Microsoft Teams, on your behalf.',
+          userConsentDescription: 'Allows the app to edit channel messages in Microsoft Teams, on your behalf.',
           userConsentDisplayName: 'Edit your channel messages',
           value: 'ChannelMessage.Edit',
         },
@@ -3632,8 +3472,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to delete channel messages in Microsoft Teams, on your behalf.',
+          userConsentDescription: 'Allows the app to delete channel messages in Microsoft Teams, on your behalf.',
           userConsentDisplayName: 'Delete your channel messages',
           value: 'ChannelMessage.Delete',
         },
@@ -3646,16 +3485,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read external datasets and content that you have access to.',
+          userConsentDescription: 'Allows the app to read external datasets and content that you have access to.',
           userConsentDisplayName: 'Read items in external datasets',
           value: 'ExternalItem.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write admin consent requests, business flows, and governance policy templates on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and write customer lockbox approval requests',
+          adminConsentDisplayName: 'Read and write customer lockbox approval requests',
           id: '115b3477-4404-4685-a45d-4cf6a6092533',
           isEnabled: true,
           lang: null,
@@ -3663,15 +3500,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write customer lockbox requests, business flows and governance policy templates on your behalf.',
-          userConsentDisplayName:
-            'Read and write customer lockbox approval requests',
+          userConsentDisplayName: 'Read and write customer lockbox approval requests',
           value: 'ApprovalRequest.ReadWrite.CustomerLockbox',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write admin consent requests, business flows, and governance policy templates on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and write admin consent approval requests',
+          adminConsentDisplayName: 'Read and write admin consent approval requests',
           id: '0c940179-817f-401c-9a44-277f3fc38e2b',
           isEnabled: true,
           lang: null,
@@ -3679,15 +3514,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write admin consent requests, business flows, and governance policy templates on your behalf.',
-          userConsentDisplayName:
-            'Read and write admin consent approval requests',
+          userConsentDisplayName: 'Read and write admin consent approval requests',
           value: 'ApprovalRequest.ReadWrite.AdminConsentRequest',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write entitlement management requests, business flows, and governance policy templates on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and write entitlement management approval requests',
+          adminConsentDisplayName: 'Read and write entitlement management approval requests',
           id: '15dc7bc3-a26c-40b1-8b58-b2a764eb06c1',
           isEnabled: true,
           lang: null,
@@ -3695,15 +3528,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write entitlement management requests, business flows, and governance policy templates on your behalf.',
-          userConsentDisplayName:
-            'Read and write entitlement management approval requests',
+          userConsentDisplayName: 'Read and write entitlement management approval requests',
           value: 'ApprovalRequest.ReadWrite.EntitlementManagement',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write privileged access requests, business flows, and governance policy templates on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and write privileged access approval requests',
+          adminConsentDisplayName: 'Read and write privileged access approval requests',
           id: '51e5d7dc-745e-4986-aa03-63d64036a7a5',
           isEnabled: true,
           lang: null,
@@ -3711,8 +3542,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write privileged access requests, business flows, and governance policy templates on your behalf.',
-          userConsentDisplayName:
-            'Read and write privileged access approval requests',
+          userConsentDisplayName: 'Read and write privileged access approval requests',
           value: 'ApprovalRequest.ReadWrite.PriviligedAccess',
         },
         {
@@ -3746,8 +3576,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read entitlement management requests, business flows, and governance policy templates on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read entitlement management approval requests',
+          adminConsentDisplayName: 'Read entitlement management approval requests',
           id: '95b85e04-9c5c-4554-a3ad-2e933c8a81cd',
           isEnabled: true,
           lang: null,
@@ -3755,8 +3584,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read entitlement management requests, business flows, and governance policy templates on your behalf.',
-          userConsentDisplayName:
-            'Read entitlement management approval requests',
+          userConsentDisplayName: 'Read entitlement management approval requests',
           value: 'ApprovalRequest.Read.EntitlementManagement',
         },
         {
@@ -3782,16 +3610,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read all the indicators for your organization, on your behalf.',
+          userConsentDescription: 'Allows the app to read all the indicators for your organization, on your behalf.',
           userConsentDisplayName: 'Read all threat indicators',
           value: 'ThreatIndicators.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to request and manage time-based assignment and just-in-time elevation (including scheduled elevation) of Azure AD groups, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and write privileged access to Azure AD groups',
+          adminConsentDisplayName: 'Read and write privileged access to Azure AD groups',
           id: '32531c59-1f32-461f-b8df-6f8a3b89f73b',
           isEnabled: true,
           lang: null,
@@ -3799,8 +3625,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to request and manage time-based assignment and just-in-time elevation (including scheduled elevation) of Azure AD groups, on your behalf.',
-          userConsentDisplayName:
-            'Read and write privileged access to Azure AD groups',
+          userConsentDisplayName: 'Read and write privileged access to Azure AD groups',
           value: 'PrivilegedAccess.ReadWrite.AzureADGroup',
         },
         {
@@ -3814,8 +3639,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read time-based assignment and just-in-time elevation of Azure resources (like your subscriptions, resource groups, storage, compute) on your behalf.',
-          userConsentDisplayName:
-            'Read privileged access to your Azure resources',
+          userConsentDisplayName: 'Read privileged access to your Azure resources',
           value: 'PrivilegedAccess.Read.AzureResources',
         },
         {
@@ -3849,8 +3673,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to request and manage time-based assignment and just-in-time elevation of user privileges to manage Azure resources (like subscriptions, resource groups, storage, compute) on behalf of the signed-in users.',
-          adminConsentDisplayName:
-            'Read and write privileged access to Azure resources',
+          adminConsentDisplayName: 'Read and write privileged access to Azure resources',
           id: 'a84a9652-ffd3-496e-a991-22ba5529156a',
           isEnabled: true,
           lang: null,
@@ -3858,8 +3681,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to request and manage time-based assignment and just-in-time elevation of user privileges to manage  your Azure resources (like your subscriptions, resource groups, storage, compute) on your behalf.',
-          userConsentDisplayName:
-            'Read and write privileged access to Azure resources',
+          userConsentDisplayName: 'Read and write privileged access to Azure resources',
           value: 'PrivilegedAccess.ReadWrite.AzureResources',
         },
         {
@@ -3877,44 +3699,38 @@ const principals = {
           value: 'TeamsActivity.Send',
         },
         {
-          adminConsentDescription:
-            "Allows the app to read the signed-in user's teamwork activity feed.",
+          adminConsentDescription: "Allows the app to read the signed-in user's teamwork activity feed.",
           adminConsentDisplayName: "Read user's teamwork activity feed",
           id: '0e755559-83fb-4b44-91d0-4cc721b9323e',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read your teamwork activity feed.',
+          userConsentDescription: 'Allows the app to read your teamwork activity feed.',
           userConsentDisplayName: 'Read your teamwork activity feed',
           value: 'TeamsActivity.Read',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read and create online meetings on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read and create online meetings on behalf of the signed-in user.',
           adminConsentDisplayName: "Read and create user's online meetings",
           id: 'a65f2972-a4f8-4f5e-afd7-69ccb046d5dc',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read and create online meetings on your behalf.',
+          userConsentDescription: 'Allows the app to read and create online meetings on your behalf.',
           userConsentDisplayName: 'Read and create your online meetings',
           value: 'OnlineMeetings.ReadWrite',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read online meeting details on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read online meeting details on behalf of the signed-in user.',
           adminConsentDisplayName: "Read user's online meetings",
           id: '9be106e1-f4e3-4df5-bdff-e4bc531cbe43',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read online meeting details on your behalf.',
+          userConsentDescription: 'Allows the app to read online meeting details on your behalf.',
           userConsentDisplayName: 'Read your online meetings',
           value: 'OnlineMeetings.Read',
         },
@@ -3935,8 +3751,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to manage permission grants for application permissions to any API (including Microsoft Graph) and application assignments for any app, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Manage app permission grants and app role assignments',
+          adminConsentDisplayName: 'Manage app permission grants and app role assignments',
           id: '84bccea3-f856-4a8a-967b-dbe0a3d53a64',
           isEnabled: true,
           lang: null,
@@ -3944,8 +3759,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to manage permission grants for application permissions to any API (including Microsoft Graph) and application assignments for any app, on your behalf.',
-          userConsentDisplayName:
-            'Manage app permission grants and app role assignments',
+          userConsentDisplayName: 'Manage app permission grants and app role assignments',
           value: 'AppRoleAssignment.ReadWrite.All',
         },
         {
@@ -3971,8 +3785,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            "Allows the app to read or write your organization's user flows, on your behalf.",
+          userConsentDescription: "Allows the app to read or write your organization's user flows, on your behalf.",
           userConsentDisplayName: 'Read and write all identity user flows',
           value: 'IdentityUserFlow.ReadWrite.All',
         },
@@ -3985,22 +3798,19 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            "Allows the app to read your organization's user flows, on your behalf.",
+          userConsentDescription: "Allows the app to read your organization's user flows, on your behalf.",
           userConsentDisplayName: 'Read all identity user flows',
           value: 'IdentityUserFlow.Read.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read and write financials data on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read and write financials data on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read and write financials data',
           id: 'f534bf13-55d4-45a9-8f3c-c92fe64d6131',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read and write financials data on your behalf.',
+          userConsentDescription: 'Allows the app to read and write financials data on your behalf.',
           userConsentDisplayName: 'Read and write financials data',
           value: 'Financials.ReadWrite.All',
         },
@@ -4013,8 +3823,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app full access to your mailboxes on your behalf.',
+          userConsentDescription: 'Allows the app full access to your mailboxes on your behalf.',
           userConsentDisplayName: 'Access your mailboxes',
           value: 'EAS.AccessAsUser.All',
         },
@@ -4111,17 +3920,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allow the application to have full control of all site collections on your behalf.',
-          userConsentDisplayName:
-            'Have full control of all your site collections',
+          userConsentDescription: 'Allow the application to have full control of all site collections on your behalf.',
+          userConsentDisplayName: 'Have full control of all your site collections',
           value: 'Sites.FullControl.All',
         },
         {
           adminConsentDescription:
             'Allows the application to create or delete document libraries and lists in all site collections on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Create, edit, and delete items and lists in all site collections',
+          adminConsentDisplayName: 'Create, edit, and delete items and lists in all site collections',
           id: '65e50fdc-43b7-4915-933e-e8138f11f40a',
           isEnabled: true,
           lang: null,
@@ -4129,8 +3935,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allow the application to create or delete document libraries and lists in all site collections on your behalf.',
-          userConsentDisplayName:
-            'Create, edit, and delete items and lists in all your site collections',
+          userConsentDisplayName: 'Create, edit, and delete items and lists in all your site collections',
           value: 'Sites.Manage.All',
         },
         {
@@ -4150,8 +3955,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to create, read, update and delete tasks and plans (and tasks in them), that are assigned to or shared with the signed-in user.',
-          adminConsentDisplayName:
-            'Create, read, update and delete user tasks and projects',
+          adminConsentDisplayName: 'Create, read, update and delete user tasks and projects',
           id: '2219042f-cab5-40cc-b0d2-16b1540b4c5f',
           isEnabled: true,
           lang: null,
@@ -4159,8 +3963,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allows the app to create, read, update and delete tasks assigned to you and plans (and tasks in them) shared with or owned by you.',
-          userConsentDisplayName:
-            'Create, read, update and delete your tasks and projects',
+          userConsentDisplayName: 'Create, read, update and delete your tasks and projects',
           value: 'Tasks.ReadWrite',
         },
         {
@@ -4192,30 +3995,26 @@ const principals = {
           value: 'IdentityRiskEvent.Read.All',
         },
         {
-          adminConsentDescription:
-            "Allows the app to see your users' basic profile (name, picture, user name)",
+          adminConsentDescription: "Allows the app to see your users' basic profile (name, picture, user name)",
           adminConsentDisplayName: "View users' basic profile",
           id: '14dad69e-099b-42c9-810b-d002981feec1',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to see your basic profile (name, picture, user name)',
+          userConsentDescription: 'Allows the app to see your basic profile (name, picture, user name)',
           userConsentDisplayName: 'View your basic profile',
           value: 'profile',
         },
         {
-          adminConsentDescription:
-            "Allows the app to read your users' primary email address",
+          adminConsentDescription: "Allows the app to read your users' primary email address",
           adminConsentDisplayName: "View users' email address",
           id: '64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read your primary email address',
+          userConsentDescription: 'Allows the app to read your primary email address',
           userConsentDisplayName: 'View your email address',
           value: 'email',
         },
@@ -4262,50 +4061,42 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read, create, update and delete all files the signed-in user can access.',
-          adminConsentDisplayName:
-            'Have full access to all files user can access',
+          adminConsentDisplayName: 'Have full access to all files user can access',
           id: '863451e7-0667-486c-a5d6-d135439485f0',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read, create, update and delete all files that you can access.',
-          userConsentDisplayName:
-            'Have full access to all files you have access to',
+          userConsentDescription: 'Allows the app to read, create, update and delete all files that you can access.',
+          userConsentDisplayName: 'Have full access to all files you have access to',
           value: 'Files.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read all files the signed-in user can access.',
+          adminConsentDescription: 'Allows the app to read all files the signed-in user can access.',
           adminConsentDisplayName: 'Read all files that user can access',
           id: 'df85f4d6-205c-4ac5-a5ea-6bf408dba283',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read all files you can access.',
+          userConsentDescription: 'Allows the app to read all files you can access.',
           userConsentDisplayName: 'Read all files that you have access to',
           value: 'Files.Read.All',
         },
         {
-          adminConsentDescription:
-            "Allows the app to read, create, update and delete the signed-in user's files.",
+          adminConsentDescription: "Allows the app to read, create, update and delete the signed-in user's files.",
           adminConsentDisplayName: 'Have full access to user files',
           id: '5c28f0bf-8a70-41f1-8ab2-9032436ddb65',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read, create, update, and delete your files.',
+          userConsentDescription: 'Allows the app to read, create, update, and delete your files.',
           userConsentDisplayName: 'Have full access to your files',
           value: 'Files.ReadWrite',
         },
         {
-          adminConsentDescription:
-            "Allows the app to read the signed-in user's files.",
+          adminConsentDescription: "Allows the app to read the signed-in user's files.",
           adminConsentDisplayName: 'Read user files',
           id: '10465720-29dd-4523-a11a-6a75c743c9d9',
           isEnabled: true,
@@ -4317,8 +4108,7 @@ const principals = {
           value: 'Files.Read',
         },
         {
-          adminConsentDescription:
-            'Allows the app to create, read, update, and delete user contacts. ',
+          adminConsentDescription: 'Allows the app to create, read, update, and delete user contacts. ',
           adminConsentDisplayName: 'Have full access to user contacts ',
           id: 'd56682ec-c09e-4743-aaf4-1a3aac4caa21',
           isEnabled: true,
@@ -4338,42 +4128,36 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read contacts in your contact folders. ',
+          userConsentDescription: 'Allows the app to read contacts in your contact folders. ',
           userConsentDisplayName: 'Read your contacts ',
           value: 'Contacts.Read',
         },
         {
-          adminConsentDescription:
-            'Allows the app to create, read, update, and delete events in user calendars. ',
+          adminConsentDescription: 'Allows the app to create, read, update, and delete events in user calendars. ',
           adminConsentDisplayName: 'Have full access to user calendars ',
           id: '1ec239c2-d7c9-4623-a91a-a9775856bb36',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read, update, create and delete events in your calendars. ',
+          userConsentDescription: 'Allows the app to read, update, create and delete events in your calendars. ',
           userConsentDisplayName: 'Have full access to your calendars  ',
           value: 'Calendars.ReadWrite',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read events in user calendars . ',
+          adminConsentDescription: 'Allows the app to read events in user calendars . ',
           adminConsentDisplayName: 'Read user calendars ',
           id: '465a38f9-76ea-45b9-9f34-9e8b0d4b0b42',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read events in your calendars. ',
+          userConsentDescription: 'Allows the app to read events in your calendars. ',
           userConsentDisplayName: 'Read your calendars ',
           value: 'Calendars.Read',
         },
         {
-          adminConsentDescription:
-            'Allows the app to send mail as users in the organization. ',
+          adminConsentDescription: 'Allows the app to send mail as users in the organization. ',
           adminConsentDisplayName: 'Send mail as a user ',
           id: 'e383f46e-2787-4529-855e-0e479a3ffac0',
           isEnabled: true,
@@ -4435,8 +4219,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            "Allows the app to read data in your organization's directory.",
+          userConsentDescription: "Allows the app to read data in your organization's directory.",
           userConsentDisplayName: 'Read directory data',
           value: 'Directory.Read.All',
         },
@@ -4547,8 +4330,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read mail you can access, including shared mail.',
+          userConsentDescription: 'Allows the app to read mail you can access, including shared mail.',
           userConsentDisplayName: 'Read mail you can access',
           value: 'Mail.Read.Shared',
         },
@@ -4575,8 +4357,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to send mail as you or on-behalf of someone else.',
+          userConsentDescription: 'Allows the app to send mail as you or on-behalf of someone else.',
           userConsentDisplayName: 'Send mail on behalf of others or yourself',
           value: 'Mail.Send.Shared',
         },
@@ -4667,8 +4448,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the application to edit or delete documents and list items in all site collections on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Edit or delete items in all site collections',
+          adminConsentDisplayName: 'Edit or delete items in all site collections',
           id: '89fe6a52-be36-487e-b7d8-d061c450a026',
           isEnabled: true,
           lang: null,
@@ -4676,8 +4456,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allow the application to edit or delete documents and list items in all site collections on your behalf.',
-          userConsentDisplayName:
-            'Edit or delete items in all site collections',
+          userConsentDisplayName: 'Edit or delete items in all site collections',
           value: 'Sites.ReadWrite.All',
         },
         {
@@ -4697,8 +4476,7 @@ const principals = {
         {
           adminConsentDescription:
             "(Preview) Allows the app to read, create, update and delete files in the application's folder.",
-          adminConsentDisplayName:
-            "Have full access to the application's folder (preview)",
+          adminConsentDisplayName: "Have full access to the application's folder (preview)",
           id: '8019c312-3263-48e6-825e-2b833497195b',
           isEnabled: true,
           lang: null,
@@ -4706,15 +4484,13 @@ const principals = {
           type: 'User',
           userConsentDescription:
             "(Preview) Allows the app to read, create, update and delete files in the application's folder.",
-          userConsentDisplayName:
-            "Have full access to the application's folder",
+          userConsentDisplayName: "Have full access to the application's folder",
           value: 'Files.ReadWrite.AppFolder',
         },
         {
           adminConsentDescription:
             '(Preview) Allows the app to read and write files that the user selects. The app has access for several hours after the user selects a file.',
-          adminConsentDisplayName:
-            'Read and write files that the user selects (preview)',
+          adminConsentDisplayName: 'Read and write files that the user selects (preview)',
           id: '17dde5bd-8c17-420f-a486-969730c1b827',
           isEnabled: true,
           lang: null,
@@ -4748,8 +4524,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read your mailbox settings.',
+          userConsentDescription: 'Allows the app to read your mailbox settings.',
           userConsentDisplayName: 'Read your mailbox settings',
           value: 'MailboxSettings.Read',
         },
@@ -4762,8 +4537,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to invite guest users to the organization, on your behalf.',
+          userConsentDescription: 'Allows the app to invite guest users to the organization, on your behalf.',
           userConsentDisplayName: 'Invite guest users to the organization',
           value: 'User.Invite.All',
         },
@@ -4792,21 +4566,18 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'This permission no longer has any effect. You can safely consent to it. No additional privileges will be granted to the app.',
-          userConsentDisplayName:
-            'Limited access to your OneNote notebooks for this app (preview)',
+          userConsentDisplayName: 'Limited access to your OneNote notebooks for this app (preview)',
           value: 'Notes.ReadWrite.CreatedByApp',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read OneNote notebooks on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read OneNote notebooks on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read user OneNote notebooks',
           id: '371361e4-b9e2-4a3f-8315-2a301a3b0a3d',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read OneNote notebooks on your behalf.',
+          userConsentDescription: 'Allows the app to read OneNote notebooks on your behalf.',
           userConsentDisplayName: 'Read your OneNote notebooks',
           value: 'Notes.Read',
         },
@@ -4819,32 +4590,27 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read, share, and modify OneNote notebooks on your behalf.',
+          userConsentDescription: 'Allows the app to read, share, and modify OneNote notebooks on your behalf.',
           userConsentDisplayName: 'Read and write your OneNote notebooks',
           value: 'Notes.ReadWrite',
         },
         {
           adminConsentDescription:
             'Allows the app to read OneNote notebooks that the signed-in user has access to in the organization.',
-          adminConsentDisplayName:
-            'Read all OneNote notebooks that user can access',
+          adminConsentDisplayName: 'Read all OneNote notebooks that user can access',
           id: 'dfabfca6-ee36-4db2-8208-7a28381419b3',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read all the OneNote notebooks that you have access to.',
-          userConsentDisplayName:
-            'Read all OneNote notebooks that you can access',
+          userConsentDescription: 'Allows the app to read all the OneNote notebooks that you have access to.',
+          userConsentDisplayName: 'Read all OneNote notebooks that you can access',
           value: 'Notes.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read, share, and modify OneNote notebooks that the signed-in user has access to in the organization.',
-          adminConsentDisplayName:
-            'Read and write all OneNote notebooks that user can access',
+          adminConsentDisplayName: 'Read and write all OneNote notebooks that user can access',
           id: '64ac0503-b4fa-45d9-b544-71a463f05da0',
           isEnabled: true,
           lang: null,
@@ -4852,13 +4618,11 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allows the app to read, share, and modify all the OneNote notebooks that you have access to.',
-          userConsentDisplayName:
-            'Read and write all OneNote notebooks that you can access',
+          userConsentDisplayName: 'Read and write all OneNote notebooks that you can access',
           value: 'Notes.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            "Allows the app to read a user's list of devices on behalf of the signed-in user.",
+          adminConsentDescription: "Allows the app to read a user's list of devices on behalf of the signed-in user.",
           adminConsentDisplayName: 'Read user devices',
           id: '11d4cd79-5ba5-460f-803f-e22c8ab85ccd',
           isEnabled: true,
@@ -4892,8 +4656,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read, update, create, and delete your mailbox settings.',
+          userConsentDescription: 'Allows the app to read, update, create, and delete your mailbox settings.',
           userConsentDisplayName: 'Read and write to your mailbox settings',
           value: 'MailboxSettings.ReadWrite',
         },
@@ -4906,16 +4669,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to report your app activity information to Microsoft Timeline.',
+          userConsentDescription: 'Allows the app to report your app activity information to Microsoft Timeline.',
           userConsentDisplayName: 'Write app activity to your timeline',
           value: 'UserTimelineActivity.Write.CreatedByApp',
         },
         {
           adminConsentDescription:
             "Allows the app to read a limited subset of the properties from the structure of schools and classes in an organization's roster and a limited subset of properties about users to be read on behalf of the user. Includes name, status, education role, email address and photo.",
-          adminConsentDisplayName:
-            "Read a limited subset of users' view of the roster",
+          adminConsentDisplayName: "Read a limited subset of users' view of the roster",
           id: '5d186531-d1bf-4f07-8cea-7c42119e1bd9',
           isEnabled: true,
           lang: null,
@@ -4923,8 +4684,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to view minimal  information about both schools and classes in your organization and education-related information about you and other users on your behalf.',
-          userConsentDisplayName:
-            'View a limited subset of your school, class and user information',
+          userConsentDisplayName: 'View a limited subset of your school, class and user information',
           value: 'EduRoster.ReadBasic',
         },
         {
@@ -4938,8 +4698,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to view information about schools and classes in your organization and education-related information about you and other users on your behalf.',
-          userConsentDisplayName:
-            'View your school, class and user information',
+          userConsentDisplayName: 'View your school, class and user information',
           value: 'EduRoster.Read',
         },
         {
@@ -4953,30 +4712,24 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to view and modify information about schools and classes in your organization and education-related information about you and other users on your behalf.',
-          userConsentDisplayName:
-            'View and modify your school, class and user information',
+          userConsentDisplayName: 'View and modify your school, class and user information',
           value: 'EduRoster.ReadWrite',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read assignments without grades on behalf of the user.',
-          adminConsentDisplayName:
-            "Read users' class assignments without grades",
+          adminConsentDescription: 'Allows the app to read assignments without grades on behalf of the user.',
+          adminConsentDisplayName: "Read users' class assignments without grades",
           id: 'c0b0103b-c053-4b2e-9973-9f3a544ec9b8',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to view your assignments on your behalf without seeing grades.',
+          userConsentDescription: 'Allows the app to view your assignments on your behalf without seeing grades.',
           userConsentDisplayName: 'View your assignments without grades',
           value: 'EduAssignments.ReadBasic',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read and write assignments without grades on behalf of the user.',
-          adminConsentDisplayName:
-            "Read and write users' class assignments without grades",
+          adminConsentDescription: 'Allows the app to read and write assignments without grades on behalf of the user.',
+          adminConsentDisplayName: "Read and write users' class assignments without grades",
           id: '2ef770a1-622a-47c4-93ee-28d6adbed3a0',
           isEnabled: true,
           lang: null,
@@ -4984,30 +4737,25 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to view and modify your assignments on your behalf without seeing grades.',
-          userConsentDisplayName:
-            'View and modify your assignments without grades',
+          userConsentDisplayName: 'View and modify your assignments without grades',
           value: 'EduAssignments.ReadWriteBasic',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read assignments and their grades on behalf of the user.',
-          adminConsentDisplayName:
-            "Read users' class assignments and their grades",
+          adminConsentDescription: 'Allows the app to read assignments and their grades on behalf of the user.',
+          adminConsentDisplayName: "Read users' class assignments and their grades",
           id: '091460c9-9c4a-49b2-81ef-1f3d852acce2',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to view your assignments on your behalf including grades.',
+          userConsentDescription: 'Allows the app to view your assignments on your behalf including grades.',
           userConsentDisplayName: 'View your assignments and grades',
           value: 'EduAssignments.Read',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write assignments and their grades on behalf of the user.',
-          adminConsentDisplayName:
-            "Read and write users' class assignments and their grades",
+          adminConsentDisplayName: "Read and write users' class assignments and their grades",
           id: '2f233e90-164b-4501-8bce-31af2559a2d3',
           isEnabled: true,
           lang: null,
@@ -5019,8 +4767,7 @@ const principals = {
           value: 'EduAssignments.ReadWrite',
         },
         {
-          adminConsentDescription:
-            'Read the state and settings of all Microsoft education apps on behalf of the user.',
+          adminConsentDescription: 'Read the state and settings of all Microsoft education apps on behalf of the user.',
           adminConsentDisplayName: 'Read education app settings',
           id: '8523895c-6081-45bf-8a5d-f062a2f12c9f',
           isEnabled: true,
@@ -5063,8 +4810,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read your organization’s security events on behalf of the signed-in user. Also allows the app to update editable properties in security events on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read and update your organization’s security events',
+          adminConsentDisplayName: 'Read and update your organization’s security events',
           id: '6aedf524-7e1c-45a7-bd76-ded8cab8d0fc',
           isEnabled: true,
           lang: null,
@@ -5072,8 +4818,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read your organization’s security events on your behalf. Also allows you to update editable properties in security events.',
-          userConsentDisplayName:
-            'Read and update your organization’s security events',
+          userConsentDisplayName: 'Read and update your organization’s security events',
           value: 'SecurityEvents.ReadWrite.All',
         },
         {
@@ -5085,8 +4830,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read your organization’s security events on your behalf.',
+          userConsentDescription: 'Allows the app to read your organization’s security events on your behalf.',
           userConsentDisplayName: 'Read your organization’s security events',
           value: 'SecurityEvents.Read.All',
         },
@@ -5107,8 +4851,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read and write Microsoft Intune service properties including device enrollment and third party service connection configuration.',
-          adminConsentDisplayName:
-            'Read and write Microsoft Intune configuration',
+          adminConsentDisplayName: 'Read and write Microsoft Intune configuration',
           id: '662ed50a-ac44-4eef-ad86-62eed9be2a29',
           isEnabled: true,
           lang: null,
@@ -5116,15 +4859,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write Microsoft Intune service properties including device enrollment and third party service connection configuration.',
-          userConsentDisplayName:
-            'Read and write Microsoft Intune configuration',
+          userConsentDisplayName: 'Read and write Microsoft Intune configuration',
           value: 'DeviceManagementServiceConfig.ReadWrite.All',
         },
         {
           adminConsentDescription:
             'Allows the app to perform remote high impact actions such as wiping the device or resetting the passcode on devices managed by Microsoft Intune.',
-          adminConsentDisplayName:
-            'Perform user-impacting remote actions on Microsoft Intune devices',
+          adminConsentDisplayName: 'Perform user-impacting remote actions on Microsoft Intune devices',
           id: '3404d2bf-2b13-457e-a330-c24615765193',
           isEnabled: true,
           lang: null,
@@ -5132,8 +4873,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to perform remote high impact actions such as wiping the device or resetting the passcode on devices managed by Microsoft Intune.',
-          userConsentDisplayName:
-            'Perform user-impacting remote actions on Microsoft Intune devices',
+          userConsentDisplayName: 'Perform user-impacting remote actions on Microsoft Intune devices',
           value: 'DeviceManagementManagedDevices.PrivilegedOperations.All',
         },
         {
@@ -5151,24 +4891,21 @@ const principals = {
           value: 'DeviceManagementManagedDevices.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read the properties of devices managed by Microsoft Intune.',
+          adminConsentDescription: 'Allows the app to read the properties of devices managed by Microsoft Intune.',
           adminConsentDisplayName: 'Read Microsoft Intune devices',
           id: '314874da-47d6-4978-88dc-cf0d37f0bb82',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read the properties of devices managed by Microsoft Intune.',
+          userConsentDescription: 'Allows the app to read the properties of devices managed by Microsoft Intune.',
           userConsentDisplayName: 'Read devices Microsoft Intune devices',
           value: 'DeviceManagementManagedDevices.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read and write the properties relating to the Microsoft Intune Role-Based Access Control (RBAC) settings.',
-          adminConsentDisplayName:
-            'Read and write Microsoft Intune RBAC settings',
+          adminConsentDisplayName: 'Read and write Microsoft Intune RBAC settings',
           id: '0c5e8a55-87a6-4556-93ab-adc52c4d862d',
           isEnabled: true,
           lang: null,
@@ -5176,8 +4913,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write the properties relating to the Microsoft Intune Role-Based Access Control (RBAC) settings.',
-          userConsentDisplayName:
-            'Read and write Microsoft Intune RBAC settings',
+          userConsentDisplayName: 'Read and write Microsoft Intune RBAC settings',
           value: 'DeviceManagementRBAC.ReadWrite.All',
         },
         {
@@ -5225,8 +4961,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read and write properties of Microsoft Intune-managed device configuration and device compliance policies and their assignment to groups.',
-          adminConsentDisplayName:
-            'Read and write Microsoft Intune Device Configuration and Policies',
+          adminConsentDisplayName: 'Read and write Microsoft Intune Device Configuration and Policies',
           id: '0883f392-0a7a-443d-8c76-16a6d39c7b63',
           isEnabled: true,
           lang: null,
@@ -5234,15 +4969,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and write properties of Microsoft Intune-managed device configuration and device compliance policies and their assignment to groups.',
-          userConsentDisplayName:
-            'Read and write Microsoft Intune Device Configuration and Policies',
+          userConsentDisplayName: 'Read and write Microsoft Intune Device Configuration and Policies',
           value: 'DeviceManagementConfiguration.ReadWrite.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read properties of Microsoft Intune-managed device configuration and device compliance policies and their assignment to groups.',
-          adminConsentDisplayName:
-            'Read Microsoft Intune Device Configuration and Policies',
+          adminConsentDisplayName: 'Read Microsoft Intune Device Configuration and Policies',
           id: 'f1493658-876a-4c87-8fa7-edb559b3476a',
           isEnabled: true,
           lang: null,
@@ -5250,24 +4983,19 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read properties of Microsoft Intune-managed device configuration and device compliance policies and their assignment to groups.',
-          userConsentDisplayName:
-            'Read Microsoft Intune Device Configuration and Policies',
+          userConsentDisplayName: 'Read Microsoft Intune Device Configuration and Policies',
           value: 'DeviceManagementConfiguration.Read.All',
         },
         {
-          adminConsentDescription:
-            "Allows the app to read and report the signed-in user's activity in the app.",
-          adminConsentDisplayName:
-            "Read and write app activity to users' activity feed",
+          adminConsentDescription: "Allows the app to read and report the signed-in user's activity in the app.",
+          adminConsentDisplayName: "Read and write app activity to users' activity feed",
           id: '47607519-5fb1-47d9-99c7-da4b48f369b1',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read and report your activity in the app.',
-          userConsentDisplayName:
-            'Read and write app activity to your activity feed',
+          userConsentDescription: 'Allows the app to read and report your activity in the app.',
+          userConsentDisplayName: 'Read and write app activity to your activity feed',
           value: 'UserActivity.ReadWrite.CreatedByApp',
         },
         {
@@ -5279,23 +5007,20 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read and query your audit log activities, on your behalf.',
+          userConsentDescription: 'Allows the app to read and query your audit log activities, on your behalf.',
           userConsentDisplayName: 'Read audit log data',
           value: 'AuditLog.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read terms of use acceptance statuses on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read terms of use acceptance statuses that user can access',
+          adminConsentDisplayName: 'Read terms of use acceptance statuses that user can access',
           id: 'a66a5341-e66e-4897-9d52-c2df58c2bfb9',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read terms of use acceptance statuses on your behalf.',
+          userConsentDescription: 'Allows the app to read terms of use acceptance statuses on your behalf.',
           userConsentDisplayName: 'Read all terms of use acceptance statuses',
           value: 'AgreementAcceptance.Read.All',
         },
@@ -5308,8 +5033,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read your terms of use acceptance statuses.',
+          userConsentDescription: 'Allows the app to read your terms of use acceptance statuses.',
           userConsentDisplayName: 'Read your terms of use acceptance statuses',
           value: 'AgreementAcceptance.Read',
         },
@@ -5322,30 +5046,26 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read and write terms of use agreements on your behalf.',
+          userConsentDescription: 'Allows the app to read and write terms of use agreements on your behalf.',
           userConsentDisplayName: 'Read and write all terms of use agreements',
           value: 'Agreement.ReadWrite.All',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read terms of use agreements on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read terms of use agreements on behalf of the signed-in user.',
           adminConsentDisplayName: 'Read all terms of use agreements',
           id: 'af2819c9-df71-4dd3-ade7-4d7c9dc653b7',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read terms of use agreements on your behalf.',
+          userConsentDescription: 'Allows the app to read terms of use agreements on your behalf.',
           userConsentDisplayName: 'Read all terms of use agreements',
           value: 'Agreement.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to request and manage just in time elevation (including scheduled elevation) of users to Azure AD built-in administrative roles, on behalf of signed-in users.',
-          adminConsentDisplayName:
-            'Read and write privileged access to Azure AD',
+          adminConsentDisplayName: 'Read and write privileged access to Azure AD',
           id: '3c3c74f5-cdaa-4a97-b7e0-4e788bfcfb37',
           isEnabled: true,
           lang: null,
@@ -5353,21 +5073,18 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to request and manage just in time elevation (including scheduled elevation) of users to Azure AD built-in administrative roles, on your behalf.',
-          userConsentDisplayName:
-            'Read and write privileged access to Azure AD',
+          userConsentDisplayName: 'Read and write privileged access to Azure AD',
           value: 'PrivilegedAccess.ReadWrite.AzureAD',
         },
         {
-          adminConsentDescription:
-            'Allows the app to create, read, update, and delete apps in the app catalogs.',
+          adminConsentDescription: 'Allows the app to create, read, update, and delete apps in the app catalogs.',
           adminConsentDisplayName: 'Read and write to all app catalogs',
           id: '1ca167d5-1655-44a1-8adf-1414072e1ef9',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to create, read, update, and delete apps in the app catalogs.',
+          userConsentDescription: 'Allows the app to create, read, update, and delete apps in the app catalogs.',
           userConsentDisplayName: 'Read and write to all app catalogs',
           value: 'AppCatalog.ReadWrite.All',
         },
@@ -5402,8 +5119,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read, update, delete and perform actions on access reviews, reviewers, decisions and settings that the signed-in user has access to in the organization.',
-          adminConsentDisplayName:
-            'Manage all access reviews that user can access',
+          adminConsentDisplayName: 'Manage all access reviews that user can access',
           id: 'e4aa47b9-9a69-4109-82ed-36ec70d85ff1',
           isEnabled: true,
           lang: null,
@@ -5417,8 +5133,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read access reviews, reviewers, decisions and settings that the signed-in user has access to in the organization.',
-          adminConsentDisplayName:
-            'Read all access reviews that user can access',
+          adminConsentDisplayName: 'Read all access reviews that user can access',
           id: 'ebfcd32b-babb-40f4-a14b-42706e83bd28',
           isEnabled: true,
           lang: null,
@@ -5438,16 +5153,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            "Allows the app to read your organization's policies on your behalf.",
+          userConsentDescription: "Allows the app to read your organization's policies on your behalf.",
           userConsentDisplayName: "Read your organization's policies",
           value: 'Policy.Read.All',
         },
         {
           adminConsentDescription:
             "Allows the app to read and write your organization's conditional access policies on behalf of the signed-in user.",
-          adminConsentDisplayName:
-            "Read and write your organization's conditional access policies",
+          adminConsentDisplayName: "Read and write your organization's conditional access policies",
           id: 'ad902697-1014-4ef5-81ef-2b4301988e8c',
           isEnabled: true,
           lang: null,
@@ -5455,15 +5168,13 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             "Allows the app to read and write your organization's conditional access policies on your behalf.",
-          userConsentDisplayName:
-            "Read and write your organization's conditional access policies",
+          userConsentDisplayName: "Read and write your organization's conditional access policies",
           value: 'Policy.ReadWrite.ConditionalAccess',
         },
         {
           adminConsentDescription:
             "Allows the app to deliver its notifications on behalf of signed-in users. Also allows the app to read, update, and delete the user's notification items for this app.",
-          adminConsentDisplayName:
-            'Deliver and manage user notifications for this app',
+          adminConsentDisplayName: 'Deliver and manage user notifications for this app',
           id: '89497502-6e42-46a2-8cb2-427fd3df970a',
           isEnabled: true,
           lang: null,
@@ -5471,8 +5182,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allows the app to deliver its notifications, on your behalf. Also allows the app to read, update, and delete your notification items for this app.',
-          userConsentDisplayName:
-            'Deliver and manage your notifications for this app',
+          userConsentDisplayName: 'Deliver and manage your notifications for this app',
           value: 'Notifications.ReadWrite.CreatedByApp',
         },
         {
@@ -5492,23 +5202,20 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to have the same access to mailboxes as the signed-in user via Exchange Web Services.',
-          adminConsentDisplayName:
-            'Access mailboxes as the signed-in user via Exchange Web Services',
+          adminConsentDisplayName: 'Access mailboxes as the signed-in user via Exchange Web Services',
           id: '9769c687-087d-48ac-9cb3-c37dde652038',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app full access to your mailboxes on your behalf.',
+          userConsentDescription: 'Allows the app full access to your mailboxes on your behalf.',
           userConsentDisplayName: 'Access your mailboxes',
           value: 'EWS.AccessAsUser.All',
         },
         {
           adminConsentDescription:
             'Allows the app to see and update the data you gave it access to, even when users are not currently using the app. This does not give the app any additional permissions.',
-          adminConsentDisplayName:
-            'Maintain access to data you have given it access to',
+          adminConsentDisplayName: 'Maintain access to data you have given it access to',
           id: '7427e0e9-2fba-42fe-b0c0-848c9e6a8182',
           isEnabled: true,
           lang: null,
@@ -5516,8 +5223,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allows the app to see and update the data you gave it access to, even when you are not currently using the app. This does not give the app any additional permissions.',
-          userConsentDisplayName:
-            'Maintain access to data you have given it access to',
+          userConsentDisplayName: 'Maintain access to data you have given it access to',
           value: 'offline_access',
         },
         {
@@ -5549,16 +5255,14 @@ const principals = {
           value: 'IdentityRiskyUser.Read.All',
         },
         {
-          adminConsentDescription:
-            "Allows the app to read the signed-in user's mailbox.",
+          adminConsentDescription: "Allows the app to read the signed-in user's mailbox.",
           adminConsentDisplayName: 'Read user mail ',
           id: '570282fd-fa5c-430d-a7fd-fc8dc98a9dca',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read email in your mailbox. ',
+          userConsentDescription: 'Allows the app to read email in your mailbox. ',
           userConsentDisplayName: 'Read your mail ',
           value: 'Mail.Read',
         },
@@ -5573,8 +5277,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read and update identity risky user information for all users in your organization on your behalf. Update operations include dismissing risky users.',
-          userConsentDisplayName:
-            'Read and write identity risky user information',
+          userConsentDisplayName: 'Read and write identity risky user information',
           value: 'IdentityRiskyUser.ReadWrite.All',
         },
         {
@@ -5600,8 +5303,7 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read or write trust framework key sets, on your behalf.',
+          userConsentDescription: 'Allows the app to read or write trust framework key sets, on your behalf.',
           userConsentDisplayName: 'Read and write trust framework key sets',
           value: 'TrustFrameworkKeySet.ReadWrite.All',
         },
@@ -5614,16 +5316,14 @@ const principals = {
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read trust framework key sets, on your behalf.',
+          userConsentDescription: 'Allows the app to read trust framework key sets, on your behalf.',
           userConsentDisplayName: 'Read trust framework key sets',
           value: 'TrustFrameworkKeySet.Read.All',
         },
         {
           adminConsentDescription:
             "Allows the app to read and write your organization's trust framework policies on behalf of the signed-in user.",
-          adminConsentDisplayName:
-            "Read and write your organization's trust framework policies",
+          adminConsentDisplayName: "Read and write your organization's trust framework policies",
           id: 'cefba324-1a70-4a6e-9c1d-fd670b7ae392',
           isEnabled: true,
           lang: null,
@@ -5663,40 +5363,34 @@ const principals = {
           value: 'Chat.Read',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read security actions, on behalf of the signed-in user.',
+          adminConsentDescription: 'Allows the app to read security actions, on behalf of the signed-in user.',
           adminConsentDisplayName: "Read your organization's security actions",
           id: '1638cddf-07a4-4de2-8645-69c96cacad73',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read security actions, on your behalf.',
+          userConsentDescription: 'Allows the app to read security actions, on your behalf.',
           userConsentDisplayName: "Read your organization's security actions",
           value: 'SecurityActions.Read.All',
         },
         {
           adminConsentDescription:
             'Allows the app to read or update security actions, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            "Read and update your organization's security actions",
+          adminConsentDisplayName: "Read and update your organization's security actions",
           id: 'dc38509c-b87d-4da0-bd92-6bec988bac4a',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'Admin',
-          userConsentDescription:
-            'Allows the app to read and update security actions, on your behalf.',
-          userConsentDisplayName:
-            "Read and update your organization's security actions",
+          userConsentDescription: 'Allows the app to read and update security actions, on your behalf.',
+          userConsentDisplayName: "Read and update your organization's security actions",
           value: 'SecurityActions.ReadWrite.All',
         },
         {
           adminConsentDescription:
             'Allows the app to create threat indicators, and fully manage those threat indicators (read, update and delete), on behalf of the signed-in user.  It cannot update any threat indicators it does not own.',
-          adminConsentDisplayName:
-            'Manage threat indicators this app creates or owns',
+          adminConsentDisplayName: 'Manage threat indicators this app creates or owns',
           id: '91e7d36d-022a-490f-a748-f8e011357b42',
           isEnabled: true,
           lang: null,
@@ -5704,21 +5398,18 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to create threat indicators, and fully manage those threat indicators (read, update and delete), on your behalf.  It cannot update any threat indicators that it is not an owner of.',
-          userConsentDisplayName:
-            'Manage threat indicators this app creates or owns',
+          userConsentDisplayName: 'Manage threat indicators this app creates or owns',
           value: 'ThreatIndicators.ReadWrite.OwnedBy',
         },
         {
-          adminConsentDescription:
-            'Allows the app to read your family information, members and their basic profile.',
+          adminConsentDescription: 'Allows the app to read your family information, members and their basic profile.',
           adminConsentDisplayName: 'Read your family info',
           id: '3a1e4806-a744-4c70-80fc-223bf8582c46',
           isEnabled: true,
           lang: null,
           origin: 'Application',
           type: 'User',
-          userConsentDescription:
-            'Allows the app to read your family information, members and their basic profile.',
+          userConsentDescription: 'Allows the app to read your family information, members and their basic profile.',
           userConsentDisplayName: 'Read your family info',
           value: 'Family.Read',
         },
@@ -5753,8 +5444,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows an app to read information protection sensitivity labels and label policy settings, on behalf of the signed-in user.',
-          adminConsentDisplayName:
-            'Read user sensitivity labels and label policies.',
+          adminConsentDisplayName: 'Read user sensitivity labels and label policies.',
           id: '4ad84827-5578-4e18-ad7a-86530b12f884',
           isEnabled: true,
           lang: null,
@@ -5762,8 +5452,7 @@ const principals = {
           type: 'User',
           userConsentDescription:
             'Allows an app to read information protection sensitivity labels and label policy settings, on behalf of the signed-in user.',
-          userConsentDisplayName:
-            'Read user sensitivity labels and label policies.',
+          userConsentDisplayName: 'Read user sensitivity labels and label policies.',
           value: 'InformationProtectionPolicy.Read',
         },
         {
@@ -5783,8 +5472,7 @@ const principals = {
         {
           adminConsentDescription:
             'Allows the app to read, update, delete and perform actions on access reviews, reviewers, decisions and settings for group and app memberships that the signed-in user has access to in the organization.',
-          adminConsentDisplayName:
-            'Manage access reviews for group and app memberships',
+          adminConsentDisplayName: 'Manage access reviews for group and app memberships',
           id: '5af8c3f5-baca-439a-97b0-ea58a435e269',
           isEnabled: true,
           lang: null,
@@ -5792,8 +5480,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             'Allows the app to read, update and perform action on access reviews, reviewers, decisions and settings that you have access to.',
-          userConsentDisplayName:
-            'Manage access reviews for group and app memberships',
+          userConsentDisplayName: 'Manage access reviews for group and app memberships',
           value: 'AccessReview.ReadWrite.Membership',
         },
         {
@@ -5897,8 +5584,7 @@ const principals = {
         {
           adminConsentDescription:
             "Allows the app to read and write your organization's feature rollout policies on behalf of the signed-in user. Includes abilities to assign and remove users and groups to rollout of a specific feature.",
-          adminConsentDisplayName:
-            "Read and write your organization's feature rollout policies",
+          adminConsentDisplayName: "Read and write your organization's feature rollout policies",
           id: '92a38652-f13b-4875-bc77-6e1dbb63e1b2',
           isEnabled: true,
           lang: null,
@@ -5906,8 +5592,7 @@ const principals = {
           type: 'Admin',
           userConsentDescription:
             "Allows the app to read and write your organization's feature rollout policies on your behalf. Includes abilities to assign and remove users and groups to rollout of a specific feature.",
-          userConsentDisplayName:
-            "Read and write your organization's feature rollout policies",
+          userConsentDisplayName: "Read and write your organization's feature rollout policies",
           value: 'Policy.ReadWrite.FeatureRollout',
         },
         {
@@ -5973,9 +5658,7 @@ type PermissionProps = {
   resourceAccesses: Array<RoleResultProps>;
 };
 
-export const getGraphPermissions = (
-  ...roleNames: RoleProps[]
-): PermissionProps => {
+export function getGraphPermissions(...roleNames: RoleProps[]): PermissionProps {
   const rs = {
     resourceAppId: graph.id,
     resourceAccesses: new Array<RoleResultProps>(),
@@ -5987,16 +5670,12 @@ export const getGraphPermissions = (
   roleNames.forEach((n) => {
     const role =
       n.type === 'Scope'
-        ? found.oauth2Permissions.find(
-            (a) => a.value.toLowerCase() === n.name.toLowerCase()
-          )
-        : found.appRoles.find(
-            (r) => r.value.toLowerCase() === n.name.toLowerCase()
-          );
+        ? found.oauth2Permissions.find((a) => a.value.toLowerCase() === n.name.toLowerCase())
+        : found.appRoles.find((r) => r.value.toLowerCase() === n.name.toLowerCase());
 
     if (!role) throw `${n.name}-${n.type} is not found.`;
     rs.resourceAccesses.push({ id: role.id, type: n.type });
   });
 
   return rs;
-};
+}

@@ -27,12 +27,12 @@ export const isSandbox = isEnv(Environments.Sandbox);
 export const isPrd = isEnv(Environments.Prd);
 export const isGlobal = isEnv(Environments.Global);
 
-const getCurrentEnv = () => {
+function getCurrentEnv() {
   if (isGlobal) return Environments.Global;
   if (isPrd) return Environments.Prd;
   if (isSandbox) return Environments.Sandbox;
   return Environments.Dev;
-};
+}
 
 export const currentEnv = getCurrentEnv();
 

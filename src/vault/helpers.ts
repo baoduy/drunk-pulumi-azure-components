@@ -1,6 +1,6 @@
 import { removeLeadingAndTrailingDash, stackInfo } from '../helpers';
 
-export const getSecretName = (name: string) => {
+export function getSecretName(name: string) {
   const n = name
     .replace(new RegExp(stackInfo.stack, 'g'), '') // Replace occurrences of "stack" variable with "-"
     .replace(/\.|_|\s/g, '-') // Replace ".", "_", and spaces with "-"
@@ -8,4 +8,4 @@ export const getSecretName = (name: string) => {
     .toLowerCase(); // Convert the result to lowercase
 
   return removeLeadingAndTrailingDash(n);
-};
+}

@@ -107,8 +107,8 @@ export type RsRoleDefinitionObject = {
   };
 };
 
-const getRsRoleDefinitions = (): RsRoleDefinitionObject =>
-  Object.entries(rsRoles).reduce((acc, [key, roles]) => {
+function getRsRoleDefinitions(): RsRoleDefinitionObject {
+  return Object.entries(rsRoles).reduce((acc, [key, roles]) => {
     acc[key as keyof typeof rsRoles] = {
       ...roles,
       getReadOnly: () => ({
@@ -124,5 +124,6 @@ const getRsRoleDefinitions = (): RsRoleDefinitionObject =>
     };
     return acc;
   }, {} as RsRoleDefinitionObject);
+}
 
 export const rsRoleDefinitions = getRsRoleDefinitions();

@@ -2,19 +2,19 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { RouteArgs } from './RouteTable';
 
-export const getVnetIdFromSubnetId = (subnetId: string) => {
+export function getVnetIdFromSubnetId(subnetId: string) {
   //The sample SubnetId is /subscriptions/63a31b41-eb5d-4160-9fc9-d30fc00286c9/resourceGroups/sg-dev-aks-vnet/providers/Microsoft.Network/virtualNetworks/sg-vnet-trans/subnets/aks-main-nodes
   return subnetId.split('/subnets')[0];
-};
+}
 
-export const getSubnetNameFromId = (subnetId: string) => {
+export function getSubnetNameFromId(subnetId: string) {
   //The sample SubnetId is /subscriptions/63a31b41-eb5d-4160-9fc9-d30fc00286c9/resourceGroups/sg-dev-aks-vnet/providers/Microsoft.Network/virtualNetworks/sg-vnet-trans/subnets/aks-main-nodes
   return subnetId.split('/subnets')[1];
-};
+}
 
-export const getDnsRecordName = (recordName: string) => {
+export function getDnsRecordName(recordName: string) {
   return recordName === '*' ? `all-aRecord` : recordName === '@' ? `root-aRecord` : `${recordName}-aRecord`;
-};
+}
 
 export enum AzureSubnetNames {
   AppGatewaySubnetName = 'app-gateway',
@@ -47,13 +47,13 @@ export const defaultRouteRules = {
   } as RouteArgs,
 };
 
-export const getBasionSGRules = ({
+export function getBasionSGRules({
   subnetPrefix,
   startPriority = 3000,
 }: {
   subnetPrefix: pulumi.Input<string>;
   startPriority?: number;
-}) => {
+}) {
   const rs = new Array<inputs.network.SecurityRuleArgs>();
   //Inbound
   rs.push(
@@ -162,4 +162,4 @@ export const getBasionSGRules = ({
     // },
   );
   return rs;
-};
+}

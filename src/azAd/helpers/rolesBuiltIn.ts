@@ -89,9 +89,7 @@ const roleInfo = [
         {
           actions: ['Microsoft.ContainerRegistry/registries/sign/write'],
           notActions: [],
-          dataActions: [
-            'Microsoft.ContainerRegistry/registries/trustedCollections/write',
-          ],
+          dataActions: ['Microsoft.ContainerRegistry/registries/trustedCollections/write'],
           notDataActions: [],
         },
       ],
@@ -137,9 +135,7 @@ const roleInfo = [
         {
           actions: ['Microsoft.ContainerRegistry/registries/quarantine/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.ContainerRegistry/registries/quarantinedArtifacts/read',
-          ],
+          dataActions: ['Microsoft.ContainerRegistry/registries/quarantinedArtifacts/read'],
           notDataActions: [],
         },
       ],
@@ -293,8 +289,7 @@ const roleInfo = [
     properties: {
       roleName: 'Application Insights Snapshot Debugger',
       type: 'BuiltInRole',
-      description:
-        'Gives user permission to use Application Insights Snapshot Debugger features',
+      description: 'Gives user permission to use Application Insights Snapshot Debugger features',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -328,9 +323,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Attestation/attestationProviders/attestation/read',
-          ],
+          actions: ['Microsoft.Attestation/attestationProviders/attestation/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -386,8 +379,7 @@ const roleInfo = [
     properties: {
       roleName: 'Automation Runbook Operator',
       type: 'BuiltInRole',
-      description:
-        'Read Runbook properties - to be able to create Jobs of the runbook.',
+      description: 'Read Runbook properties - to be able to create Jobs of the runbook.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -417,8 +409,7 @@ const roleInfo = [
     properties: {
       roleName: 'Automation Operator',
       type: 'BuiltInRole',
-      description:
-        'Automation Operators are able to start, stop, suspend, and resume jobs',
+      description: 'Automation Operators are able to start, stop, suspend, and resume jobs',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -604,8 +595,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Maps Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Grants access to read map related data from an Azure maps account.',
+      description: 'Grants access to read map related data from an Azure maps account.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -656,8 +646,7 @@ const roleInfo = [
     properties: {
       roleName: 'Backup Contributor',
       type: 'BuiltInRole',
-      description:
-        "Lets you manage backups, but can't delete vaults and give access to others",
+      description: "Lets you manage backups, but can't delete vaults and give access to others",
       assignableScopes: ['/'],
       permissions: [
         {
@@ -894,13 +883,9 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Blockchain/blockchainMembers/transactionNodes/read',
-          ],
+          actions: ['Microsoft.Blockchain/blockchainMembers/transactionNodes/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.Blockchain/blockchainMembers/transactionNodes/connect/action',
-          ],
+          dataActions: ['Microsoft.Blockchain/blockchainMembers/transactionNodes/connect/action'],
           notDataActions: [],
         },
       ],
@@ -948,8 +933,7 @@ const roleInfo = [
     properties: {
       roleName: 'CDN Endpoint Contributor',
       type: 'BuiltInRole',
-      description:
-        "Can manage CDN endpoints, but can't grant access to other users.",
+      description: "Can manage CDN endpoints, but can't grant access to other users.",
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1014,8 +998,7 @@ const roleInfo = [
     properties: {
       roleName: 'CDN Profile Reader',
       type: 'BuiltInRole',
-      description:
-        "Can view CDN profiles and their endpoints, but can't make changes.",
+      description: "Can view CDN profiles and their endpoints, but can't make changes.",
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1081,8 +1064,7 @@ const roleInfo = [
     properties: {
       roleName: 'Classic Storage Account Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage classic storage accounts, but not access to them.',
+      description: 'Lets you manage classic storage accounts, but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1140,8 +1122,7 @@ const roleInfo = [
     properties: {
       roleName: 'ClearDB MySQL DB Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage ClearDB MySQL databases, but not access to them.',
+      description: 'Lets you manage ClearDB MySQL databases, but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1274,8 +1255,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you create, read, update, delete and manage keys of Cognitive Services.',
+      description: 'Lets you create, read, update, delete and manage keys of Cognitive Services.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1317,8 +1297,7 @@ const roleInfo = [
     properties: {
       roleName: 'CosmosBackupOperator',
       type: 'BuiltInRole',
-      description:
-        'Can submit restore request for a Cosmos DB database or a container for an account',
+      description: 'Can submit restore request for a Cosmos DB database or a container for an account',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1409,8 +1388,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cost Management Contributor',
       type: 'BuiltInRole',
-      description:
-        'Can view costs and manage cost configuration (e.g. budgets, exports)',
+      description: 'Can view costs and manage cost configuration (e.g. budgets, exports)',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1444,8 +1422,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cost Management Reader',
       type: 'BuiltInRole',
-      description:
-        'Can view cost data and configuration (e.g. budgets, exports)',
+      description: 'Can view cost data and configuration (e.g. budgets, exports)',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1479,8 +1456,7 @@ const roleInfo = [
     properties: {
       roleName: 'Data Box Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage everything under Data Box Service except giving access to others.',
+      description: 'Lets you manage everything under Data Box Service except giving access to others.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1545,8 +1521,7 @@ const roleInfo = [
     properties: {
       roleName: 'Data Factory Contributor',
       type: 'BuiltInRole',
-      description:
-        'Create and manage data factories, as well as child resources within them.',
+      description: 'Create and manage data factories, as well as child resources within them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1655,8 +1630,7 @@ const roleInfo = [
     properties: {
       roleName: 'DevTest Labs User',
       type: 'BuiltInRole',
-      description:
-        'Lets you connect, start, restart, and shutdown your virtual machines in your Azure DevTest Labs.',
+      description: 'Lets you connect, start, restart, and shutdown your virtual machines in your Azure DevTest Labs.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1712,8 +1686,7 @@ const roleInfo = [
     properties: {
       roleName: 'DocumentDB Account Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage DocumentDB accounts, but not access to them.',
+      description: 'Lets you manage DocumentDB accounts, but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1907,8 +1880,7 @@ const roleInfo = [
     properties: {
       roleName: 'Intelligent Systems Account Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage Intelligent Systems accounts, but not access to them.',
+      description: 'Lets you manage Intelligent Systems accounts, but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -1978,9 +1950,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.EnterpriseKnowledgeGraph/services/knowledge/read',
-          ],
+          actions: ['Microsoft.EnterpriseKnowledgeGraph/services/knowledge/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -2052,9 +2022,7 @@ const roleInfo = [
             'Microsoft.OperationalInsights/workspaces/search/action',
             'Microsoft.Support/*',
           ],
-          notActions: [
-            'Microsoft.OperationalInsights/workspaces/sharedKeys/read',
-          ],
+          notActions: ['Microsoft.OperationalInsights/workspaces/sharedKeys/read'],
           dataActions: [],
           notDataActions: [],
         },
@@ -2196,16 +2164,11 @@ const roleInfo = [
     properties: {
       roleName: 'Managed Application Operator Role',
       type: 'BuiltInRole',
-      description:
-        'Lets you read and perform actions on Managed Application resources',
+      description: 'Lets you read and perform actions on Managed Application resources',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            '*/read',
-            'Microsoft.Solutions/applications/read',
-            'Microsoft.Solutions/*/action',
-          ],
+          actions: ['*/read', 'Microsoft.Solutions/applications/read', 'Microsoft.Solutions/*/action'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -2224,16 +2187,11 @@ const roleInfo = [
     properties: {
       roleName: 'Managed Applications Reader',
       type: 'BuiltInRole',
-      description:
-        'Lets you read resources in a managed app and request JIT access.',
+      description: 'Lets you read resources in a managed app and request JIT access.',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            '*/read',
-            'Microsoft.Resources/deployments/*',
-            'Microsoft.Solutions/jitRequests/*',
-          ],
+          actions: ['*/read', 'Microsoft.Resources/deployments/*', 'Microsoft.Solutions/jitRequests/*'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -2381,11 +2339,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            '*/read',
-            'Microsoft.OperationalInsights/workspaces/search/action',
-            'Microsoft.Support/*',
-          ],
+          actions: ['*/read', 'Microsoft.OperationalInsights/workspaces/search/action', 'Microsoft.Support/*'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -2467,8 +2421,7 @@ const roleInfo = [
     properties: {
       roleName: 'Owner',
       type: 'BuiltInRole',
-      description:
-        'Grants full access to manage all resources, including the ability to assign roles in Azure RBAC.',
+      description: 'Grants full access to manage all resources, including the ability to assign roles in Azure RBAC.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2491,8 +2444,7 @@ const roleInfo = [
     properties: {
       roleName: 'Reader',
       type: 'BuiltInRole',
-      description:
-        'View all resources, but does not allow you to make any changes.',
+      description: 'View all resources, but does not allow you to make any changes.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2608,8 +2560,7 @@ const roleInfo = [
     properties: {
       roleName: 'Scheduler Job Collections Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage Scheduler job collections, but not access to them.',
+      description: 'Lets you manage Scheduler job collections, but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2671,8 +2622,7 @@ const roleInfo = [
     properties: {
       roleName: 'Security Manager (Legacy)',
       type: 'BuiltInRole',
-      description:
-        'This is a legacy role. Please use Security Administrator instead',
+      description: 'This is a legacy role. Please use Security Administrator instead',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2744,8 +2694,7 @@ const roleInfo = [
     properties: {
       roleName: 'Spatial Anchors Account Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage spatial anchors in your account, but not delete them',
+      description: 'Lets you manage spatial anchors in your account, but not delete them',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2775,8 +2724,7 @@ const roleInfo = [
     properties: {
       roleName: 'Site Recovery Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage Site Recovery service except vault creation and role assignment',
+      description: 'Lets you manage Site Recovery service except vault creation and role assignment',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2829,8 +2777,7 @@ const roleInfo = [
     properties: {
       roleName: 'Site Recovery Operator',
       type: 'BuiltInRole',
-      description:
-        'Lets you failover and failback but not perform other Site Recovery management operations',
+      description: 'Lets you failover and failback but not perform other Site Recovery management operations',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2913,8 +2860,7 @@ const roleInfo = [
     properties: {
       roleName: 'Spatial Anchors Account Reader',
       type: 'BuiltInRole',
-      description:
-        'Lets you locate and read properties of spatial anchors in your account',
+      description: 'Lets you locate and read properties of spatial anchors in your account',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2942,8 +2888,7 @@ const roleInfo = [
     properties: {
       roleName: 'Site Recovery Reader',
       type: 'BuiltInRole',
-      description:
-        'Lets you view Site Recovery status but not perform other management operations',
+      description: 'Lets you view Site Recovery status but not perform other management operations',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -2999,8 +2944,7 @@ const roleInfo = [
     properties: {
       roleName: 'Spatial Anchors Account Owner',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage spatial anchors in your account, including deleting them',
+      description: 'Lets you manage spatial anchors in your account, including deleting them',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3333,8 +3277,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Account Key Operator Service Role',
       type: 'BuiltInRole',
-      description:
-        'Storage Account Key Operators are allowed to list and regenerate keys on Storage Accounts',
+      description: 'Storage Account Key Operators are allowed to list and regenerate keys on Storage Accounts',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3360,8 +3303,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Blob Data Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows for read, write and delete access to Azure Storage blob containers and data',
+      description: 'Allows for read, write and delete access to Azure Storage blob containers and data',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3405,9 +3347,7 @@ const roleInfo = [
             'Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*',
-          ],
+          dataActions: ['Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*'],
           notDataActions: [],
         },
       ],
@@ -3424,8 +3364,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Blob Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows for read access to Azure Storage blob containers and data',
+      description: 'Allows for read access to Azure Storage blob containers and data',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3434,9 +3373,7 @@ const roleInfo = [
             'Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read',
-          ],
+          dataActions: ['Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'],
           notDataActions: [],
         },
       ],
@@ -3453,8 +3390,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Queue Data Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows for read, write, and delete access to Azure Storage queues and queue messages',
+      description: 'Allows for read, write, and delete access to Azure Storage queues and queue messages',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3486,8 +3422,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Queue Data Message Processor',
       type: 'BuiltInRole',
-      description:
-        'Allows for peek, receive, and delete access to Azure Storage queue messages',
+      description: 'Allows for peek, receive, and delete access to Azure Storage queue messages',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3519,9 +3454,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.Storage/storageAccounts/queueServices/queues/messages/add/action',
-          ],
+          dataActions: ['Microsoft.Storage/storageAccounts/queueServices/queues/messages/add/action'],
           notDataActions: [],
         },
       ],
@@ -3538,18 +3471,13 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Queue Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows for read access to Azure Storage queues and queue messages',
+      description: 'Allows for read access to Azure Storage queues and queue messages',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Storage/storageAccounts/queueServices/queues/read',
-          ],
+          actions: ['Microsoft.Storage/storageAccounts/queueServices/queues/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.Storage/storageAccounts/queueServices/queues/messages/read',
-          ],
+          dataActions: ['Microsoft.Storage/storageAccounts/queueServices/queues/messages/read'],
           notDataActions: [],
         },
       ],
@@ -3593,8 +3521,7 @@ const roleInfo = [
     properties: {
       roleName: 'Traffic Manager Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage Traffic Manager profiles, but does not let you control who has access to them.',
+      description: 'Lets you manage Traffic Manager profiles, but does not let you control who has access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3629,11 +3556,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            '*/read',
-            'Microsoft.Authorization/*',
-            'Microsoft.Support/*',
-          ],
+          actions: ['*/read', 'Microsoft.Authorization/*', 'Microsoft.Support/*'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -3720,8 +3643,7 @@ const roleInfo = [
     properties: {
       roleName: 'Web Plan Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage the web plans for websites, but not access to them.',
+      description: 'Lets you manage the web plans for websites, but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3754,8 +3676,7 @@ const roleInfo = [
     properties: {
       roleName: 'Website Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage websites (not web plans), but not access to them.',
+      description: 'Lets you manage websites (not web plans), but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -3944,15 +3865,11 @@ const roleInfo = [
     properties: {
       roleName: 'Hybrid Server Resource Administrator',
       type: 'BuiltInRole',
-      description:
-        'Can read, write, delete, and re-onboard Hybrid servers to the Hybrid Resource Provider.',
+      description: 'Can read, write, delete, and re-onboard Hybrid servers to the Hybrid Resource Provider.',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.HybridCompute/machines/*',
-            'Microsoft.HybridCompute/*/read',
-          ],
+          actions: ['Microsoft.HybridCompute/machines/*', 'Microsoft.HybridCompute/*/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -3971,15 +3888,11 @@ const roleInfo = [
     properties: {
       roleName: 'Hybrid Server Onboarding',
       type: 'BuiltInRole',
-      description:
-        'Can onboard new Hybrid servers to the Hybrid Resource Provider.',
+      description: 'Can onboard new Hybrid servers to the Hybrid Resource Provider.',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.HybridCompute/machines/read',
-            'Microsoft.HybridCompute/machines/write',
-          ],
+          actions: ['Microsoft.HybridCompute/machines/read', 'Microsoft.HybridCompute/machines/write'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -4104,9 +4017,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read',
-          ],
+          dataActions: ['Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read'],
           notDataActions: [],
         },
       ],
@@ -4123,8 +4034,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage File Data SMB Share Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows for read, write, and delete access in Azure Storage file shares over SMB',
+      description: 'Allows for read, write, and delete access in Azure Storage file shares over SMB',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -4151,8 +4061,7 @@ const roleInfo = [
     properties: {
       roleName: 'Private DNS Zone Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage private DNS zone resources, but not the virtual networks they are linked to.',
+      description: 'Lets you manage private DNS zone resources, but not the virtual networks they are linked to.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -4186,14 +4095,11 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Blob Delegator',
       type: 'BuiltInRole',
-      description:
-        'Allows for generation of a user delegation key which can be used to sign SAS tokens',
+      description: 'Allows for generation of a user delegation key which can be used to sign SAS tokens',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action',
-          ],
+          actions: ['Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -4212,8 +4118,7 @@ const roleInfo = [
     properties: {
       roleName: 'Desktop Virtualization User',
       type: 'BuiltInRole',
-      description:
-        'Allows user to use the applications in an application group.',
+      description: 'Allows user to use the applications in an application group.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -4476,8 +4381,7 @@ const roleInfo = [
     properties: {
       roleName: 'Policy Insights Data Writer (Preview)',
       type: 'BuiltInRole',
-      description:
-        'Allows read access to resource policies and write access to resource component policy events.',
+      description: 'Allows read access to resource policies and write access to resource component policy events.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -4657,9 +4561,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppConfiguration/configurationStores/*/read',
-          ],
+          dataActions: ['Microsoft.AppConfiguration/configurationStores/*/read'],
           notDataActions: [],
         },
       ],
@@ -4676,8 +4578,7 @@ const roleInfo = [
     properties: {
       roleName: 'Kubernetes Cluster - Azure Arc Onboarding',
       type: 'BuiltInRole',
-      description:
-        'Role definition to authorize any user/service to create connectedClusters resource',
+      description: 'Role definition to authorize any user/service to create connectedClusters resource',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -4791,8 +4692,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services QnA Maker Editor',
       type: 'BuiltInRole',
-      description:
-        'Let’s you create, edit, import and export a KB. You cannot publish or delete a KB.',
+      description: 'Let’s you create, edit, import and export a KB. You cannot publish or delete a KB.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5014,8 +4914,7 @@ const roleInfo = [
     properties: {
       roleName: 'Tag Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage tags on entities, without providing access to the entities themselves.',
+      description: 'Lets you manage tags on entities, without providing access to the entities themselves.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5076,8 +4975,7 @@ const roleInfo = [
     properties: {
       roleName: 'Integration Service Environment Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage integration service environments, but not access to them.',
+      description: 'Lets you manage integration service environments, but not access to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5104,8 +5002,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Kubernetes Service Contributor Role',
       type: 'BuiltInRole',
-      description:
-        'Grants access to read and write Azure Kubernetes Service clusters',
+      description: 'Grants access to read and write Azure Kubernetes Service clusters',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5372,8 +5269,7 @@ const roleInfo = [
     properties: {
       roleName: 'Object Understanding Account Owner',
       type: 'BuiltInRole',
-      description:
-        'Provides user with ingestion capabilities for Azure Object Understanding.',
+      description: 'Provides user with ingestion capabilities for Azure Object Understanding.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5399,8 +5295,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Maps Data Contributor',
       type: 'BuiltInRole',
-      description:
-        'Grants access to read, write, and delete access to map related data from an Azure maps account.',
+      description: 'Grants access to read, write, and delete access to map related data from an Azure maps account.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5428,8 +5323,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Custom Vision Contributor',
       type: 'BuiltInRole',
-      description:
-        'Full access to the project, including the ability to view, create, edit, or delete projects.',
+      description: 'Full access to the project, including the ability to view, create, edit, or delete projects.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5452,8 +5346,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Custom Vision Deployment',
       type: 'BuiltInRole',
-      description:
-        'Publish, unpublish or export models. Deployment can view the project but can’t update.',
+      description: 'Publish, unpublish or export models. Deployment can view the project but can’t update.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5468,9 +5361,7 @@ const roleInfo = [
             'Microsoft.CognitiveServices/accounts/CustomVision/classify/*',
             'Microsoft.CognitiveServices/accounts/CustomVision/detect/*',
           ],
-          notDataActions: [
-            'Microsoft.CognitiveServices/accounts/CustomVision/projects/export/read',
-          ],
+          notDataActions: ['Microsoft.CognitiveServices/accounts/CustomVision/projects/export/read'],
         },
       ],
       createdOn: '2020-05-09T01:31:05.9528620Z',
@@ -5501,9 +5392,7 @@ const roleInfo = [
             'Microsoft.CognitiveServices/accounts/CustomVision/projects/images/suggested/*',
             'Microsoft.CognitiveServices/accounts/CustomVision/projects/tagsandregions/suggestions/action',
           ],
-          notDataActions: [
-            'Microsoft.CognitiveServices/accounts/CustomVision/projects/export/read',
-          ],
+          notDataActions: ['Microsoft.CognitiveServices/accounts/CustomVision/projects/export/read'],
         },
       ],
       createdOn: '2020-05-09T01:33:20.8278896Z',
@@ -5519,8 +5408,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Custom Vision Reader',
       type: 'BuiltInRole',
-      description:
-        'Read-only actions in the project. Readers can’t create or update the project.',
+      description: 'Read-only actions in the project. Readers can’t create or update the project.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5530,9 +5418,7 @@ const roleInfo = [
             'Microsoft.CognitiveServices/accounts/CustomVision/*/read',
             'Microsoft.CognitiveServices/accounts/CustomVision/projects/predictions/query/action',
           ],
-          notDataActions: [
-            'Microsoft.CognitiveServices/accounts/CustomVision/projects/export/read',
-          ],
+          notDataActions: ['Microsoft.CognitiveServices/accounts/CustomVision/projects/export/read'],
         },
       ],
       createdOn: '2020-05-09T01:34:18.5328818Z',
@@ -5765,10 +5651,7 @@ const roleInfo = [
             'Microsoft.KeyVault/operations/read',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.KeyVault/vaults/*/read',
-            'Microsoft.KeyVault/vaults/secrets/readMetadata/action',
-          ],
+          dataActions: ['Microsoft.KeyVault/vaults/*/read', 'Microsoft.KeyVault/vaults/secrets/readMetadata/action'],
           notDataActions: [],
         },
       ],
@@ -5817,8 +5700,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Arc Kubernetes Viewer',
       type: 'BuiltInRole',
-      description:
-        'Lets you view all resources in cluster/namespace, except secrets.',
+      description: 'Lets you view all resources in cluster/namespace, except secrets.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -5879,8 +5761,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Arc Kubernetes Writer',
       type: 'BuiltInRole',
-      description:
-        'Lets you update everything in cluster/namespace, except (cluster)roles and (cluster)role bindings.',
+      description: 'Lets you update everything in cluster/namespace, except (cluster)roles and (cluster)role bindings.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -6263,16 +6144,13 @@ const roleInfo = [
     properties: {
       roleName: 'Object Understanding Account Reader',
       type: 'BuiltInRole',
-      description:
-        'Lets you read ingestion jobs for an object understanding account.',
+      description: 'Lets you read ingestion jobs for an object understanding account.',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.MixedReality/ObjectUnderstandingAccounts/ingest/read',
-          ],
+          dataActions: ['Microsoft.MixedReality/ObjectUnderstandingAccounts/ingest/read'],
           notDataActions: [],
         },
       ],
@@ -6355,8 +6233,7 @@ const roleInfo = [
     properties: {
       roleName: 'Device Update Reader',
       type: 'BuiltInRole',
-      description:
-        'Gives you read access to management and content operations, but does not allow making changes',
+      description: 'Gives you read access to management and content operations, but does not allow making changes',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -6457,8 +6334,7 @@ const roleInfo = [
     properties: {
       roleName: 'Device Update Content Reader',
       type: 'BuiltInRole',
-      description:
-        'Gives you read access to content operations, but does not allow making changes',
+      description: 'Gives you read access to content operations, but does not allow making changes',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -6470,9 +6346,7 @@ const roleInfo = [
             'Microsoft.Insights/alertRules/*',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.DeviceUpdate/accounts/instances/updates/read',
-          ],
+          dataActions: ['Microsoft.DeviceUpdate/accounts/instances/updates/read'],
           notDataActions: [],
         },
       ],
@@ -6489,16 +6363,13 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Metrics Advisor Administrator',
       type: 'BuiltInRole',
-      description:
-        'Full access to the project, including the system level configuration.',
+      description: 'Full access to the project, including the system level configuration.',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: ['Microsoft.CognitiveServices/*/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.CognitiveServices/accounts/MetricsAdvisor/*',
-          ],
+          dataActions: ['Microsoft.CognitiveServices/accounts/MetricsAdvisor/*'],
           notDataActions: [],
         },
       ],
@@ -6521,12 +6392,8 @@ const roleInfo = [
         {
           actions: ['Microsoft.CognitiveServices/*/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.CognitiveServices/accounts/MetricsAdvisor/*',
-          ],
-          notDataActions: [
-            'Microsoft.CognitiveServices/accounts/MetricsAdvisor/stats/*',
-          ],
+          dataActions: ['Microsoft.CognitiveServices/accounts/MetricsAdvisor/*'],
+          notDataActions: ['Microsoft.CognitiveServices/accounts/MetricsAdvisor/stats/*'],
         },
       ],
       createdOn: '2020-09-10T07:47:59.6195639Z',
@@ -6565,8 +6432,7 @@ const roleInfo = [
     properties: {
       roleName: 'Schema Registry Contributor (Preview)',
       type: 'BuiltInRole',
-      description:
-        'Read, write, and delete Schema Registry groups and schemas.',
+      description: 'Read, write, and delete Schema Registry groups and schemas.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -6705,8 +6571,7 @@ const roleInfo = [
     properties: {
       roleName: 'Security Detonation Chamber Submitter',
       type: 'BuiltInRole',
-      description:
-        'Allowed to create submissions to Security Detonation Chamber',
+      description: 'Allowed to create submissions to Security Detonation Chamber',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -6827,9 +6692,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.MachineLearningServices/workspaces/metrics/*/write',
-          ],
+          actions: ['Microsoft.MachineLearningServices/workspaces/metrics/*/write'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -6848,8 +6711,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Account Backup Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you perform backup and restore operations using Azure Backup on the storage account.',
+      description: 'Lets you perform backup and restore operations using Azure Backup on the storage account.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -6891,8 +6753,7 @@ const roleInfo = [
     properties: {
       roleName: 'Experimentation Metric Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows for creation, writes and reads to the metric set via the metrics service APIs.',
+      description: 'Allows for creation, writes and reads to the metric set via the metrics service APIs.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -6927,10 +6788,7 @@ const roleInfo = [
         {
           actions: ['Microsoft.ProjectBabylon/accounts/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.ProjectBabylon/accounts/data/read',
-            'Microsoft.ProjectBabylon/accounts/data/write',
-          ],
+          dataActions: ['Microsoft.ProjectBabylon/accounts/data/read', 'Microsoft.ProjectBabylon/accounts/data/write'],
           notDataActions: [],
         },
       ],
@@ -6978,10 +6836,7 @@ const roleInfo = [
         {
           actions: ['Microsoft.ProjectBabylon/accounts/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.ProjectBabylon/accounts/scan/read',
-            'Microsoft.ProjectBabylon/accounts/scan/write',
-          ],
+          dataActions: ['Microsoft.ProjectBabylon/accounts/scan/read', 'Microsoft.ProjectBabylon/accounts/scan/write'],
           notDataActions: [],
         },
       ],
@@ -7279,8 +7134,7 @@ const roleInfo = [
     properties: {
       roleName: 'Desktop Virtualization Application Group Contributor',
       type: 'BuiltInRole',
-      description:
-        'Contributor of the Desktop Virtualization Application Group.',
+      description: 'Contributor of the Desktop Virtualization Application Group.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7343,8 +7197,7 @@ const roleInfo = [
     properties: {
       roleName: 'Disk Backup Reader',
       type: 'BuiltInRole',
-      description:
-        'Provides permission to backup vault to perform disk backup.',
+      description: 'Provides permission to backup vault to perform disk backup.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7371,8 +7224,7 @@ const roleInfo = [
     properties: {
       roleName: 'Disk Restore Operator',
       type: 'BuiltInRole',
-      description:
-        'Provides permission to backup vault to perform disk restore.',
+      description: 'Provides permission to backup vault to perform disk restore.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7400,8 +7252,7 @@ const roleInfo = [
     properties: {
       roleName: 'Disk Snapshot Contributor',
       type: 'BuiltInRole',
-      description:
-        'Provides permission to backup vault to manage disk snapshots.',
+      description: 'Provides permission to backup vault to manage disk snapshots.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7465,8 +7316,7 @@ const roleInfo = [
     properties: {
       roleName: 'Security Detonation Chamber Submission Manager',
       type: 'BuiltInRole',
-      description:
-        'Allowed to create and manage submissions to Security Detonation Chamber',
+      description: 'Allowed to create and manage submissions to Security Detonation Chamber',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7501,8 +7351,7 @@ const roleInfo = [
     properties: {
       roleName: 'Security Detonation Chamber Publisher',
       type: 'BuiltInRole',
-      description:
-        'Allowed to publish and modify platforms, workflows and toolsets to Security Detonation Chamber',
+      description: 'Allowed to publish and modify platforms, workflows and toolsets to Security Detonation Chamber',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7572,8 +7421,7 @@ const roleInfo = [
     properties: {
       roleName: 'CosmosRestoreOperator',
       type: 'BuiltInRole',
-      description:
-        'Can perform restore action for Cosmos DB database account with continuous backup mode',
+      description: 'Can perform restore action for Cosmos DB database account with continuous backup mode',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7600,8 +7448,7 @@ const roleInfo = [
     properties: {
       roleName: 'FHIR Data Converter',
       type: 'BuiltInRole',
-      description:
-        'Role allows user or principal to convert data from legacy format to FHIR',
+      description: 'Role allows user or principal to convert data from legacy format to FHIR',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7627,8 +7474,7 @@ const roleInfo = [
     properties: {
       roleName: 'Quota Request Operator',
       type: 'BuiltInRole',
-      description:
-        'Read and create quota requests, get quota request status, and create support tickets.',
+      description: 'Read and create quota requests, get quota request status, and create support tickets.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7696,8 +7542,7 @@ const roleInfo = [
     properties: {
       roleName: 'Security Detonation Chamber Reader',
       type: 'BuiltInRole',
-      description:
-        'Allowed to query submission info and files from Security Detonation Chamber',
+      description: 'Allowed to query submission info and files from Security Detonation Chamber',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -7723,16 +7568,13 @@ const roleInfo = [
     properties: {
       roleName: 'Object Anchors Account Reader',
       type: 'BuiltInRole',
-      description:
-        'Lets you read ingestion jobs for an object anchors account.',
+      description: 'Lets you read ingestion jobs for an object anchors account.',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.MixedReality/ObjectAnchorsAccounts/ingest/read',
-          ],
+          dataActions: ['Microsoft.MixedReality/ObjectAnchorsAccounts/ingest/read'],
           notDataActions: [],
         },
       ],
@@ -7749,8 +7591,7 @@ const roleInfo = [
     properties: {
       roleName: 'Object Anchors Account Owner',
       type: 'BuiltInRole',
-      description:
-        'Provides user with ingestion capabilities for an object anchors account.',
+      description: 'Provides user with ingestion capabilities for an object anchors account.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8038,9 +7879,7 @@ const roleInfo = [
             'Microsoft.Media/mediaservices/contentKeyPolicies/*',
             'Microsoft.Media/mediaservices/transforms/*',
           ],
-          notActions: [
-            'Microsoft.Media/mediaservices/contentKeyPolicies/getPolicyPropertiesWithSecrets/action',
-          ],
+          notActions: ['Microsoft.Media/mediaservices/contentKeyPolicies/getPolicyPropertiesWithSecrets/action'],
           dataActions: [],
           notDataActions: [],
         },
@@ -8094,8 +7933,7 @@ const roleInfo = [
     properties: {
       roleName: 'Stream Analytics Query Tester',
       type: 'BuiltInRole',
-      description:
-        'Lets you perform query testing without creating a stream analytics job first',
+      description: 'Lets you perform query testing without creating a stream analytics job first',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8130,10 +7968,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.AnyBuild/clusters/build/write',
-            'Microsoft.AnyBuild/clusters/build/read',
-          ],
+          dataActions: ['Microsoft.AnyBuild/clusters/build/write', 'Microsoft.AnyBuild/clusters/build/read'],
           notDataActions: [],
         },
       ],
@@ -8150,8 +7985,7 @@ const roleInfo = [
     properties: {
       roleName: 'IoT Hub Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows for full read access to IoT Hub data-plane properties',
+      description: 'Allows for full read access to IoT Hub data-plane properties',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8177,8 +8011,7 @@ const roleInfo = [
     properties: {
       roleName: 'IoT Hub Twin Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows for read and write access to all IoT Hub device and module twins.',
+      description: 'Allows for read and write access to all IoT Hub device and module twins.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8283,9 +8116,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.Search/searchServices/indexes/documents/read',
-          ],
+          dataActions: ['Microsoft.Search/searchServices/indexes/documents/read'],
           notDataActions: [],
         },
       ],
@@ -8325,18 +8156,13 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Table Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows for read access to Azure Storage tables and entities',
+      description: 'Allows for read access to Azure Storage tables and entities',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Storage/storageAccounts/tableServices/tables/read',
-          ],
+          actions: ['Microsoft.Storage/storageAccounts/tableServices/tables/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.Storage/storageAccounts/tableServices/tables/entities/read',
-          ],
+          dataActions: ['Microsoft.Storage/storageAccounts/tableServices/tables/entities/read'],
           notDataActions: [],
         },
       ],
@@ -8353,8 +8179,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Table Data Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows for read, write and delete access to Azure Storage tables and entities',
+      description: 'Allows for read, write and delete access to Azure Storage tables and entities',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8393,9 +8218,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.HealthcareApis/workspaces/dicomservices/resources/read',
-          ],
+          dataActions: ['Microsoft.HealthcareApis/workspaces/dicomservices/resources/read'],
           notDataActions: [],
         },
       ],
@@ -8418,9 +8241,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.HealthcareApis/workspaces/dicomservices/resources/*',
-          ],
+          dataActions: ['Microsoft.HealthcareApis/workspaces/dicomservices/resources/*'],
           notDataActions: [],
         },
       ],
@@ -8467,8 +8288,7 @@ const roleInfo = [
     properties: {
       roleName: 'Disk Pool Operator',
       type: 'BuiltInRole',
-      description:
-        'Used by the StoragePool Resource Provider to manage Disks added to a Disk Pool.',
+      description: 'Used by the StoragePool Resource Provider to manage Disks added to a Disk Pool.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8592,10 +8412,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Relay/*/wcfRelays/read',
-            'Microsoft.Relay/*/hybridConnections/read',
-          ],
+          actions: ['Microsoft.Relay/*/wcfRelays/read', 'Microsoft.Relay/*/hybridConnections/read'],
           notActions: [],
           dataActions: ['Microsoft.Relay/*/send/action'],
           notDataActions: [],
@@ -8641,10 +8458,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Relay/*/wcfRelays/read',
-            'Microsoft.Relay/*/hybridConnections/read',
-          ],
+          actions: ['Microsoft.Relay/*/wcfRelays/read', 'Microsoft.Relay/*/hybridConnections/read'],
           notActions: [],
           dataActions: ['Microsoft.Relay/*/listen/action'],
           notDataActions: [],
@@ -8669,9 +8483,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.Dashboard/grafana/ActAsGrafanaViewer/action',
-          ],
+          dataActions: ['Microsoft.Dashboard/grafana/ActAsGrafanaViewer/action'],
           notDataActions: [],
         },
       ],
@@ -8694,9 +8506,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.Dashboard/grafana/ActAsGrafanaEditor/action',
-          ],
+          dataActions: ['Microsoft.Dashboard/grafana/ActAsGrafanaEditor/action'],
           notDataActions: [],
         },
       ],
@@ -8713,8 +8523,7 @@ const roleInfo = [
     properties: {
       roleName: 'Automation Contributor',
       type: 'BuiltInRole',
-      description:
-        'Manage azure automation resources and other resources using azure automation.',
+      description: 'Manage azure automation resources and other resources using azure automation.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8749,8 +8558,7 @@ const roleInfo = [
     properties: {
       roleName: 'Kubernetes Extension Contributor',
       type: 'BuiltInRole',
-      description:
-        'Can create, update, get, list and delete Kubernetes Extensions, and get extension async operations',
+      description: 'Can create, update, get, list and delete Kubernetes Extensions, and get extension async operations',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8782,8 +8590,7 @@ const roleInfo = [
     properties: {
       roleName: 'Device Provisioning Service Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows for full read access to Device Provisioning Service data-plane properties.',
+      description: 'Allows for full read access to Device Provisioning Service data-plane properties.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8806,8 +8613,7 @@ const roleInfo = [
     properties: {
       roleName: 'Device Provisioning Service Data Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows for full access to Device Provisioning Service data-plane operations.',
+      description: 'Allows for full access to Device Provisioning Service data-plane operations.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8830,8 +8636,7 @@ const roleInfo = [
     properties: {
       roleName: 'Trusted Signing Certificate Profile Signer',
       type: 'BuiltInRole',
-      description:
-        'Sign files with a certificate profile. This role is in preview and subject to change.',
+      description: 'Sign files with a certificate profile. This role is in preview and subject to change.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8842,9 +8647,7 @@ const roleInfo = [
             'Microsoft.Resources/subscriptions/resourceGroups/read',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.CodeSigning/certificateProfiles/Sign/action',
-          ],
+          dataActions: ['Microsoft.CodeSigning/certificateProfiles/Sign/action'],
           notDataActions: [],
         },
       ],
@@ -8884,8 +8687,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Spring Cloud Service Registry Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allow read, write and delete access to Azure Spring Cloud Service Registry',
+      description: 'Allow read, write and delete access to Azure Spring Cloud Service Registry',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8935,8 +8737,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Spring Cloud Config Server Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allow read, write and delete access to Azure Spring Cloud Config Server',
+      description: 'Allow read, write and delete access to Azure Spring Cloud Config Server',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -8994,10 +8795,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.Maps/accounts/services/render/read',
-            'Microsoft.Maps/accounts/services/search/read',
-          ],
+          dataActions: ['Microsoft.Maps/accounts/services/render/read', 'Microsoft.Maps/accounts/services/search/read'],
           notDataActions: [],
         },
       ],
@@ -9042,8 +8840,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Arc VMware VM Contributor',
       type: 'BuiltInRole',
-      description:
-        'Arc VMware VM Contributor has permissions to perform all VM actions.',
+      description: 'Arc VMware VM Contributor has permissions to perform all VM actions.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9188,8 +8985,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Arc VMware Administrator role ',
       type: 'BuiltInRole',
-      description:
-        'Arc VMware VM Contributor has permissions to perform all connected VMwarevSphere actions.',
+      description: 'Arc VMware VM Contributor has permissions to perform all connected VMwarevSphere actions.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9271,8 +9067,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services LUIS Owner',
       type: 'BuiltInRole',
-      description:
-        ' Has access to all Read, Test, Write, Deploy and Delete functions under LUIS',
+      description: ' Has access to all Read, Test, Write, Deploy and Delete functions under LUIS',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9300,8 +9095,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Language Reader',
       type: 'BuiltInRole',
-      description:
-        'Has access to Read and Test functions under Language portal',
+      description: 'Has access to Read and Test functions under Language portal',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9329,9 +9123,7 @@ const roleInfo = [
             'Microsoft.CognitiveServices/accounts/Language/generate/action',
             'Microsoft.CognitiveServices/accounts/TextAnalytics/*',
           ],
-          notDataActions: [
-            'Microsoft.CognitiveServices/accounts/TextAnalytics/QnaMaker/*',
-          ],
+          notDataActions: ['Microsoft.CognitiveServices/accounts/TextAnalytics/QnaMaker/*'],
         },
       ],
       createdOn: '2021-11-04T03:29:14.7643336Z',
@@ -9347,8 +9139,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Language Writer',
       type: 'BuiltInRole',
-      description:
-        ' Has access to all Read, Test, and Write functions under Language Portal',
+      description: ' Has access to all Read, Test, and Write functions under Language Portal',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9388,8 +9179,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Language Owner',
       type: 'BuiltInRole',
-      description:
-        'Has access to all Read, Test, Write, Deploy and Delete functions under Language portal',
+      description: 'Has access to all Read, Test, Write, Deploy and Delete functions under Language portal',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9406,9 +9196,7 @@ const roleInfo = [
             'Microsoft.CognitiveServices/accounts/Language/*',
             'Microsoft.CognitiveServices/accounts/TextAnalytics/*',
           ],
-          notDataActions: [
-            'Microsoft.CognitiveServices/accounts/TextAnalytics/QnaMaker/*',
-          ],
+          notDataActions: ['Microsoft.CognitiveServices/accounts/TextAnalytics/QnaMaker/*'],
         },
       ],
       createdOn: '2021-11-04T03:30:07.6173528Z',
@@ -9454,8 +9242,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services LUIS Writer',
       type: 'BuiltInRole',
-      description:
-        'Has access to all Read, Test, and Write functions under LUIS',
+      description: 'Has access to all Read, Test, and Write functions under LUIS',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9550,8 +9337,7 @@ const roleInfo = [
     properties: {
       roleName: 'Load Test Owner',
       type: 'BuiltInRole',
-      description:
-        'Execute all operations on load test resources and load tests',
+      description: 'Execute all operations on load test resources and load tests',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9610,8 +9396,7 @@ const roleInfo = [
     properties: {
       roleName: 'Load Test Reader',
       type: 'BuiltInRole',
-      description:
-        'View and list all load tests and load test resources but can not make any changes',
+      description: 'View and list all load tests and load test resources but can not make any changes',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9644,16 +9429,13 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services Immersive Reader User',
       type: 'BuiltInRole',
-      description:
-        'Provides access to create Immersive Reader sessions and call APIs',
+      description: 'Provides access to create Immersive Reader sessions and call APIs',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.CognitiveServices/accounts/ImmersiveReader/getcontentmodelforreader/action',
-          ],
+          dataActions: ['Microsoft.CognitiveServices/accounts/ImmersiveReader/getcontentmodelforreader/action'],
           notDataActions: [],
         },
       ],
@@ -9951,8 +9733,7 @@ const roleInfo = [
     properties: {
       roleName: 'SignalR App Server',
       type: 'BuiltInRole',
-      description:
-        'Lets your app server access SignalR Service with AAD auth options.',
+      description: 'Lets your app server access SignalR Service with AAD auth options.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -9979,8 +9760,7 @@ const roleInfo = [
     properties: {
       roleName: 'Virtual Machine User Login',
       type: 'BuiltInRole',
-      description:
-        'View Virtual Machines in the portal and login as a regular user.',
+      description: 'View Virtual Machines in the portal and login as a regular user.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10014,8 +9794,7 @@ const roleInfo = [
     properties: {
       roleName: 'Virtual Machine Administrator Login',
       type: 'BuiltInRole',
-      description:
-        'View Virtual Machines in the portal and login as administrator',
+      description: 'View Virtual Machines in the portal and login as administrator',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10051,8 +9830,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Connected Machine Resource Administrator',
       type: 'BuiltInRole',
-      description:
-        'Can read, write, delete and re-onboard Azure Connected Machines.',
+      description: 'Can read, write, delete and re-onboard Azure Connected Machines.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10279,8 +10057,7 @@ const roleInfo = [
     properties: {
       roleName: 'Monitoring Contributor',
       type: 'BuiltInRole',
-      description:
-        'Can read all monitoring data and update monitoring settings.',
+      description: 'Can read all monitoring data and update monitoring settings.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10352,10 +10129,7 @@ const roleInfo = [
             'Microsoft.Resources/subscriptions/resourceGroups/read',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.Insights/Metrics/Write',
-            'Microsoft.Insights/Telemetry/Write',
-          ],
+          dataActions: ['Microsoft.Insights/Metrics/Write', 'Microsoft.Insights/Telemetry/Write'],
           notDataActions: [],
         },
       ],
@@ -10378,10 +10152,7 @@ const roleInfo = [
         {
           actions: ['Microsoft.Purview/accounts/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.Purview/accounts/data/read',
-            'Microsoft.Purview/accounts/data/write',
-          ],
+          dataActions: ['Microsoft.Purview/accounts/data/read', 'Microsoft.Purview/accounts/data/write'],
           notDataActions: [],
         },
       ],
@@ -10404,10 +10175,7 @@ const roleInfo = [
         {
           actions: ['Microsoft.Purview/accounts/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.Purview/accounts/scan/read',
-            'Microsoft.Purview/accounts/scan/write',
-          ],
+          dataActions: ['Microsoft.Purview/accounts/scan/read', 'Microsoft.Purview/accounts/scan/write'],
           notDataActions: [],
         },
       ],
@@ -10447,8 +10215,7 @@ const roleInfo = [
     properties: {
       roleName: 'Autonomous Development Platform Data Contributor (Preview)',
       type: 'BuiltInRole',
-      description:
-        'Grants permissions to upload and manage new Autonomous Development Platform measurements.',
+      description: 'Grants permissions to upload and manage new Autonomous Development Platform measurements.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10491,8 +10258,7 @@ const roleInfo = [
     properties: {
       roleName: 'Autonomous Development Platform Data Owner (Preview)',
       type: 'BuiltInRole',
-      description:
-        'Grants full access to Autonomous Development Platform data.',
+      description: 'Grants full access to Autonomous Development Platform data.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10519,8 +10285,7 @@ const roleInfo = [
     properties: {
       roleName: 'Autonomous Development Platform Data Reader (Preview)',
       type: 'BuiltInRole',
-      description:
-        'Grants read access to Autonomous Development Platform data.',
+      description: 'Grants read access to Autonomous Development Platform data.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10565,10 +10330,7 @@ const roleInfo = [
             'Microsoft.KeyVault/operations/read',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.KeyVault/vaults/keys/*',
-            'Microsoft.KeyVault/vaults/keyrotationpolicies/*',
-          ],
+          dataActions: ['Microsoft.KeyVault/vaults/keys/*', 'Microsoft.KeyVault/vaults/keyrotationpolicies/*'],
           notDataActions: [],
         },
       ],
@@ -10585,8 +10347,7 @@ const roleInfo = [
     properties: {
       roleName: 'Device Update Deployments Reader',
       type: 'BuiltInRole',
-      description:
-        'Gives you read access to management operations, but does not allow making changes',
+      description: 'Gives you read access to management operations, but does not allow making changes',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10721,8 +10482,7 @@ const roleInfo = [
     properties: {
       roleName: 'Chamber Admin',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage everything under your Modeling and Simulation Workbench chamber.',
+      description: 'Lets you manage everything under your Modeling and Simulation Workbench chamber.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10836,9 +10596,7 @@ const roleInfo = [
             'Microsoft.Resources/subscriptions/resourceGroups/read',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.ModSimWorkbench/workbenches/chambers/upload/action',
-          ],
+          dataActions: ['Microsoft.ModSimWorkbench/workbenches/chambers/upload/action'],
           notDataActions: [],
         },
       ],
@@ -10902,8 +10660,7 @@ const roleInfo = [
     properties: {
       roleName: 'Windows Admin Center Administrator Login',
       type: 'BuiltInRole',
-      description:
-        "Let's you manage the OS of your resource via Windows Admin Center as an administrator.",
+      description: "Let's you manage the OS of your resource via Windows Admin Center as an administrator.",
       assignableScopes: ['/'],
       permissions: [
         {
@@ -10973,8 +10730,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Kubernetes Service Policy Add-on Deployment',
       type: 'BuiltInRole',
-      description:
-        'Deploy the Azure Policy add-on on Azure Kubernetes Service clusters',
+      description: 'Deploy the Azure Policy add-on on Azure Kubernetes Service clusters',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11032,8 +10788,7 @@ const roleInfo = [
     properties: {
       roleName: 'Domain Services Reader',
       type: 'BuiltInRole',
-      description:
-        'Can view Azure AD Domain Services and related network configurations',
+      description: 'Can view Azure AD Domain Services and related network configurations',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11085,8 +10840,7 @@ const roleInfo = [
     properties: {
       roleName: 'Domain Services Contributor',
       type: 'BuiltInRole',
-      description:
-        'Can manage Azure AD Domain Services and related network configurations',
+      description: 'Can manage Azure AD Domain Services and related network configurations',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11306,19 +11060,14 @@ const roleInfo = [
     properties: {
       roleName: 'AgFood Platform Sensor Partner Contributor',
       type: 'BuiltInRole',
-      description:
-        'Provides contribute access to manage sensor related entities in AgFood Platform Service',
+      description: 'Provides contribute access to manage sensor related entities in AgFood Platform Service',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.AgFoodPlatform/farmBeats/sensorPartnerScope/*',
-          ],
-          notDataActions: [
-            'Microsoft.AgFoodPlatform/farmBeats/sensorPartnerScope/sensors/delete',
-          ],
+          dataActions: ['Microsoft.AgFoodPlatform/farmBeats/sensorPartnerScope/*'],
+          notDataActions: ['Microsoft.AgFoodPlatform/farmBeats/sensorPartnerScope/sensors/delete'],
         },
       ],
       createdOn: '2022-03-09T11:06:02.2546966Z',
@@ -11334,8 +11083,7 @@ const roleInfo = [
     properties: {
       roleName: 'Compute Gallery Sharing Admin',
       type: 'BuiltInRole',
-      description:
-        'This role allows user to share gallery to another subscription/tenant or share it to the public.',
+      description: 'This role allows user to share gallery to another subscription/tenant or share it to the public.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11445,10 +11193,7 @@ const roleInfo = [
             'Microsoft.Resources/deployments/*',
             'Microsoft.Resources/subscriptions/resourceGroups/read',
           ],
-          notActions: [
-            'Microsoft.DevCenter/projects/write',
-            'Microsoft.DevCenter/projects/delete',
-          ],
+          notActions: ['Microsoft.DevCenter/projects/write', 'Microsoft.DevCenter/projects/delete'],
           dataActions: [
             'Microsoft.DevCenter/projects/users/devboxes/adminStart/action',
             'Microsoft.DevCenter/projects/users/devboxes/adminStop/action',
@@ -11489,8 +11234,7 @@ const roleInfo = [
     properties: {
       roleName: 'Virtual Machine Local User Login',
       type: 'BuiltInRole',
-      description:
-        'View Virtual Machines in the portal and login as a local user configured on the arc server',
+      description: 'View Virtual Machines in the portal and login as a local user configured on the arc server',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11516,8 +11260,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Arc ScVmm Private Cloud User',
       type: 'BuiltInRole',
-      description:
-        'Azure Arc ScVmm Private Cloud User has permissions to use the ScVmm resources to deploy VMs.',
+      description: 'Azure Arc ScVmm Private Cloud User has permissions to use the ScVmm resources to deploy VMs.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11575,8 +11318,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Arc ScVmm VM Contributor',
       type: 'BuiltInRole',
-      description:
-        'Arc ScVmm VM Contributor has permissions to perform all VM actions.',
+      description: 'Arc ScVmm VM Contributor has permissions to perform all VM actions.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11713,8 +11455,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Arc ScVmm Administrator role',
       type: 'BuiltInRole',
-      description:
-        'Arc ScVmm VM Administrator has permissions to perform all ScVmm actions.',
+      description: 'Arc ScVmm VM Administrator has permissions to perform all ScVmm actions.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11850,8 +11591,7 @@ const roleInfo = [
     properties: {
       roleName: 'HDInsight on AKS Cluster Pool Admin',
       type: 'BuiltInRole',
-      description:
-        'Can read, create, modify and delete HDInsight on AKS cluster pools and create clusters',
+      description: 'Can read, create, modify and delete HDInsight on AKS cluster pools and create clusters',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11928,8 +11668,7 @@ const roleInfo = [
     properties: {
       roleName: 'API Management Developer Portal Content Editor',
       type: 'BuiltInRole',
-      description:
-        'Can customize the developer portal, edit its content, and publish it.',
+      description: 'Can customize the developer portal, edit its content, and publish it.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -11961,8 +11700,7 @@ const roleInfo = [
     properties: {
       roleName: 'VM Scanner Operator',
       type: 'BuiltInRole',
-      description:
-        'Role that provides access to disk snapshot for security analysis.',
+      description: 'Role that provides access to disk snapshot for security analysis.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -12055,8 +11793,7 @@ const roleInfo = [
     properties: {
       roleName: 'Desktop Virtualization Power On Contributor',
       type: 'BuiltInRole',
-      description:
-        'Provide permission to the Azure Virtual Desktop Resource Provider to start virtual machines.',
+      description: 'Provide permission to the Azure Virtual Desktop Resource Provider to start virtual machines.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -12285,8 +12022,7 @@ const roleInfo = [
     properties: {
       roleName: 'Trusted Signing Identity Verifier',
       type: 'BuiltInRole',
-      description:
-        'Manage identity or business verification requests. This role is in preview and subject to change.',
+      description: 'Manage identity or business verification requests. This role is in preview and subject to change.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -12317,10 +12053,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.VideoIndexer/*/read',
-            'Microsoft.VideoIndexer/accounts/*/action',
-          ],
+          actions: ['Microsoft.VideoIndexer/*/read', 'Microsoft.VideoIndexer/accounts/*/action'],
           notActions: [
             'Microsoft.VideoIndexer/*/write',
             'Microsoft.VideoIndexer/*/delete',
@@ -12424,8 +12157,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Kubernetes Fleet Manager RBAC Cluster Admin',
       type: 'BuiltInRole',
-      description:
-        'Grants read/write access to all Kubernetes resources in the fleet-managed hub cluster.',
+      description: 'Grants read/write access to all Kubernetes resources in the fleet-managed hub cluster.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -12581,10 +12313,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.ContainerService/fleets/*',
-            'Microsoft.Resources/deployments/*',
-          ],
+          actions: ['Microsoft.ContainerService/fleets/*', 'Microsoft.Resources/deployments/*'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -12603,8 +12332,7 @@ const roleInfo = [
     properties: {
       roleName: 'Kubernetes Namespace User',
       type: 'BuiltInRole',
-      description:
-        'Allows a user to read namespace resources and retrieve kubeconfig for the cluster',
+      description: 'Allows a user to read namespace resources and retrieve kubeconfig for the cluster',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -12689,8 +12417,7 @@ const roleInfo = [
     properties: {
       roleName: 'Template Spec Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows read access to Template Specs at the assigned scope.',
+      description: 'Allows read access to Template Specs at the assigned scope.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -12713,8 +12440,7 @@ const roleInfo = [
     properties: {
       roleName: 'Template Spec Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows full access to Template Spec operations at the assigned scope.',
+      description: 'Allows full access to Template Spec operations at the assigned scope.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -12780,10 +12506,7 @@ const roleInfo = [
             'Microsoft.Resources/subscriptions/resourceGroups/read',
             'Microsoft.Authorization/*/read',
           ],
-          notActions: [
-            'Microsoft.DevCenter/projects/pools/read',
-            'Microsoft.DevCenter/projects/pools/schedules/read',
-          ],
+          notActions: ['Microsoft.DevCenter/projects/pools/read', 'Microsoft.DevCenter/projects/pools/schedules/read'],
           dataActions: [
             'Microsoft.DevCenter/projects/users/environments/userRead/action',
             'Microsoft.DevCenter/projects/users/environments/userWrite/action',
@@ -12813,9 +12536,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/apps/deployments/connect/action',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/apps/deployments/connect/action'],
           notDataActions: [],
         },
       ],
@@ -12838,9 +12559,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/apps/deployments/remotedebugging/action',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/apps/deployments/remotedebugging/action'],
           notDataActions: [],
         },
       ],
@@ -12911,8 +12630,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Center for SAP solutions reader',
       type: 'BuiltInRole',
-      description:
-        'This role provides read access to all capabilities of Azure Center for SAP solutions.',
+      description: 'This role provides read access to all capabilities of Azure Center for SAP solutions.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13059,8 +12777,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Center for SAP solutions administrator',
       type: 'BuiltInRole',
-      description:
-        'This role provides read and write access to all capabilities of Azure Center for SAP solutions.',
+      description: 'This role provides read and write access to all capabilities of Azure Center for SAP solutions.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13124,9 +12841,7 @@ const roleInfo = [
             'Microsoft.Compute/disks/read',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read',
-          ],
+          dataActions: ['Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'],
           notDataActions: [],
         },
       ],
@@ -13143,8 +12858,7 @@ const roleInfo = [
     properties: {
       roleName: 'AppGw for Containers Configuration Manager',
       type: 'BuiltInRole',
-      description:
-        'Allows access and configuration updates to Application Gateway for Containers resource.',
+      description: 'Allows access and configuration updates to Application Gateway for Containers resource.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13185,8 +12899,7 @@ const roleInfo = [
     properties: {
       roleName: 'FHIR SMART User',
       type: 'BuiltInRole',
-      description:
-        'Role allows user to access FHIR Service according to SMART on FHIR specification',
+      description: 'Role allows user to access FHIR Service according to SMART on FHIR specification',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13214,8 +12927,7 @@ const roleInfo = [
     properties: {
       roleName: 'Cognitive Services OpenAI Contributor',
       type: 'BuiltInRole',
-      description:
-        'Full access including the ability to fine-tune, deploy and generate text',
+      description: 'Full access including the ability to fine-tune, deploy and generate text',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13294,10 +13006,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Impact/WorkloadImpacts/*',
-            'Microsoft.Impact/ImpactCategories/read',
-          ],
+          actions: ['Microsoft.Impact/WorkloadImpacts/*', 'Microsoft.Impact/ImpactCategories/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -13316,15 +13025,11 @@ const roleInfo = [
     properties: {
       roleName: 'Impact Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows read-only access to reported impacts and impact categories',
+      description: 'Allows read-only access to reported impacts and impact categories',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Impact/WorkloadImpacts/read',
-            'Microsoft.Impact/ImpactCategories/read',
-          ],
+          actions: ['Microsoft.Impact/WorkloadImpacts/read', 'Microsoft.Impact/ImpactCategories/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -13343,8 +13048,7 @@ const roleInfo = [
     properties: {
       roleName: 'ContainerApp Reader',
       type: 'BuiltInRole',
-      description:
-        'View all containerapp resources, but does not allow you to make any changes.',
+      description: 'View all containerapp resources, but does not allow you to make any changes.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13491,8 +13195,7 @@ const roleInfo = [
     properties: {
       roleName: 'Bayer Ag Powered Services GDU Solution',
       type: 'BuiltInRole',
-      description:
-        'Provide access to GDU Solution by Bayer Ag Powered Services',
+      description: 'Provide access to GDU Solution by Bayer Ag Powered Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13522,8 +13225,7 @@ const roleInfo = [
     properties: {
       roleName: 'Bayer Ag Powered Services Imagery Solution',
       type: 'BuiltInRole',
-      description:
-        'Provide access to Imagery Solution by Bayer Ag Powered Services',
+      description: 'Provide access to Imagery Solution by Bayer Ag Powered Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13582,8 +13284,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Center for SAP solutions Management role',
       type: 'BuiltInRole',
-      description:
-        'This role has permissions which allow users to register existing systems, view and manage systems.',
+      description: 'This role has permissions which allow users to register existing systems, view and manage systems.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13606,8 +13307,7 @@ const roleInfo = [
     properties: {
       roleName: 'Kubernetes Agentless Operator',
       type: 'BuiltInRole',
-      description:
-        'Grants Microsoft Defender for Cloud access to Azure Kubernetes Services',
+      description: 'Grants Microsoft Defender for Cloud access to Azure Kubernetes Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13639,8 +13339,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Usage Billing Data Sender',
       type: 'BuiltInRole',
-      description:
-        'Azure Usage Billing shared BuiltIn role to be used for all Customer Account Authentication',
+      description: 'Azure Usage Billing shared BuiltIn role to be used for all Customer Account Authentication',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13767,8 +13466,7 @@ const roleInfo = [
     properties: {
       roleName: 'Bayer Ag Powered Services CWUM Solution',
       type: 'BuiltInRole',
-      description:
-        'Provide access to CWUM Solution by Bayer Ag Powered Services',
+      description: 'Provide access to CWUM Solution by Bayer Ag Powered Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13862,8 +13560,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Front Door Domain Reader',
       type: 'BuiltInRole',
-      description:
-        "For internal use within Azure. Can view Azure Front Door domains, but can't make changes.",
+      description: "For internal use within Azure. Can view Azure Front Door domains, but can't make changes.",
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13890,8 +13587,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Front Door Secret Reader',
       type: 'BuiltInRole',
-      description:
-        "For internal use within Azure. Can view Azure Front Door secrets, but can't make changes.",
+      description: "For internal use within Azure. Can view Azure Front Door secrets, but can't make changes.",
       assignableScopes: ['/'],
       permissions: [
         {
@@ -13948,8 +13644,7 @@ const roleInfo = [
     properties: {
       roleName: 'LocalNGFirewallAdministrator role',
       type: 'BuiltInRole',
-      description:
-        'Allows user to create, modify, describe, or delete NGFirewalls.',
+      description: 'Allows user to create, modify, describe, or delete NGFirewalls.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14118,8 +13813,7 @@ const roleInfo = [
     properties: {
       roleName: 'LocalRulestacksAdministrator role',
       type: 'BuiltInRole',
-      description:
-        'Allows users to create, modify, describe, or delete Rulestacks.',
+      description: 'Allows users to create, modify, describe, or delete Rulestacks.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14150,15 +13844,11 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Extension for SQL Server Deployment',
       type: 'BuiltInRole',
-      description:
-        'Microsoft.AzureArcData service role to enable deployment of Azure Extension for SQL Server',
+      description: 'Microsoft.AzureArcData service role to enable deployment of Azure Extension for SQL Server',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Resources/deployments/write',
-            'Microsoft.HybridCompute/machines/extensions/write',
-          ],
+          actions: ['Microsoft.Resources/deployments/write', 'Microsoft.HybridCompute/machines/extensions/write'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -14177,17 +13867,13 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Maps Data Read and Batch Role',
       type: 'BuiltInRole',
-      description:
-        'This role can be used to assign read and batch actions on Azure Maps.',
+      description: 'This role can be used to assign read and batch actions on Azure Maps.',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.Maps/accounts/services/*/read',
-            'Microsoft.Maps/accounts/services/batch/action',
-          ],
+          dataActions: ['Microsoft.Maps/accounts/services/*/read', 'Microsoft.Maps/accounts/services/batch/action'],
           notDataActions: [],
         },
       ],
@@ -14209,10 +13895,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.ApiManagement/service/workspaces/*/read',
-            'Microsoft.Authorization/*/read',
-          ],
+          actions: ['Microsoft.ApiManagement/service/workspaces/*/read', 'Microsoft.Authorization/*/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -14372,10 +14055,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.ApiManagement/service/workspaces/*',
-            'Microsoft.Authorization/*/read',
-          ],
+          actions: ['Microsoft.ApiManagement/service/workspaces/*', 'Microsoft.Authorization/*/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -14420,8 +14100,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage File Data Privileged Contributor',
       type: 'BuiltInRole',
-      description:
-        'Customer has read, write, delete and modify NTFS permission access on Azure Storage file shares.',
+      description: 'Customer has read, write, delete and modify NTFS permission access on Azure Storage file shares.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14520,8 +14199,7 @@ const roleInfo = [
     properties: {
       roleName: 'Windows365SubscriptionReader',
       type: 'BuiltInRole',
-      description:
-        'Read subscriptions, images, azure firewalls. This role is used in Windows365 scenarios.',
+      description: 'Read subscriptions, images, azure firewalls. This role is used in Windows365 scenarios.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14548,8 +14226,7 @@ const roleInfo = [
     properties: {
       roleName: 'App Compliance Automation Administrator',
       type: 'BuiltInRole',
-      description:
-        'Create, read, download, modify and delete reports objects and related other resource objects.',
+      description: 'Create, read, download, modify and delete reports objects and related other resource objects.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14601,8 +14278,7 @@ const roleInfo = [
     properties: {
       roleName: 'App Compliance Automation Reader',
       type: 'BuiltInRole',
-      description:
-        'Read, download the reports objects and related other resource objects.',
+      description: 'Read, download the reports objects and related other resource objects.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14625,8 +14301,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Sphere Contributor',
       type: 'BuiltInRole',
-      description:
-        'Allows user read and write access to Azure Sphere resources.',
+      description: 'Allows user read and write access to Azure Sphere resources.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14721,8 +14396,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Sphere Publisher',
       type: 'BuiltInRole',
-      description:
-        'Allows user to read and download Azure Sphere resources and upload images.',
+      description: 'Allows user to read and download Azure Sphere resources and upload images.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -14862,10 +14536,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.CognitiveSearch/indexes/schema/*',
-            'Microsoft.CognitiveSearch/indexes/documents/*',
-          ],
+          dataActions: ['Microsoft.CognitiveSearch/indexes/schema/*', 'Microsoft.CognitiveSearch/indexes/documents/*'],
           notDataActions: [],
         },
       ],
@@ -14882,8 +14553,7 @@ const roleInfo = [
     properties: {
       roleName: 'Community Owner Role',
       type: 'BuiltInRole',
-      description:
-        'Community Owner Role to access the resources of Microsoft.Mission stored with RPSAAS.',
+      description: 'Community Owner Role to access the resources of Microsoft.Mission stored with RPSAAS.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -15017,9 +14687,7 @@ const roleInfo = [
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Storage/storageAccounts/blobServices/containers/read',
-          ],
+          actions: ['Microsoft.Storage/storageAccounts/blobServices/containers/read'],
           notActions: [],
           dataActions: [
             'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read',
@@ -15070,8 +14738,7 @@ const roleInfo = [
     properties: {
       roleName: 'Elastic SAN Network Admin',
       type: 'BuiltInRole',
-      description:
-        'Allows access to create Private Endpoints on SAN resources, and to read SAN resources',
+      description: 'Allows access to create Private Endpoints on SAN resources, and to read SAN resources',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -15155,8 +14822,7 @@ const roleInfo = [
     properties: {
       roleName: 'Search Parameter Manager',
       type: 'BuiltInRole',
-      description:
-        'Role allows user or principal access to $status and $reindex to update search parameters',
+      description: 'Role allows user or principal access to $status and $reindex to update search parameters',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -15417,8 +15083,7 @@ const roleInfo = [
     properties: {
       roleName: 'SpatialMapsAccounts Account Owner',
       type: 'BuiltInRole',
-      description:
-        'Lets you manage data in your account, including deleting them',
+      description: 'Lets you manage data in your account, including deleting them',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -15475,8 +15140,7 @@ const roleInfo = [
     properties: {
       roleName: 'Elastic SAN Snapshot Exporter',
       type: 'BuiltInRole',
-      description:
-        'Allows for creating and exporting Snapshot of Elastic San Volume',
+      description: 'Allows for creating and exporting Snapshot of Elastic San Volume',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -15550,8 +15214,7 @@ const roleInfo = [
     properties: {
       roleName: 'Community Contributor Role',
       type: 'BuiltInRole',
-      description:
-        'Community Contributor Role to access the resources of Microsoft.Mission stored with RPSAAS.',
+      description: 'Community Contributor Role to access the resources of Microsoft.Mission stored with RPSAAS.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -15697,8 +15360,7 @@ const roleInfo = [
     properties: {
       roleName: 'DeID Batch Data Owner',
       type: 'BuiltInRole',
-      description:
-        'Create and manage DeID batch jobs. This role is in preview and subject to change.',
+      description: 'Create and manage DeID batch jobs. This role is in preview and subject to change.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -15725,16 +15387,13 @@ const roleInfo = [
     properties: {
       roleName: 'DeID Batch Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Read DeID batch jobs. This role is in preview and subject to change.',
+      description: 'Read DeID batch jobs. This role is in preview and subject to change.',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.HealthDataAIServices/DeidServices/Batch/read',
-          ],
+          dataActions: ['Microsoft.HealthDataAIServices/DeidServices/Batch/read'],
           notDataActions: [
             'Microsoft.HealthDataAIServices/DeidServices/Batch/write',
             'Microsoft.HealthDataAIServices/DeidServices/Batch/delete',
@@ -15754,16 +15413,13 @@ const roleInfo = [
     properties: {
       roleName: 'DeID Realtime Data User',
       type: 'BuiltInRole',
-      description:
-        'Execute requests against DeID realtime endpoint. This role is in preview and subject to change.',
+      description: 'Execute requests against DeID realtime endpoint. This role is in preview and subject to change.',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.HealthDataAIServices/DeidServices/Realtime/action',
-          ],
+          dataActions: ['Microsoft.HealthDataAIServices/DeidServices/Realtime/action'],
           notDataActions: [],
         },
       ],
@@ -16138,8 +15794,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure AI Developer',
       type: 'BuiltInRole',
-      description:
-        'Can perform all actions within an Azure AI resource besides managing the resource itself.',
+      description: 'Can perform all actions within an Azure AI resource besides managing the resource itself.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16192,10 +15847,7 @@ const roleInfo = [
             'Microsoft.Authorization/*/read',
             'Microsoft.Resources/subscriptions/resourceGroups/read',
           ],
-          notActions: [
-            'Microsoft.DevCenter/projects/pools/read',
-            'Microsoft.DevCenter/projects/pools/schedules/read',
-          ],
+          notActions: ['Microsoft.DevCenter/projects/pools/read', 'Microsoft.DevCenter/projects/pools/schedules/read'],
           dataActions: [
             'Microsoft.DevCenter/projects/users/environments/adminRead/action',
             'Microsoft.DevCenter/projects/users/environments/adminActionRead/action',
@@ -16234,10 +15886,7 @@ const roleInfo = [
             'Microsoft.EventGrid/namespaces/read',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.EventGrid/events/send/action',
-            'Microsoft.EventGrid/events/receive/action',
-          ],
+          dataActions: ['Microsoft.EventGrid/events/send/action', 'Microsoft.EventGrid/events/receive/action'],
           notDataActions: [],
         },
       ],
@@ -16285,8 +15934,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure AI Inference Deployment Operator',
       type: 'BuiltInRole',
-      description:
-        'Can perform all actions required to create a resource deployment within a resource group.',
+      description: 'Can perform all actions required to create a resource deployment within a resource group.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16313,8 +15961,7 @@ const roleInfo = [
     properties: {
       roleName: 'Connected Cluster Managed Identity CheckAccess Reader',
       type: 'BuiltInRole',
-      description:
-        'Built-in role that allows a Connected Cluster managed identity to call the checkAccess API',
+      description: 'Built-in role that allows a Connected Cluster managed identity to call the checkAccess API',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16337,15 +15984,11 @@ const roleInfo = [
     properties: {
       roleName: 'Advisor Reviews Reader',
       type: 'BuiltInRole',
-      description:
-        'View reviews for a workload and recommendations linked to them.',
+      description: 'View reviews for a workload and recommendations linked to them.',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.Advisor/resiliencyReviews/read',
-            'Microsoft.Advisor/triageRecommendations/read',
-          ],
+          actions: ['Microsoft.Advisor/resiliencyReviews/read', 'Microsoft.Advisor/triageRecommendations/read'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -16364,8 +16007,7 @@ const roleInfo = [
     properties: {
       roleName: 'Advisor Reviews Contributor',
       type: 'BuiltInRole',
-      description:
-        'View reviews for a workload and triage recommendations linked to them.',
+      description: 'View reviews for a workload and triage recommendations linked to them.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16469,8 +16111,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Front Door Profile Reader',
       type: 'BuiltInRole',
-      description:
-        "Can view AFD standard and premium profiles and their endpoints, but can't make changes.",
+      description: "Can view AFD standard and premium profiles and their endpoints, but can't make changes.",
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16511,8 +16152,7 @@ const roleInfo = [
     properties: {
       roleName: 'Enclave Reader Role',
       type: 'BuiltInRole',
-      description:
-        'Enclave Reader Role to access the resources of Microsoft.Mission stored with RPSAAS.',
+      description: 'Enclave Reader Role to access the resources of Microsoft.Mission stored with RPSAAS.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16613,8 +16253,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Kubernetes Service Hybrid Contributor Role',
       type: 'BuiltInRole',
-      description:
-        'Grants access to read and write Azure Kubernetes Services hybrid clusters',
+      description: 'Grants access to read and write Azure Kubernetes Services hybrid clusters',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16662,8 +16301,7 @@ const roleInfo = [
     properties: {
       roleName: 'Enclave Owner Role',
       type: 'BuiltInRole',
-      description:
-        'Enclave Owner Role to access the resources of Microsoft.Mission stored with RPSAAS.',
+      description: 'Enclave Owner Role to access the resources of Microsoft.Mission stored with RPSAAS.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16722,8 +16360,7 @@ const roleInfo = [
     properties: {
       roleName: 'Community Reader Role',
       type: 'BuiltInRole',
-      description:
-        'Community Reader Role to access the resources of Microsoft.Mission stored with RPSAAS.',
+      description: 'Community Reader Role to access the resources of Microsoft.Mission stored with RPSAAS.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16770,8 +16407,7 @@ const roleInfo = [
     properties: {
       roleName: 'Enclave Contributor Role',
       type: 'BuiltInRole',
-      description:
-        'Enclave Contributor Role to access the resources of Microsoft.Mission stored with RPSAAS.',
+      description: 'Enclave Contributor Role to access the resources of Microsoft.Mission stored with RPSAAS.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16852,8 +16488,7 @@ const roleInfo = [
     properties: {
       roleName: 'Storage Account Encryption Scope Contributor Role',
       type: 'BuiltInRole',
-      description:
-        'Allows management of Encryption Scopes on a Storage Account',
+      description: 'Allows management of Encryption Scopes on a Storage Account',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16903,8 +16538,7 @@ const roleInfo = [
     properties: {
       roleName: 'KubernetesRuntime Storage Class Contributor Role',
       type: 'BuiltInRole',
-      description:
-        'Read, write, and delete KubernetesRuntime storage classes in an Arc connected Kubernetes cluster',
+      description: 'Read, write, and delete KubernetesRuntime storage classes in an Arc connected Kubernetes cluster',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -16993,19 +16627,13 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Spring Apps Spring Cloud Gateway Log Reader Role',
       type: 'BuiltInRole',
-      description:
-        'Read real-time logs for Spring Cloud Gateway in Azure Spring Apps',
+      description: 'Read real-time logs for Spring Cloud Gateway in Azure Spring Apps',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.AppPlatform/Spring/read',
-            'Microsoft.AppPlatform/Spring/gateways/read',
-          ],
+          actions: ['Microsoft.AppPlatform/Spring/read', 'Microsoft.AppPlatform/Spring/gateways/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/SpringCloudGateway/logstream/action',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/SpringCloudGateway/logstream/action'],
           notDataActions: [],
         },
       ],
@@ -17022,16 +16650,13 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Spring Apps Managed Components Log Reader Role',
       type: 'BuiltInRole',
-      description:
-        'Read real-time logs for all managed components in Azure Spring Apps',
+      description: 'Read real-time logs for all managed components in Azure Spring Apps',
       assignableScopes: ['/'],
       permissions: [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/managedComponents/logstream/action',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/managedComponents/logstream/action'],
           notDataActions: [],
         },
       ],
@@ -17046,22 +16671,15 @@ const roleInfo = [
   },
   {
     properties: {
-      roleName:
-        'Azure Spring Apps Application Configuration Service Log Reader Role',
+      roleName: 'Azure Spring Apps Application Configuration Service Log Reader Role',
       type: 'BuiltInRole',
-      description:
-        'Read real-time logs for Application Configuration Service in Azure Spring Apps',
+      description: 'Read real-time logs for Application Configuration Service in Azure Spring Apps',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.AppPlatform/Spring/read',
-            'Microsoft.AppPlatform/Spring/configurationServices/read',
-          ],
+          actions: ['Microsoft.AppPlatform/Spring/read', 'Microsoft.AppPlatform/Spring/configurationServices/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/ApplicationConfigurationService/logstream/action',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/ApplicationConfigurationService/logstream/action'],
           notDataActions: [],
         },
       ],
@@ -17105,8 +16723,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure API Center Data Reader',
       type: 'BuiltInRole',
-      description:
-        'Allows for access to Azure API Center data plane read operations.',
+      description: 'Allows for access to Azure API Center data plane read operations.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17346,8 +16963,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure RedHat OpenShift Network Operator Role',
       type: 'BuiltInRole',
-      description:
-        'Enables permissions to install and upgrade the networking components on an OpenShift cluster.',
+      description: 'Enables permissions to install and upgrade the networking components on an OpenShift cluster.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17472,8 +17088,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure RedHat OpenShift Cluster Ingress Operator Role',
       type: 'BuiltInRole',
-      description:
-        'Enables permissions for the operator to configure and manage the OpenShift router.',
+      description: 'Enables permissions for the operator to configure and manage the OpenShift router.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17557,8 +17172,7 @@ const roleInfo = [
     properties: {
       roleName: 'GroupQuota Request Operator',
       type: 'BuiltInRole',
-      description:
-        'Read and create GroupQuota requests, get GroupQuota request status, and get groupQuotaLimits.',
+      description: 'Read and create GroupQuota requests, get GroupQuota request status, and get groupQuotaLimits.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17591,8 +17205,7 @@ const roleInfo = [
     properties: {
       roleName: 'GroupQuota Reader',
       type: 'BuiltInRole',
-      description:
-        'Read GroupQuota requests, get GroupQuota request status, and get groupQuotaLimits.',
+      description: 'Read GroupQuota requests, get GroupQuota request status, and get groupQuotaLimits.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17626,8 +17239,7 @@ const roleInfo = [
     properties: {
       roleName: 'Bayer Ag Powered Services Smart Boundary Solution User Role',
       type: 'BuiltInRole',
-      description:
-        'Provide access to Smart Boundary Solution by Bayer Ag Powered Services',
+      description: 'Provide access to Smart Boundary Solution by Bayer Ag Powered Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17737,8 +17349,7 @@ const roleInfo = [
     properties: {
       roleName: 'GeoCatalog Administrator',
       type: 'BuiltInRole',
-      description:
-        'Grants full access to manage GeoCatalogs, but does not allow you to assign roles in Azure RBAC.',
+      description: 'Grants full access to manage GeoCatalogs, but does not allow you to assign roles in Azure RBAC.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17768,8 +17379,7 @@ const roleInfo = [
     properties: {
       roleName: 'GeoCatalog Reader',
       type: 'BuiltInRole',
-      description:
-        'View GeoCatalogs, but does not allow you to make any changes.',
+      description: 'View GeoCatalogs, but does not allow you to make any changes.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17883,9 +17493,7 @@ const roleInfo = [
             'Microsoft.Resources/deployments/*',
           ],
           notActions: [],
-          dataActions: [
-            'Microsoft.ProgrammableConnectivity/Gateways/NetworkAPIAccess',
-          ],
+          dataActions: ['Microsoft.ProgrammableConnectivity/Gateways/NetworkAPIAccess'],
           notDataActions: [],
         },
       ],
@@ -17902,8 +17510,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure AI Enterprise Network Connection Approver',
       type: 'BuiltInRole',
-      description:
-        'Can approve private endpoint connections to Azure AI common dependency resources',
+      description: 'Can approve private endpoint connections to Azure AI common dependency resources',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -17968,8 +17575,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Container Storage Operator',
       type: 'BuiltInRole',
-      description:
-        'Role required by a Managed Identity for Azure Container Storage operations',
+      description: 'Role required by a Managed Identity for Azure Container Storage operations',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18011,8 +17617,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Container Storage Contributor',
       type: 'BuiltInRole',
-      description:
-        'Lets you install Azure Container Storage and manage its storage resources',
+      description: 'Lets you install Azure Container Storage and manage its storage resources',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18033,10 +17638,7 @@ const roleInfo = [
           notDataActions: [],
         },
         {
-          actions: [
-            'Microsoft.Authorization/roleAssignments/write',
-            'Microsoft.Authorization/roleAssignments/delete',
-          ],
+          actions: ['Microsoft.Authorization/roleAssignments/write', 'Microsoft.Authorization/roleAssignments/delete'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -18058,8 +17660,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Container Storage Owner',
       type: 'BuiltInRole',
-      description:
-        'Lets you install Azure Container Storage and grants access to its storage resources',
+      description: 'Lets you install Azure Container Storage and grants access to its storage resources',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18085,10 +17686,7 @@ const roleInfo = [
           notDataActions: [],
         },
         {
-          actions: [
-            'Microsoft.Authorization/roleAssignments/write',
-            'Microsoft.Authorization/roleAssignments/delete',
-          ],
+          actions: ['Microsoft.Authorization/roleAssignments/write', 'Microsoft.Authorization/roleAssignments/delete'],
           notActions: [],
           dataActions: [],
           notDataActions: [],
@@ -18110,8 +17708,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Kubernetes Service Arc Contributor Role',
       type: 'BuiltInRole',
-      description:
-        'Grants access to read and write Azure Kubernetes Services hybrid clusters',
+      description: 'Grants access to read and write Azure Kubernetes Services hybrid clusters',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18214,8 +17811,7 @@ const roleInfo = [
     properties: {
       roleName: 'Backup MUA Admin',
       type: 'BuiltInRole',
-      description:
-        'Backup MultiUser-Authorization. Can create/delete ResourceGuard ',
+      description: 'Backup MultiUser-Authorization. Can create/delete ResourceGuard ',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18327,8 +17923,7 @@ const roleInfo = [
     properties: {
       roleName: 'CrossConnectionManager',
       type: 'BuiltInRole',
-      description:
-        'Allows for read, write access to ExpressRoute CrossConnections',
+      description: 'Allows for read, write access to ExpressRoute CrossConnections',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18382,8 +17977,7 @@ const roleInfo = [
     properties: {
       roleName: 'Kubernetes Agent Operator',
       type: 'BuiltInRole',
-      description:
-        'Grants Microsoft Defender for Cloud access to Azure Kubernetes Services',
+      description: 'Grants Microsoft Defender for Cloud access to Azure Kubernetes Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18412,8 +18006,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure API Center Compliance Manager',
       type: 'BuiltInRole',
-      description:
-        'Allows managing API compliance in Azure API Center service.',
+      description: 'Allows managing API compliance in Azure API Center service.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18483,9 +18076,7 @@ const roleInfo = [
             'Microsoft.Resources/deployments/*',
             'Microsoft.Resources/subscriptions/resourceGroups/read',
           ],
-          notActions: [
-            'Microsoft.ApiCenter/services/workspaces/apis/versions/definitions/updateAnalysisState/action',
-          ],
+          notActions: ['Microsoft.ApiCenter/services/workspaces/apis/versions/definitions/updateAnalysisState/action'],
           dataActions: [],
           notDataActions: [],
         },
@@ -18501,11 +18092,9 @@ const roleInfo = [
   },
   {
     properties: {
-      roleName:
-        'Bayer Ag Powered Services Historical Weather Data Solution User Role',
+      roleName: 'Bayer Ag Powered Services Historical Weather Data Solution User Role',
       type: 'BuiltInRole',
-      description:
-        'Provide access to Historical Weather Data Solution by Bayer Ag Powered Services',
+      description: 'Provide access to Historical Weather Data Solution by Bayer Ag Powered Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18534,8 +18123,7 @@ const roleInfo = [
     properties: {
       roleName: 'Oracle Subscriptions Manager Built-in Role',
       type: 'BuiltInRole',
-      description:
-        'Grants full access to manage all Oracle Subscriptions resources',
+      description: 'Grants full access to manage all Oracle Subscriptions resources',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18679,11 +18267,9 @@ const roleInfo = [
   },
   {
     properties: {
-      roleName:
-        'Oracle.Database Exadata Infrastructure Administrator Built-in Role',
+      roleName: 'Oracle.Database Exadata Infrastructure Administrator Built-in Role',
       type: 'BuiltInRole',
-      description:
-        'Grants full access to manage all Exadata Infrastructure resources',
+      description: 'Grants full access to manage all Exadata Infrastructure resources',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18726,22 +18312,15 @@ const roleInfo = [
   },
   {
     properties: {
-      roleName:
-        'Azure Spring Apps Application Configuration Service Config File Pattern Reader Role',
+      roleName: 'Azure Spring Apps Application Configuration Service Config File Pattern Reader Role',
       type: 'BuiltInRole',
-      description:
-        'Read content of config file pattern for Application Configuration Service in Azure Spring Apps',
+      description: 'Read content of config file pattern for Application Configuration Service in Azure Spring Apps',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.AppPlatform/Spring/read',
-            'Microsoft.AppPlatform/Spring/configurationServices/read',
-          ],
+          actions: ['Microsoft.AppPlatform/Spring/read', 'Microsoft.AppPlatform/Spring/configurationServices/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/ApplicationConfigurationService/read',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/ApplicationConfigurationService/read'],
           notDataActions: [],
         },
       ],
@@ -18758,8 +18337,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Messaging Catalog Data Owner',
       type: 'BuiltInRole',
-      description:
-        'Allows for full access to Azure Messaging Catalog resources.',
+      description: 'Allows for full access to Azure Messaging Catalog resources.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18782,8 +18360,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Hybrid Database Administrator - Read Only Service Role',
       type: 'BuiltInRole',
-      description:
-        'Read only access to Azure hybrid database services resources.',
+      description: 'Read only access to Azure hybrid database services resources.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -18904,8 +18481,7 @@ const roleInfo = [
     properties: {
       roleName: 'Bayer Ag Powered Services Crop Id Solution User Role',
       type: 'BuiltInRole',
-      description:
-        'Provide access to Crop Id Solution by Bayer Ag Powered Services',
+      description: 'Provide access to Crop Id Solution by Bayer Ag Powered Services',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -19000,9 +18576,7 @@ const roleInfo = [
         {
           actions: [],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/jobs/executions/listInstances/action',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/jobs/executions/listInstances/action'],
           notDataActions: [],
         },
       ],
@@ -19078,8 +18652,7 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Deployment Stack Owner',
       type: 'BuiltInRole',
-      description:
-        'Allows a user to manage deployment stacks, including those with deny assignments.',
+      description: 'Allows a user to manage deployment stacks, including those with deny assignments.',
       assignableScopes: ['/'],
       permissions: [
         {
@@ -19139,19 +18712,13 @@ const roleInfo = [
     properties: {
       roleName: 'Azure Spring Apps Spring Cloud Config Server Log Reader Role',
       type: 'BuiltInRole',
-      description:
-        'Read real-time logs for Spring Cloud Config Server in Azure Spring Apps',
+      description: 'Read real-time logs for Spring Cloud Config Server in Azure Spring Apps',
       assignableScopes: ['/'],
       permissions: [
         {
-          actions: [
-            'Microsoft.AppPlatform/Spring/read',
-            'Microsoft.AppPlatform/Spring/configServers/read',
-          ],
+          actions: ['Microsoft.AppPlatform/Spring/read', 'Microsoft.AppPlatform/Spring/configServers/read'],
           notActions: [],
-          dataActions: [
-            'Microsoft.AppPlatform/Spring/configService/logstream/action',
-          ],
+          dataActions: ['Microsoft.AppPlatform/Spring/configService/logstream/action'],
           notDataActions: [],
         },
       ],
@@ -19166,10 +18733,8 @@ const roleInfo = [
   },
 ];
 
-export const getRoleDefinitionByName = (name: string) => {
-  const role = roleInfo.find(
-    (r) => r.properties.roleName.toLowerCase() === name.toLowerCase()
-  );
+export function getRoleDefinitionByName(name: string) {
+  const role = roleInfo.find((r) => r.properties.roleName.toLowerCase() === name.toLowerCase());
   if (role) return role;
   throw new Error(`The role ${name} is not found.`);
-};
+}

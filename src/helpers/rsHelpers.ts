@@ -1,6 +1,14 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
 import * as azureEnv from './azureEnv';
+import * as stackInfo from './stackEnv';
+
+export const removeLeadingAndTrailingDash = (s: string) => s.replace(/^-+|-+$/g, '');
+
+export function getShortName(name: string) {
+  const n = name.replace(stackInfo.organization, '').replace(stackInfo.projectName, '').replace(stackInfo.stack, '');
+  return removeLeadingAndTrailingDash(n);
+}
 
 export function getRsNameFromId(resourceId: string) {
   resourceId = resourceId.trim();

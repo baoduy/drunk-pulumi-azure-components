@@ -1,4 +1,4 @@
-import { removeLeadingAndTrailingDash, stackInfo } from '../helpers';
+import { rsHelpers, stackInfo } from '../helpers';
 
 export function getSecretName(name: string) {
   const n = name
@@ -7,5 +7,5 @@ export function getSecretName(name: string) {
     .replace(/-+/g, '-') // Replace multiple dashes with a single dash
     .toLowerCase(); // Convert the result to lowercase
 
-  return removeLeadingAndTrailingDash(n);
+  return rsHelpers.removeLeadingAndTrailingDash(n);
 }

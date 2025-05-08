@@ -47,11 +47,13 @@ export class NetworkPeering extends pulumi.ComponentResource<NetworkPeeringArgs>
     const { options } = this.args;
     const vnetInfo = rsHelpers.getRsInfoFromId(from.id);
 
+    const n = `${this.name}-${rsHelpers.getShortName(from.resourceName)}-to-${rsHelpers.getShortName(to.resourceName)}`;
     return new network.VirtualNetworkPeering(
-      `${this.name}-${from.resourceName}-to-${to.resourceName}`,
+      n,
       {
         ...defaultProps,
         ...options,
+        virtualNetworkPeeringName: n,
         virtualNetworkName: vnetInfo.resourceName,
         resourceGroupName: vnetInfo.rsGroup.resourceGroupName,
         peeringSyncLevel: 'FullyInSync',

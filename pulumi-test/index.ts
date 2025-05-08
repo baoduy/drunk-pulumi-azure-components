@@ -71,7 +71,7 @@ const rs = (async () => {
         //defaultOutboundAccess: false,
         subnets: [
           { subnetName: 'primary', addressPrefix: '192.168.1.128/26' },
-          { subnetName: 'secondary', addressPrefix: '192.168.1.192/25' },
+          { subnetName: 'secondary', addressPrefix: '192.168.1.192/26' },
         ],
       },
       vnetPeering: { vnet: hub.vnet, direction: 'Bidirectional' },

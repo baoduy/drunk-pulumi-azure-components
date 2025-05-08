@@ -1,11 +1,50 @@
 import * as network from '@pulumi/azure-native/network';
+import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
+import { Basion, BasionArgs } from './Basion';
+import { Firewall, FirewallArgs } from './Firewall';
+import { RouteTable, RouteTableArgs } from './RouteTable';
+import * as helpers from './helpers';
+
+export type SubnetArgs = Pick<
+  network.SubnetArgs,
+  | 'applicationGatewayIPConfigurations'
+  | 'delegations'
+  | 'ipamPoolPrefixAllocations'
+  | 'privateEndpointNetworkPolicies'
+  | 'privateLinkServiceNetworkPolicies'
+  | 'serviceEndpointPolicies'
+  | 'serviceEndpoints'
+  | 'sharingScope'
+> & {
+  subnetName: string;
+  addressPrefix: pulumi.Input<string>;
+  disableSecurityGroup?: boolean;
+  disableRouteTable?: boolean;
+  disableNatGateway?: boolean;
+};
 
 export interface HubVnetArgs extends CommonBaseArgs {
-  securityGroup?: Pick<network.NetworkSecurityGroupArgs, 'flushConnection' | 'securityRules'>;
-  routeTable?: Pick<network.RouteTableArgs, 'disableBgpRoutePropagation' | 'routes'>;
-  natGateway?: Pick<network.NatGatewayArgs, ''> & {};
+  /**
+   * An array of public ip addresses associated with the nat gateway resource.
+   */
+  publicIpAddresses?: types.ResourceInputs[];
+
+  securityGroup?: Pick<network.NetworkSecurityGroupArgs, 'flushConnection'> & {
+    securityRules?: pulumi.Input<inputs.network.SecurityRuleArgs>[];
+  };
+  routeTable?: Omit<RouteTableArgs, 'rsGroup'>;
+  natGateway?: Pick<network.NatGatewayArgs, 'idleTimeoutInMinutes' | 'zones'> & { sku: network.NatGatewaySkuName };
+  basion?: Omit<BasionArgs, 'rsGroup' | 'subnetId'> & {
+    subnetPrefix: pulumi.Input<string>;
+  };
+  firewall?: Omit<FirewallArgs, 'managementIpConfiguration' | 'ipConfigurations' | 'hubIPAddresses' | 'rsGroup'> & {
+    subnetPrefix: pulumi.Input<string>;
+    managementSubnetPrefix?: pulumi.Input<string>;
+    managementPublicIpAddress?: types.SubResourceInputs;
+  };
 
   vnet: Omit<
     network.VirtualNetworkArgs,
@@ -19,107 +58,318 @@ export interface HubVnetArgs extends CommonBaseArgs {
     | 'virtualNetworkName'
     | 'virtualNetworkPeerings'
   > & {
+    defaultOutboundAccess?: pulumi.Input<boolean>;
     addressPrefixes?: pulumi.Input<string>[];
-    subnets: Array<
-      Pick<
-        network.SubnetArgs,
-        | 'addressPrefix'
-        | 'applicationGatewayIPConfigurations'
-        | 'defaultOutboundAccess'
-        | 'delegations'
-        | 'ipamPoolPrefixAllocations'
-        | 'privateEndpointNetworkPolicies'
-        | 'privateLinkServiceNetworkPolicies'
-        | 'serviceEndpointPolicies'
-        | 'serviceEndpoints'
-        | 'sharingScope'
-      > & {
-        subnetName: string;
-        disableSecurityGroup?: boolean;
-        disableRouteTable?: boolean;
-        allowNatGateway?: boolean;
-      }
-    >;
+    subnets: Array<SubnetArgs>;
   };
 }
 
 export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
-  //public readonly id: pulumi.Output<string>;
-  //public readonly resourceName: pulumi.Output<string>;
+  public readonly basion?: types.ResourceOutputs;
+  public readonly securityGroup?: types.ResourceOutputs;
+  public readonly routeTable: types.ResourceOutputs;
+  public readonly natGateway?: types.ResourceOutputs;
+  public readonly firewall?: types.ResourceOutputs;
+  public readonly vnet: types.ResourceOutputs;
+  public readonly subnets: Record<string, types.ResourceOutputs>;
 
   constructor(name: string, args: HubVnetArgs, opts?: pulumi.ComponentResourceOptions) {
     super('HubVnet', name, args, opts);
 
-    const nsg = this.createSecurityGroup();
-    const table = this.createRouteTable();
+    const securityGroup = this.createSecurityGroup();
+    const routeTable = this.createRouteTable();
+    const natGateway = this.createNatGateway();
+    const { vnet, subnets } = this.createVnet({ natGateway, routeTable, securityGroup });
+    const firewall = this.createFirewall(subnets);
+    const basion = this.createBasion(subnets);
+
+    this.createOutboundRoute({ router: routeTable!, natGateway, firewall });
+
+    if (basion) this.basion = { id: basion.id, resourceName: basion.resourceName };
+    if (securityGroup) this.securityGroup = { id: securityGroup.id, resourceName: securityGroup.name };
+    this.routeTable = { id: routeTable.id, resourceName: routeTable.resourceName };
+    if (natGateway) this.natGateway = { id: natGateway.id, resourceName: natGateway.name };
+    if (firewall) this.firewall = firewall.firewall;
+    this.vnet = { id: vnet.id, resourceName: vnet.name };
+
+    this.subnets = Object.entries(subnets).reduce(
+      (acc, [name, subnet]) => ({
+        ...acc,
+        [name]: { id: subnet.id, resourceName: subnet.name },
+      }),
+      {},
+    );
+
+    this.registerOutputs({
+      securityGroup: this.securityGroup,
+      routeTable: this.routeTable,
+      natGateway: this.natGateway,
+      firewall: this.firewall,
+      vnet: this.vnet,
+      subnets: this.subnets,
+    });
   }
 
   private createSecurityGroup() {
-    const { rsGroup, securityGroup } = this.args;
+    const { rsGroup, securityGroup, basion } = this.args;
     if (!securityGroup) return undefined;
+    const { securityRules = [], ...props } = securityGroup;
+
+    if (basion) {
+      securityRules.push(...helpers.getBasionSGRules({ subnetPrefix: basion.subnetPrefix }));
+    }
 
     return new network.NetworkSecurityGroup(
       `${this.name}-nsg`,
       {
         ...rsGroup,
-        ...securityGroup,
+        ...props,
+        securityRules,
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 
   private createRouteTable() {
-    const { rsGroup, routeTable } = this.args;
-    if (!routeTable) return undefined;
-    return new network.RouteTable(
+    const { rsGroup, firewall, routeTable = {} } = this.args;
+    const { routes = [], ...routeProps } = routeTable;
+
+    if (firewall) {
+      routes.push({
+        name: 'Internet',
+        ...helpers.defaultRouteRules.defaultInternetRoute,
+      });
+    }
+
+    return new RouteTable(
       `${this.name}-tb`,
       {
-        ...rsGroup,
-        ...routeTable,
+        rsGroup,
+        ...routeProps,
+        routes,
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 
-  private createNatGateway() {}
+  private createNatGateway() {
+    const { rsGroup, natGateway, publicIpAddresses } = this.args;
+    if (!natGateway) return undefined;
+    if (!publicIpAddresses) throw new Error('PublicIpAddresses is required when NatGateway is created');
+
+    return new network.NatGateway(
+      `${this.name}-ngw`,
+      {
+        ...rsGroup,
+        ...natGateway,
+        sku: { name: natGateway.sku },
+        publicIpAddresses,
+      },
+      { dependsOn: this.opts?.dependsOn, parent: this },
+    );
+  }
+
+  private createFirewall(subnets: Record<string, network.Subnet>) {
+    const { rsGroup, natGateway, publicIpAddresses, firewall } = this.args;
+    if (!firewall) return undefined;
+
+    const firewallSubnet = subnets[helpers.AzureSubnetNames.AzFirewallSubnet];
+    const firewallManageSubnet = subnets[helpers.AzureSubnetNames.AzFirewallManagementSubnet];
+
+    return new Firewall(
+      `${this.name}-fw`,
+      {
+        ...firewall,
+        rsGroup,
+        managementIpConfiguration:
+          firewallManageSubnet && firewall.managementPublicIpAddress
+            ? {
+                name: `${this.name}-fw-management`,
+                publicIPAddress: firewall.managementPublicIpAddress,
+                subnet: { id: firewallManageSubnet.id },
+              }
+            : undefined,
+
+        ipConfigurations: publicIpAddresses
+          ? pulumi.output(publicIpAddresses).apply((ips) =>
+              ips.map((i, index) => ({
+                name: `${this.name}-${i.resourceName}-ip-config`,
+                //Only link the public Ip Address when nateGateway not created.
+                publicIPAddress: natGateway ? undefined : i,
+                //Only link the subnet to the first ipConfigurations
+                subnet: index === 0 ? { id: firewallSubnet.id } : undefined,
+              })),
+            )
+          : [
+              {
+                name: `${this.name}-ip-config`,
+                subnet: { id: firewallSubnet.id },
+              },
+            ],
+      },
+      { dependsOn: firewallManageSubnet ? [firewallManageSubnet, firewallSubnet] : firewallSubnet, parent: this },
+    );
+  }
+
+  private createBasion(subnets: Record<string, network.Subnet>) {
+    const { rsGroup, basion } = this.args;
+    if (!basion) return undefined;
+    const basionSubnet = subnets[helpers.AzureSubnetNames.AzBastionSubnetName];
+
+    return new Basion(
+      `${this.name}-bastion`,
+      {
+        ...basion,
+        rsGroup,
+        subnetId: basionSubnet.id,
+        network: { ...basion.network },
+      },
+      { dependsOn: basionSubnet, parent: this },
+    );
+  }
 
   private createVnet({
     natGateway,
     routeTable,
     securityGroup,
   }: {
-    natGateway?: { id: pulumi.Input<string> };
-    routeTable?: network.RouteTable;
+    natGateway?: network.NatGateway;
+    routeTable: RouteTable;
     securityGroup?: network.NetworkSecurityGroup;
   }) {
-    const {
-      rsGroup,
-      vnet: { subnets, ...vnetProps },
-    } = this.args;
-    const vnet = new network.VirtualNetwork(
+    const { rsGroup, firewall, basion, vnet } = this.args;
+    const subnets = vnet.subnets ?? [];
+    const dependsOn: pulumi.Input<pulumi.Resource>[] = [];
+
+    if (firewall) {
+      //If NateGateway is together with Firewall, then NatGateway must be link to the Firewall Subnet only.
+      if (natGateway) {
+        subnets.forEach((s) => {
+          s.disableNatGateway = true;
+        });
+      }
+
+      subnets.push({
+        subnetName: helpers.AzureSubnetNames.AzFirewallSubnet,
+        addressPrefix: firewall.subnetPrefix,
+        disableSecurityGroup: true,
+        disableRouteTable: false,
+        disableNatGateway: false,
+      });
+
+      if (firewall.managementSubnetPrefix) {
+        subnets.push({
+          subnetName: helpers.AzureSubnetNames.AzFirewallManagementSubnet,
+          addressPrefix: firewall.managementSubnetPrefix,
+          disableSecurityGroup: true,
+          disableRouteTable: true,
+          disableNatGateway: true,
+        });
+      }
+    }
+    if (basion) {
+      subnets.push({
+        subnetName: helpers.AzureSubnetNames.AzBastionSubnetName,
+        addressPrefix: basion.subnetPrefix,
+        disableSecurityGroup: false,
+        disableRouteTable: true,
+        disableNatGateway: true,
+      });
+    }
+
+    if (natGateway) dependsOn.push(natGateway);
+    if (routeTable) dependsOn.push(routeTable);
+    if (securityGroup) dependsOn.push(securityGroup);
+
+    const vn = new network.VirtualNetwork(
       `${this.name}-vnet`,
       {
         ...rsGroup,
-        ...vnetProps,
+        ...vnet,
         addressSpace: {
-          addressPrefixes: vnetProps.addressPrefixes ?? subnets.map((s) => s.addressPrefix!),
+          addressPrefixes: vnet.addressPrefixes ?? subnets.map((s) => s.addressPrefix!),
         },
 
-        subnets: subnets.map((s) => ({
-          ...s,
-          //Not allows outbound by default and it will be controlling by NatGateway or Firewall
-          defaultOutboundAccess: s.defaultOutboundAccess ?? false,
-          routeTable: s.disableRouteTable ? undefined : { id: routeTable?.id },
-          networkSecurityGroup: s.disableSecurityGroup ? undefined : { id: securityGroup?.id },
-          natGateway: s.allowNatGateway ? natGateway : undefined,
-        })),
+        subnets: [],
+        virtualNetworkPeerings: [],
+
         enableVmProtection: true,
         encryption: {
           enabled: true,
           enforcement: network.VirtualNetworkEncryptionEnforcement.AllowUnencrypted,
         },
       },
-      { ignoreChanges: ['virtualNetworkPeerings'], parent: this },
+      { dependsOn, ignoreChanges: ['virtualNetworkPeerings', 'subnets'], parent: this },
     );
+
+    const subs = this.createSubnets({
+      subnets,
+      vnet: vn,
+      natGateway,
+      routeTable,
+      securityGroup,
+    });
+
+    return { vnet: vn, subnets: subs };
+  }
+
+  private createSubnets({
+    subnets,
+    vnet,
+    natGateway,
+    routeTable,
+    securityGroup,
+  }: {
+    subnets: Array<SubnetArgs>;
+    vnet: network.VirtualNetwork;
+    natGateway?: network.NatGateway;
+    routeTable: RouteTable;
+    securityGroup?: network.NetworkSecurityGroup;
+  }) {
+    const {
+      rsGroup,
+      vnet: { defaultOutboundAccess },
+    } = this.args;
+    const rs: Record<string, network.Subnet> = {};
+
+    subnets
+      .sort((a, b) => a.subnetName.localeCompare(b.subnetName))
+      .map(
+        (s) =>
+          (rs[s.subnetName] = new network.Subnet(
+            `${this.name}-${s.subnetName}`,
+            {
+              ...s,
+              ...rsGroup,
+              virtualNetworkName: vnet.name,
+
+              //Not allows outbound by default and it will be controlling by NatGateway or Firewall
+              defaultOutboundAccess: defaultOutboundAccess ?? false,
+              routeTable: s.disableRouteTable ? undefined : routeTable ? { id: routeTable.id } : undefined,
+              networkSecurityGroup: s.disableSecurityGroup
+                ? undefined
+                : securityGroup
+                ? { id: securityGroup.id }
+                : undefined,
+              natGateway: s.disableNatGateway ? undefined : natGateway ? { id: natGateway.id } : undefined,
+            },
+            { dependsOn: vnet, parent: this },
+          )),
+      );
+    return rs;
+  }
+
+  private createOutboundRoute({
+    router,
+    firewall,
+    natGateway,
+  }: {
+    router: RouteTable;
+    natGateway?: network.NatGateway;
+    firewall?: Firewall;
+  }) {
+    if (natGateway && !firewall) {
+      return router.addRoute('Internet-via-Gateway', helpers.defaultRouteRules.defaultGatewayRoute);
+    }
   }
 }

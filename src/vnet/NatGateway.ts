@@ -2,8 +2,6 @@ import * as search from '@pulumi/azure-native/search';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
-import * as vault from '../vault';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
 
 export interface NatGatewayArgs
   extends CommonBaseArgs,

@@ -1,6 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
 import { PrivateEndpointType } from './vnet';
 
+export type DnsRecordTypes = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'PTR' | 'SOA' | 'SRV' | 'TXT' | 'CAA';
+
 export type GroupRoleTypes = 'admin' | 'contributor' | 'readOnly';
 
 type AsInput<T> = {
@@ -52,6 +54,10 @@ export type ResourceWithGroupType = ResourceType & {
 
 export type ResourceWithGroupInputs = AsInput<ResourceWithGroupType>;
 export type ResourceWithGroupOutputs = AsOutput<ResourceWithGroupType>;
+
+export type SubResourceType = { id: string };
+export type SubResourceInputs = AsInput<SubResourceType>;
+export type SubResourceOutputs = AsOutput<SubResourceType>;
 
 export type WithVaultInfo = {
   vaultInfo?: ResourceInputs;

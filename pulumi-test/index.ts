@@ -1,10 +1,10 @@
 import {
   GroupRole,
+  HubVnet,
+  IpAddresses,
   KeyVault,
-  Logs,
   RsGroup,
   rsRoleDefinitions,
-  ServiceBus,
   UserAssignedIdentity,
 } from '@drunk-pulumi/azure-components';
 import * as pulumi from '@pulumi/pulumi';
@@ -44,34 +44,46 @@ const rs = (async () => {
     { dependsOn: [rsGroup, groupRoles, vaultInfo] },
   );
 
-  const logs = new Logs(
-    'logs',
+  const publicIpAddress = new IpAddresses('ip', {
+    rsGroup,
+    ipAddresses: [{ name: 'primary' }, { name: 'management' }, { name: 'basion' }],
+    sku: { name: 'Standard', tier: 'Regional' },
+  });
+
+  const vnet = new HubVnet(
+    'hub',
     {
       rsGroup,
-      vaultInfo,
-      retentionInDays: 7,
-      storage: { enabled: true },
+      publicIpAddresses: [publicIpAddress.ipAddresses['primary']],
+      securityGroup: {},
+      basion: {
+        sku: 'Basic',
+        subnetPrefix: '192.168.4.0/24',
+        publicIPAddress: publicIpAddress.ipAddresses['basion'],
+      },
+      natGateway: { sku: 'Standard' },
+      firewall: {
+        subnetPrefix: '192.168.2.0/24',
+        sku: { name: 'AZFW_VNet', tier: 'Standard' },
+        managementPublicIpAddress: publicIpAddress.ipAddresses['management'],
+        managementSubnetPrefix: '192.168.3.0/24',
+        policy: {},
+      },
+      vnet: {
+        //defaultOutboundAccess: false,
+        subnets: [
+          { subnetName: 'primary', addressPrefix: '192.168.0.0/24' },
+          { subnetName: 'secondary', addressPrefix: '192.168.1.0/24' },
+        ],
+      },
     },
-    { dependsOn: [rsGroup, groupRoles, vaultInfo] },
+    { dependsOn: [rsGroup, userAssignedId] },
   );
-
-  // const bus = new ServiceBus(
-  //   'bus',
-  //   {
-  //     rsGroup,
-  //     vaultInfo,
-  //     defaultUAssignedId: userAssignedId,
-  //     sku: { name: 'Standard' },
-  //     enableEncryption: true,
-  //     queues: { 'test-queue': {} },
-  //     topics: { 'test-tp': { subscriptions: { 'test-sub': {} } } },
-  //   },
-  //   { dependsOn: [rsGroup, groupRoles, vaultInfo, userAssignedId] },
-  // );
 
   return {
     rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),
     envRole: groupRoles.PickOutputs('admin', 'contributor', 'readOnly'),
+    subnets: vnet.subnets,
   };
 })();
 

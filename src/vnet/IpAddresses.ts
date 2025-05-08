@@ -16,7 +16,7 @@ export interface IpAddressesArgs extends CommonBaseArgs {
   prefix?: { length: 28 | 29 | 30 | 31 | number };
   config?: Omit<
     network.PublicIPAddressArgs,
-    'id' | 'ipAddress' | 'publicIPPrefix' | 'resourceGroupName' | 'location' | 'sku'
+    'id' | 'ipAddress' | 'publicIPPrefix' | 'resourceGroupName' | 'location' | 'sku' | 'publicIPAllocationMethod'
   >;
   ipAddresses: Array<{ name: string }>;
 }
@@ -45,6 +45,7 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
           ...rsGroup,
           sku,
           publicIPPrefix: prefix ? { id: prefix.id } : undefined,
+          publicIPAllocationMethod: network.IPAllocationMethod.Static,
         },
         { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this },
       );

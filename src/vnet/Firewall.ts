@@ -1,7 +1,7 @@
 import * as network from '@pulumi/azure-native/network';
+import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import * as inputs from '@pulumi/azure-native/types/input';
 import * as types from '../types';
 
 export interface FirewallArgs
@@ -52,7 +52,7 @@ export interface FirewallArgs
     }>;
   };
 
-  logs: {
+  logs?: {
     defaultWorkspace: types.ResourceInputs;
     regionalWorkspaces?: Array<{ id: pulumi.Input<string>; region: pulumi.Input<string> }>;
   };
@@ -61,6 +61,7 @@ export interface FirewallArgs
 export class Firewall extends BaseResourceComponent<FirewallArgs> {
   public readonly firewall: types.ResourceOutputs;
   public readonly policy: types.ResourceOutputs;
+  public readonly privateIpAddress: pulumi.Output<string>;
 
   constructor(name: string, args: FirewallArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Firewall', name, args, opts);
@@ -71,8 +72,10 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
 
     this.firewall = { id: firewall.id, resourceName: firewall.name };
     this.policy = { id: policy.id, resourceName: policy.name };
+    this.privateIpAddress = firewall.ipConfigurations.apply((config) => config![0].privateIPAddress);
 
-    this.registerOutputs({ firewall: this.firewall, policy: this.policy });
+    // Export the resource ID
+    this.registerOutputs({ firewall: this.firewall, policy: this.policy, privateIpAddress: this.privateIpAddress });
   }
 
   private createPolicy(basePolicy?: types.ResourceInputs) {
@@ -140,8 +143,8 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
     const { rsGroup, sku, logs, policy, snat, additionalProperties, ...props } = this.args;
     const properties: Record<string, pulumi.Input<string>> = {
       ...additionalProperties,
-      autoLearnPrivateRanges: 'Enabled',
-      privateRanges: 'IANAPrivateRanges',
+      //autoLearnPrivateRanges: 'Enabled',
+      //privateRanges: 'IANAPrivateRanges',
     };
 
     if (snat) {

@@ -1,15 +1,10 @@
 import * as nw from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
-import * as vault from '../vault';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
-import { IpAddresses } from './IpAddresses';
 
 export interface BasionArgs
-  extends CommonBaseArgs,
-    types.WithUserAssignedIdentity,
-    types.WithEncryptionEnabler,
+  extends types.WithResourceGroupInputs,
     Pick<
       nw.BastionHostArgs,
       | 'disableCopyPaste'
@@ -26,23 +21,19 @@ export interface BasionArgs
       | 'tags'
     > {
   sku: nw.BastionHostSkuName;
-  network: Pick<types.NetworkArgs, 'ipRules'> & { subnetId: pulumi.Input<string> };
+  publicIPAddress: types.SubResourceInputs;
+  subnetId: pulumi.Input<string>;
+  network?: Pick<types.NetworkArgs, 'ipRules'>;
 }
 
-export class Basion extends BaseResourceComponent<BasionArgs> {
+export class Basion extends pulumi.ComponentResource<BasionArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
   constructor(name: string, args: BasionArgs, opts?: pulumi.ComponentResourceOptions) {
-    super('Basion', name, args, opts);
+    super(getComponentResourceType('Basion'), name, args, opts);
 
-    const { rsGroup, sku, network, ...props } = args;
-    const ips = new IpAddresses(
-      name,
-      { rsGroup, sku: { name: 'Basic', tier: 'Regional' }, ipAddresses: [{ name: 'basion-ip' }] },
-      { dependsOn: opts?.dependsOn, parent: this },
-    );
-    const ip = ips.ipAddresses['basion-ip'];
+    const { rsGroup, sku, network, publicIPAddress, subnetId, ...props } = args;
 
     const bs = new nw.BastionHost(
       name,
@@ -53,18 +44,18 @@ export class Basion extends BaseResourceComponent<BasionArgs> {
         ipConfigurations: [
           {
             name: 'IpConfig',
-            publicIPAddress: { id: ip.id },
-            subnet: { id: network.subnetId },
+            publicIPAddress: sku !== 'Developer' ? publicIPAddress : undefined,
+            subnet: { id: subnetId },
             privateIPAllocationMethod: nw.IPAllocationMethod.Dynamic,
           },
         ],
-        networkAcls: network.ipRules
+
+        networkAcls: network?.ipRules
           ? { ipRules: pulumi.output(network.ipRules).apply((ips) => ips.map((ip) => ({ addressPrefix: ip }))) }
           : undefined,
       },
       {
         ...opts,
-        dependsOn: ips,
         parent: this,
       },
     );

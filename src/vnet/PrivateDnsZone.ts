@@ -1,8 +1,13 @@
 import * as privateDns from '@pulumi/azure-native/privatedns';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
-import { WithResourceGroupInputs } from '../types';
+import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
+
+export type DnsRecordArgs = Omit<
+  privateDns.PrivateRecordSetArgs,
+  'privateZoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl' | 'recordType'
+> & { recordType: DnsRecordTypes };
 
 export interface PrivateDnsZoneArgs extends WithResourceGroupInputs {
   aRecords?: Array<{
@@ -39,42 +44,37 @@ export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs>
     this.id = zone.id;
     this.resourceName = zone.name;
 
-    this.createARecord(zone);
+    this.createARecord();
 
     this.registerOutputs({
       id: this.id,
       resourceName: this.resourceName,
     });
   }
-
-  private getRecordName(recordName: string) {
-    return recordName === '*' ? `all-aRecord` : recordName === '@' ? `root-aRecord` : `${recordName}-aRecord`;
-  }
-
-  private createARecord(zone: privateDns.PrivateZone) {
+  private createARecord() {
     const { aRecords } = this.args;
     if (!aRecords) return;
-
-    aRecords.map((aRecord) => {
-      const recordName = this.getRecordName(aRecord.name);
-
-      return this.addRecordSet(recordName, {
-        recordType: 'A',
-        aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
-      });
-    });
+    this.addARecords(aRecords);
   }
 
-  public addRecordSet(
-    name: string,
-    props: Omit<
-      privateDns.PrivateRecordSetArgs,
-      'privateZoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl'
-    >,
+  public addARecords(
+    aRecords: Array<{
+      name: string;
+      ipv4Address: pulumi.Input<pulumi.Input<string>[]>;
+    }>,
   ) {
+    return aRecords.map((aRecord) =>
+      this.addRecordSet(aRecord.name, {
+        recordType: 'A',
+        aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
+      }),
+    );
+  }
+
+  public addRecordSet(name: string, props: DnsRecordArgs) {
     const group = this.getRsGroupInfo();
     return new privateDns.PrivateRecordSet(
-      `${this._rsName}-${name}`,
+      `${this._rsName}-${helpers.getDnsRecordName(name)}-${props.recordType}`,
       {
         ...props,
         ...group,

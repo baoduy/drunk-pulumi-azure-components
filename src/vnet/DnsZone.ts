@@ -1,11 +1,17 @@
 import * as dns from '@pulumi/azure-native/dns';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
-import { WithResourceGroupInputs } from '../types';
+import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
+import { getDnsRecordName } from './helpers';
 
-type DnsZoneRecordArgs = Omit<dns.RecordSetArgs, 'zoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl'> & {
+type DnsZoneRecordArgs = Omit<
+  dns.RecordSetArgs,
+  'zoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl' | 'recordType'
+> & {
   name: string;
+  recordType: DnsRecordTypes;
 };
+
 type DnsZoneProps = { name: string; records?: DnsZoneRecordArgs[] };
 
 export interface DnsZoneArgs extends WithResourceGroupInputs, DnsZoneProps {
@@ -69,6 +75,21 @@ export class DnsZone extends pulumi.ComponentResource<DnsZoneArgs> {
     return zone;
   }
 
+  public addARecords(
+    zone: dns.Zone,
+    aRecords: Array<{
+      name: string;
+      ipv4Address: pulumi.Input<pulumi.Input<string>[]>;
+    }>,
+  ) {
+    return aRecords.map((aRecord) =>
+      this.addRecordSet(zone, aRecord.name, {
+        recordType: 'A',
+        aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
+      }),
+    );
+  }
+
   public addRecordSet(
     zone: dns.Zone,
     name: string,
@@ -76,7 +97,7 @@ export class DnsZone extends pulumi.ComponentResource<DnsZoneArgs> {
   ) {
     const group = this.getRsGroupInfo();
     return new dns.RecordSet(
-      `${this._rsName}-${name}`,
+      `${this._rsName}-${getDnsRecordName(name)}-${props.recordType}`,
       {
         ...props,
         ...group,

@@ -141,11 +141,14 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
    * @param identity - A Pulumi output containing the managed identity with its principal ID
    * @returns A new GroupMember resource if successful, undefined if groupRoles not configured or identity invalid
    */
-  public addIdentityToRole(type: types.GroupRoleTypes, identity: pulumi.Output<{ principalId: string } | undefined>) {
+  public addIdentityToRole(
+    type: types.GroupRoleTypes,
+    identity: pulumi.Input<{ principalId: pulumi.Input<string> } | undefined>,
+  ) {
     const { groupRoles } = this.args;
     if (!groupRoles) return;
 
-    return identity.apply((i) => {
+    return pulumi.output(identity).apply((i) => {
       if (!i?.principalId) return;
       return new azAd.GroupMember(`${this.name}-${type}-${i.principalId}`, {
         groupObjectId: groupRoles[type].objectId,

@@ -1,5 +1,5 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as auth from '@pulumi/azure-native/authorization';
+import * as pulumi from '@pulumi/pulumi';
 import { getRoleDefinitionByName } from './helpers/rolesBuiltIn';
 
 export interface RoleAssignmentArgs extends Omit<auth.RoleAssignmentArgs, 'roleDefinitionId'> {

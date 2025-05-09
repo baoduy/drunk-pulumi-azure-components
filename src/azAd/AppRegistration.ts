@@ -1,7 +1,9 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
-import { WithVaultInfo, WithMemberOfArgs } from '../types';
+import * as pulumi from '@pulumi/pulumi';
+import { getComponentResourceType } from '../base/helpers';
+import { WithMemberOfArgs, WithVaultInfo } from '../types';
 import { VaultSecret } from '../vault';
+import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
 
 export enum GroupMembershipClaimsTypes {
   None = 'None',
@@ -50,6 +52,7 @@ export interface AppRegistrationArgs
     accessTokenIssuanceEnabled?: pulumi.Input<boolean>;
     idTokenIssuanceEnabled?: pulumi.Input<boolean>;
   }>;
+  roleAssignments?: Array<Omit<RoleAssignmentArgs, 'roleAssignmentName' | 'principalId' | 'principalType'>>;
 }
 
 export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArgs> {
@@ -58,20 +61,20 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
   public readonly servicePrincipalId?: pulumi.Output<string>;
   public readonly servicePrincipalPassword?: pulumi.Output<string>;
 
-  private readonly _app: azAd.Application;
+  //private readonly _app: azAd.Application;
 
   constructor(
     private name: string,
     private args: AppRegistrationArgs = { appType: 'native' },
-    opts?: pulumi.ComponentResourceOptions,
+    private opts?: pulumi.ComponentResourceOptions,
   ) {
-    super('drunk-pulumi:index:AppRegistration', name, args, opts);
+    super(getComponentResourceType('AppRegistration'), name, args, opts);
     const ops = args.info ?? {
       displayName: name,
       description: name,
     };
     //Application
-    this._app = new azAd.Application(
+    const app = new azAd.Application(
       name,
       {
         ...ops,
@@ -107,31 +110,21 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
       { ...opts, parent: this },
     );
 
-    if (args.vaultInfo) {
-      new VaultSecret(
-        `${this.name}-client-id`,
-        {
-          vaultInfo: args.vaultInfo,
-          value: this._app.clientId,
-          contentType: `${this.name} client-id`,
-        },
-        { dependsOn: this._app, parent: this },
-      );
-    }
+    this.addSecret('client-id', app.clientId);
 
     if (args.enableClientSecret) {
-      const secret = this.createClientSecret();
+      const secret = this.createClientSecret(app);
       this.clientSecret = secret.clientSecret;
     }
     if (args.servicePrincipal?.enabled) {
-      const sp = this.createServicePrincipal();
+      const sp = this.createServicePrincipal(app);
       this.servicePrincipalId = sp.servicePrincipalId;
       this.servicePrincipalPassword = sp.servicePrincipalPassword;
     }
 
-    this.addMemberOf();
+    this.addMemberOf(app);
 
-    this.clientId = this._app.clientId;
+    this.clientId = app.clientId;
     this.registerOutputs({
       clientId: this.clientId,
       clientSecret: this.clientSecret,
@@ -140,17 +133,17 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
     });
   }
 
-  private createServicePrincipal() {
+  private createServicePrincipal(app: azAd.Application) {
     //Service Principal
     const sp = new azAd.ServicePrincipal(
       `${this.name}-sp`,
       {
         ...this.args.servicePrincipal,
         description: this.name,
-        clientId: this._app.clientId,
+        clientId: app.clientId,
         owners: this.args.owners,
       },
-      { dependsOn: this._app, parent: this },
+      { dependsOn: app, parent: this },
     );
 
     var spPass = new azAd.ServicePrincipalPassword(
@@ -162,17 +155,8 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
       { dependsOn: sp, parent: this },
     );
 
-    if (this.args.vaultInfo) {
-      new VaultSecret(
-        `${this.name}-sp-pass`,
-        {
-          vaultInfo: this.args.vaultInfo,
-          value: spPass.value,
-          contentType: `${this.name} sp password`,
-        },
-        { dependsOn: spPass, parent: this },
-      );
-    }
+    this.addRoleAssignments(sp);
+    this.addSecret('sp-pass', spPass.value);
 
     return {
       servicePrincipalId: sp.id,
@@ -180,34 +164,38 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
     };
   }
 
-  private createClientSecret() {
+  private createClientSecret(app: azAd.Application) {
     const clientSecret = new azAd.ApplicationPassword(
       `${this.name}-client-secret`,
       {
         displayName: this.name,
-        applicationId: this._app.id,
+        applicationId: app.id,
       },
-      { dependsOn: this._app, parent: this },
+      { dependsOn: app, parent: this },
     );
 
-    if (this.args.vaultInfo) {
-      new VaultSecret(
-        `${this.name}-client-secret`,
-        {
-          vaultInfo: this.args.vaultInfo,
-          value: clientSecret.value,
-          contentType: `${this.name} client-secret`,
-        },
-        { dependsOn: clientSecret, parent: this },
-      );
-    }
+    this.addSecret('client-secret', clientSecret.value);
 
     return {
       clientSecret: clientSecret.value,
     };
   }
 
-  private addMemberOf() {
+  private addRoleAssignments(sv: azAd.ServicePrincipal) {
+    const { roleAssignments } = this.args;
+    if (!roleAssignments) return;
+
+    return roleAssignments.map(
+      (role) =>
+        new RoleAssignment(
+          `${this.name}-${role.roleName}`,
+          { ...role, principalId: sv.objectId, principalType: 'ServicePrincipal' },
+          { dependsOn: sv, parent: this },
+        ),
+    );
+  }
+
+  private addMemberOf(app: azAd.Application) {
     if (!this.args.memberof) return;
     this.args.memberof.map((group) =>
       pulumi.output(group).apply(
@@ -216,11 +204,24 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
             `${this.name}-${id.objectId}`,
             {
               groupObjectId: id.objectId,
-              memberObjectId: this._app.objectId,
+              memberObjectId: app.objectId,
             },
-            { dependsOn: this._app, parent: this },
+            { dependsOn: app, parent: this },
           ),
       ),
+    );
+  }
+
+  private addSecret(name: string, value: pulumi.Output<string>) {
+    if (!this.args.vaultInfo) return;
+    new VaultSecret(
+      `${this.name}-${name}`,
+      {
+        vaultInfo: this.args.vaultInfo,
+        value: value,
+        contentType: `${this.name} ${name}`,
+      },
+      { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 }

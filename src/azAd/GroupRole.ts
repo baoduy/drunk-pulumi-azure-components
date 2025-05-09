@@ -1,9 +1,9 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
-import { AzRole } from './AzRole';
-import { stackInfo } from '../helpers';
+import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+import { stackInfo } from '../helpers';
 import * as types from '../types';
+import { AzRole } from './AzRole';
 
 export interface GroupRoleArgs
   extends BaseArgs,
@@ -57,7 +57,7 @@ export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
       displayName: roleInstances.readOnly.displayName,
     });
 
-    this.configHierarchyRoles();
+    this.configHierarchyRoles(roleInstances);
 
     this.registerOutputs({
       admin: this.admin,
@@ -66,7 +66,7 @@ export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
     });
   }
 
-  private configHierarchyRoles() {
+  private configHierarchyRoles(roles: { [k: string]: AzRole }) {
     if (this.admin && this.contributor) {
       new azAd.GroupMember(
         `${this.name}-admin2contributor`,
@@ -74,7 +74,7 @@ export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
           groupObjectId: this.contributor.objectId,
           memberObjectId: this.admin.objectId,
         },
-        { parent: this },
+        { dependsOn: Object.values(roles), parent: this },
       );
     }
 
@@ -85,7 +85,7 @@ export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
           groupObjectId: this.readOnly.objectId,
           memberObjectId: this.contributor.objectId,
         },
-        { parent: this },
+        { dependsOn: Object.values(roles), parent: this },
       );
     }
   }

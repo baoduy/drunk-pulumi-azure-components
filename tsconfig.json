@@ -24,6 +24,7 @@
   "files": [
     "src/aks/AzKubernetes.ts",
     "src/aks/ContainerRegistry.ts",
+    "src/aks/helpers.ts",
     "src/aks/index.ts",
     "src/app/AppCert.ts",
     "src/app/AppConfig.ts",

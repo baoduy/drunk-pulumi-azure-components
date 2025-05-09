@@ -10,6 +10,10 @@ export function getShortName(name: string) {
   return removeLeadingAndTrailingDash(n);
 }
 
+/** The method to get Resource group Name*/
+export const getRsGroupIdFrom = (rsGroup: types.ResourceGroupInputs) =>
+  pulumi.interpolate`${azureEnv.defaultSubScope}/resourceGroups/${rsGroup.resourceGroupName}`;
+
 export function getRsNameFromId(resourceId: string) {
   resourceId = resourceId.trim();
   //Resource ID

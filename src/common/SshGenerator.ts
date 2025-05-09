@@ -3,6 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
 
 export interface SshGeneratorArgs extends BaseArgs {
+  /** if vaultInfo is provided this password will be added into Key vault together with public key and private key */
   password: pulumi.Input<string>;
 }
 

@@ -55,64 +55,49 @@ const rs = (async () => {
     { dependsOn: rsGroup },
   );
 
-  const hub = new HubVnet(
-    'env',
-    {
-      rsGroup,
-      securityGroup: {},
-      // securityGroup: {
-      //   securityRules: [
-      //     {
-      //       name: 'allow-to-public-Ip',
-      //       priority: 300,
-      //       direction: 'Outbound',
-      //       access: 'Allow',
-      //       protocol: '*',
-      //       sourcePortRange: '*',
-      //       destinationPortRanges: aksHelpers.aksRequiredOutboundPorts,
-      //       sourceAddressPrefix: '*',
-      //       destinationAddressPrefix: 'VirtualNetworkGateway', //ipAddress.ipAddresses.outbound.address.apply((ip) => `${ip}/32`),
-      //     },
-      //   ],
-      // },
-      publicIpAddresses: [ipAddress.ipAddresses.outbound],
-      natGateway: { sku: 'Standard' },
-      vnet: {
-        addressPrefixes: ['192.168.1.0/24'],
-        defaultOutboundAccess: false,
-        subnets: [{ subnetName: 'aks', addressPrefix: '192.168.1.0/25' }],
-      },
-    },
-    { dependsOn: [rsGroup, userAssignedId] },
-  );
+  // const hub = new HubVnet(
+  //   'env',
+  //   {
+  //     rsGroup,
+  //     securityGroup: {},
+  //     publicIpAddresses: [ipAddress.ipAddresses.outbound],
+  //     natGateway: { sku: 'Standard' },
+  //     vnet: {
+  //       addressPrefixes: ['192.168.1.0/24'],
+  //       defaultOutboundAccess: false,
+  //       subnets: [{ subnetName: 'aks', addressPrefix: '192.168.1.0/25' }],
+  //     },
+  //   },
+  //   { dependsOn: [rsGroup, userAssignedId] },
+  // );
 
-  const aks = new AzKubernetes(
-    'aks',
-    {
-      rsGroup,
-      vaultInfo: vaultInfo,
-      sku: 'Standard',
-      features: { enablePrivateCluster: true },
-      agentPoolProfiles: [
-        {
-          name: 'defaultpool',
-          enableAutoScaling: true,
-          minCount: 1,
-          maxCount: 3,
-          mode: 'System',
-          type: 'VirtualMachineScaleSets',
-          vmSize: 'Standard_D2as_v4',
-          osDiskSizeGB: 128,
-          osType: 'Linux',
-          vnetSubnetID: hub.subnets.aks.id,
-        },
-      ],
-      network: {
-        outboundType: 'userDefinedRouting',
-      },
-    },
-    { dependsOn: [rsGroup, hub, userAssignedId, ipAddress, vaultInfo] },
-  );
+  // const aks = new AzKubernetes(
+  //   'aks',
+  //   {
+  //     rsGroup,
+  //     vaultInfo: vaultInfo,
+  //     sku: 'Standard',
+  //     features: { enablePrivateCluster: true },
+  //     agentPoolProfiles: [
+  //       {
+  //         name: 'defaultpool',
+  //         enableAutoScaling: true,
+  //         minCount: 1,
+  //         maxCount: 3,
+  //         mode: 'System',
+  //         type: 'VirtualMachineScaleSets',
+  //         vmSize: 'Standard_D2as_v4',
+  //         osDiskSizeGB: 128,
+  //         osType: 'Linux',
+  //         vnetSubnetID: hub.subnets.aks.id,
+  //       },
+  //     ],
+  //     network: {
+  //       outboundType: 'userDefinedRouting',
+  //     },
+  //   },
+  //   { dependsOn: [rsGroup, hub, userAssignedId, ipAddress, vaultInfo] },
+  // );
 
   return {
     rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),

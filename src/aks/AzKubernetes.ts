@@ -25,8 +25,12 @@ export interface AzKubernetesArgs
     > {
   sku: ccs.ManagedClusterSKUTier;
   agentPoolProfiles: pulumi.Input<
-    inputs.containerservice.ManagedClusterAgentPoolProfileArgs & { vnetSubnetID: pulumi.Input<string> }
+    inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
+      vmSize: pulumi.Input<string>;
+      vnetSubnetID: pulumi.Input<string>;
+    }
   >[];
+  attachToAcr?: types.ResourceInputs;
   diskEncryptionSet?: types.ResourceInputs;
   features?: {
     enablePrivateCluster: boolean;
@@ -38,9 +42,16 @@ export interface AzKubernetesArgs
     enablePodIdentity?: boolean;
   };
   addonProfiles?: { enableAzureKeyVault?: boolean };
-  network?: {
-    /** If this is not provided the network OutboundType will be UserDefinedRouting  */
-    outboundPublicIpAddress?: types.ResourceInputs[];
+  network?: Omit<
+    inputs.containerservice.ContainerServiceNetworkProfileArgs,
+    'networkMode' | 'networkPolicy' | 'networkPlugin' | 'loadBalancerSku' | 'loadBalancerProfile'
+  > & {
+    outboundType?: ccs.OutboundType;
+    loadBalancerProfile?: inputs.containerservice.ManagedClusterLoadBalancerProfileArgs & {
+      backendPoolType?: ccs.BackendPoolType;
+    };
+    /** Link the private DNS of AKS to these VNets */
+    extraPrivateDnsVnets?: types.ResourceInputs[];
     authorizedIPRanges?: pulumi.Input<string>[];
     virtualHostSubnetName?: pulumi.Input<string>;
   };
@@ -51,8 +62,8 @@ export interface AzKubernetesArgs
 }
 
 export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
-  //public readonly id: pulumi.Output<string>;
-  //public readonly resourceName: pulumi.Output<string>;
+  public readonly id: pulumi.Output<string>;
+  public readonly resourceName: pulumi.Output<string>;
 
   constructor(name: string, args: AzKubernetesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzKubernetes', name, args, opts);
@@ -63,6 +74,14 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     this.createMaintenance(cluster);
     this.assignPermission(cluster);
     this.addAksCredentialToVault(cluster);
+
+    this.id = cluster.id;
+    this.resourceName = cluster.name;
+
+    this.registerOutputs({
+      id: this.id,
+      resourceName: this.resourceName,
+    });
   }
 
   private createIdentity() {
@@ -113,6 +132,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       groupRoles,
       defaultUAssignedId,
       diskEncryptionSet,
+      enableEncryption,
       features,
       addonProfiles,
       network,
@@ -243,25 +263,13 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         },
 
         networkProfile: {
+          ...network,
           networkMode: ccs.NetworkMode.Transparent,
           networkPolicy: ccs.NetworkPolicy.Azure,
           networkPlugin: ccs.NetworkPlugin.Azure,
 
-          outboundType:
-            features?.enablePrivateCluster || !network?.outboundPublicIpAddress
-              ? ccs.OutboundType.UserDefinedRouting
-              : ccs.OutboundType.LoadBalancer,
-
           loadBalancerSku: 'Standard',
-          loadBalancerProfile: network?.outboundPublicIpAddress
-            ? {
-                outboundIPs: {
-                  publicIPs: pulumi
-                    .output(network.outboundPublicIpAddress!)
-                    .apply((ips) => ips.map((ip) => ({ id: ip.id }))),
-                },
-              }
-            : undefined,
+          outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
         },
       },
       {
@@ -294,10 +302,23 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private assignPermission(aks: ccs.ManagedCluster) {
-    const { rsGroup } = this.args;
+    const { rsGroup, attachToAcr } = this.args;
     pulumi.all([aks.identity, aks.identityProfile]).apply(([identity, identityProfile]) => {
       if (identityProfile?.kubeletIdentity) {
         this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletIdentity!.objectId! });
+
+        if (attachToAcr) {
+          new RoleAssignment(
+            `${this.name}-aks-acr`,
+            {
+              principalId: identityProfile.kubeletIdentity!.objectId!,
+              principalType: 'ServicePrincipal',
+              roleName: 'acr-pull',
+              scope: attachToAcr.id,
+            },
+            { dependsOn: aks, parent: this },
+          );
+        }
       }
       if (identity) {
         new RoleAssignment(

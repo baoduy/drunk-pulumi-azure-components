@@ -60,26 +60,9 @@ const rs = (async () => {
     {
       rsGroup,
       securityGroup: {},
-      // securityGroup: {
-      //   securityRules: [
-      //     {
-      //       name: 'allow-to-public-Ip',
-      //       priority: 300,
-      //       direction: 'Outbound',
-      //       access: 'Allow',
-      //       protocol: '*',
-      //       sourcePortRange: '*',
-      //       destinationPortRanges: aksHelpers.aksRequiredOutboundPorts,
-      //       sourceAddressPrefix: '*',
-      //       destinationAddressPrefix: 'VirtualNetworkGateway', //ipAddress.ipAddresses.outbound.address.apply((ip) => `${ip}/32`),
-      //     },
-      //   ],
-      // },
-      publicIpAddresses: [ipAddress.ipAddresses.outbound],
-      natGateway: { sku: 'Standard' },
       vnet: {
         addressPrefixes: ['192.168.1.0/24'],
-        defaultOutboundAccess: false,
+        defaultOutboundAccess: true,
         subnets: [{ subnetName: 'aks', addressPrefix: '192.168.1.0/25' }],
       },
     },
@@ -108,7 +91,8 @@ const rs = (async () => {
         },
       ],
       network: {
-        outboundType: 'userDefinedRouting',
+        loadBalancerProfile: { outboundIPs: { publicIPs: [{ id: ipAddress.ipAddresses.outbound.id }] } },
+        outboundType: 'loadBalancer',
       },
     },
     { dependsOn: [rsGroup, hub, userAssignedId, ipAddress, vaultInfo] },

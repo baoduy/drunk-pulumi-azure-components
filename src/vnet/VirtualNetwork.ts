@@ -5,10 +5,10 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 import { Basion, BasionArgs } from './Basion';
 import { Firewall, FirewallArgs } from './Firewall';
-import { RouteTable, RouteTableArgs } from './RouteTable';
-import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import * as helpers from './helpers';
 import { NetworkPeering, NetworkPeeringArgs } from './NetworkPeering';
+import { RouteTable, RouteTableArgs } from './RouteTable';
+import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 
 export type SubnetArgs = Pick<
   network.SubnetArgs,
@@ -90,7 +90,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     const basion = this.createBasion(subnets);
     const vpnGateway = this.createVpnGateway(subnets);
 
-    this.createOutboundRoute({ router: routeTable!, natGateway, firewall });
+    //this.createOutboundRoute({ router: routeTable!, natGateway, firewall });
     this.createPeering(vnet);
 
     if (basion) this.basion = { id: basion.id, resourceName: basion.resourceName };
@@ -395,19 +395,19 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     return rs;
   }
 
-  private createOutboundRoute({
-    router,
-    firewall,
-    natGateway,
-  }: {
-    router: RouteTable;
-    natGateway?: network.NatGateway;
-    firewall?: Firewall;
-  }) {
-    if (natGateway && !firewall) {
-      return router.addRoute('Internet-via-Gateway', helpers.defaultRouteRules.defaultGatewayRoute);
-    }
-  }
+  // private createOutboundRoute({
+  //   router,
+  //   firewall,
+  //   natGateway,
+  // }: {
+  //   router: RouteTable;
+  //   natGateway?: network.NatGateway;
+  //   firewall?: Firewall;
+  // }) {
+  //   if (natGateway && !firewall) {
+  //     return router.addRoute('Internet-via-Gateway', helpers.defaultRouteRules.defaultGatewayRoute);
+  //   }
+  // }
 
   private createPeering(vnet: network.VirtualNetwork) {
     const { vnetPeering } = this.args;

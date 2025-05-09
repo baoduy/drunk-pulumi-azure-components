@@ -19,7 +19,14 @@ export interface IpAddressesArgs extends CommonBaseArgs {
   /** The default config for all Ip address. */
   defaultConfig?: Omit<
     network.PublicIPAddressArgs,
-    'id' | 'ipAddress' | 'publicIPPrefix' | 'resourceGroupName' | 'location' | 'sku' | 'publicIPAllocationMethod'
+    | 'id'
+    | 'ipAddress'
+    | 'publicIPPrefix'
+    | 'resourceGroupName'
+    | 'location'
+    | 'sku'
+    | 'publicIPAllocationMethod'
+    | 'natGateway'
   >;
   ipAddresses: Array<Pick<network.PublicIPAddressArgs, 'zones'> & { name: string; sku?: IpSku }>;
 }
@@ -51,7 +58,7 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
           publicIPAllocationMethod: network.IPAllocationMethod.Static,
           zones: ip.zones ?? defaultConfig?.zones,
         },
-        { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this },
+        { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this, ignoreChanges: ['natGateway'] },
       );
 
       this.ipAddresses[ip.name] = { id: ipAddress.id, resourceName: ipAddress.name, address: ipAddress.ipAddress };

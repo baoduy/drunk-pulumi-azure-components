@@ -5,7 +5,7 @@ import * as types from '../types';
 
 export type RouteArgs = Omit<
   network.RouteArgs,
-  'id' | 'resourceGroupName' | 'routeTableName' | 'name' | 'nextHopType' | 'routeTableName' | 'routeName'
+  'id' | 'resourceGroupName' | 'routeTableName' | 'name' | 'nextHopType' | 'routeTableName' | 'routeName' | 'type'
 > & {
   nextHopType: network.RouteNextHopType;
 };

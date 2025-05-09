@@ -1,5 +1,7 @@
 import * as ccs from '@pulumi/azure-native/containerservice';
 
+export const aksRequiredOutboundPorts = ['1194', '9000', '123', '53', '80', '443'];
+
 export const getAksConfig = async ({
   resourceName,
   resourceGroupName,

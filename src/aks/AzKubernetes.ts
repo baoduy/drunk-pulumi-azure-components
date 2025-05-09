@@ -89,8 +89,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
   private createUserNameAndSshKeys() {
     const { vaultInfo } = this.args;
-    const userName = this.createRandomString({ type: 'string', vaultInfo }).value.apply(
-      (v) => `${this.name}-admin-${v}`,
+    const userName = this.createRandomString({ type: 'string', length: 8, vaultInfo }).value.apply((v) =>
+      `${this.name}-admin-${v}`.substring(0, 32),
     );
     const password = this.createPassword({ length: 50 }).value;
 
@@ -120,7 +120,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       sku,
       ...props
     } = this.args;
-    const nodeResourceGroup = pulumi.output(rsGroup).apply((rs) => `${rs.resourceGroupName}-nodes`);
+    const nodeResourceGroup = pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
     const login = this.createUserNameAndSshKeys();
 
     return new ccs.ManagedCluster(
@@ -129,6 +129,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         ...props,
         ...rsGroup,
         nodeResourceGroup,
+        dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
 
         enableRBAC: true,
         aadProfile: groupRoles

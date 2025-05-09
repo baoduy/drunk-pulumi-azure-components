@@ -70,7 +70,7 @@ jobs:
 
       - name: Update version in package.json
         run: |
-          cd .bin
+          cd ./bin
           sed -i 's/"version": "0.0.1"/"version": "${{ env.NEXT_VERSION }}"/' package.json
 
       # Create Release
@@ -89,7 +89,7 @@ jobs:
       - name: Publish to npm
         if: ${{ env.Enable_Release == 'true' }}
         run: |
-          cd .bin
+          cd ./bin
           pnpm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
           pnpm config set scope "@drunk-pulumi"
           pnpm publish --access public --no-git-checks

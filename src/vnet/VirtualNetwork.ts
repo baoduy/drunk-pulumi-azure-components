@@ -1,7 +1,7 @@
 import * as network from '@pulumi/azure-native/network';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { BaseResourceComponent, CommonBaseArgs, baseHelpers } from '../base';
 import * as types from '../types';
 import { Basion, BasionArgs } from './Basion';
 import { Firewall, FirewallArgs } from './Firewall';
@@ -9,6 +9,7 @@ import * as helpers from './helpers';
 import { NetworkPeering, NetworkPeeringArgs } from './NetworkPeering';
 import { RouteTable, RouteTableArgs } from './RouteTable';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
+import { getBasionSecurityRules } from './securityRules';
 
 export type SubnetArgs = Pick<
   network.SubnetArgs,
@@ -101,13 +102,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     if (firewall) this.firewall = firewall.firewall;
     this.vnet = { id: vnet.id, resourceName: vnet.name };
 
-    this.subnets = Object.entries(subnets).reduce(
-      (acc, [name, subnet]) => ({
-        ...acc,
-        [name]: { id: subnet.id, resourceName: subnet.name },
-      }),
-      {},
-    );
+    this.subnets = baseHelpers.recordMap(subnets, (s) => ({ id: s.id, resourceName: s.name.apply((n) => n!) }));
 
     this.registerOutputs({
       securityGroup: this.securityGroup,
@@ -126,7 +121,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     const { securityRules = [], ...props } = securityGroup;
 
     if (basion) {
-      securityRules.push(...helpers.getBasionSGRules({ subnetPrefix: basion.subnetPrefix }));
+      securityRules.push(...getBasionSecurityRules({ bastionAddressPrefix: basion.subnetPrefix }));
     }
 
     return new network.NetworkSecurityGroup(

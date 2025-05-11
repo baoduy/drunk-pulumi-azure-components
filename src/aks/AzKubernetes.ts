@@ -8,6 +8,7 @@ import { azureEnv, rsHelpers } from '../helpers';
 import * as types from '../types';
 import { VaultSecret } from '../vault';
 import * as aksHelpers from './helpers';
+import { DiskEncryptionSet } from '../vm/DiskEncryptionSet';
 
 export interface AzKubernetesArgs
   extends CommonBaseArgs,
@@ -31,7 +32,6 @@ export interface AzKubernetesArgs
     }
   >[];
   attachToAcr?: types.ResourceInputs;
-  diskEncryptionSet?: types.ResourceInputs;
   features?: {
     enablePrivateCluster: boolean;
     enablePrivateClusterPublicFQDN?: boolean;
@@ -125,13 +125,28 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return { userName, sshPublicKey: ssh.publicKey };
   }
 
+  private createDiskEncryptionSet() {
+    const { rsGroup, enableEncryption, defaultUAssignedId, vaultInfo } = this.args;
+    if (!enableEncryption) return undefined;
+    return new DiskEncryptionSet(
+      `${this.name}-disk-encryption-set`,
+      {
+        rsGroup,
+        vaultInfo,
+        defaultUAssignedId,
+        encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
+      },
+      { dependsOn: this.opts?.dependsOn, parent: this },
+    );
+  }
+
   private createCluster(app: AppRegistration) {
     const {
       rsGroup,
       vaultInfo,
       groupRoles,
       defaultUAssignedId,
-      diskEncryptionSet,
+
       enableEncryption,
       features,
       addonProfiles,
@@ -142,6 +157,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     } = this.args;
     const nodeResourceGroup = pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
     const login = this.createUserNameAndSshKeys();
+    const diskEncryptionSet = this.createDiskEncryptionSet();
 
     return new ccs.ManagedCluster(
       this.name,
@@ -283,6 +299,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private createMaintenance(aks: ccs.ManagedCluster) {
     const { rsGroup, maintenance } = this.args;
     if (!maintenance) return undefined;
+
     return new ccs.MaintenanceConfiguration(
       `${this.name}-MaintenanceConfiguration`,
       {

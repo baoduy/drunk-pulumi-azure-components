@@ -22,6 +22,7 @@
     "node_modules"
   ],
   "files": [
+    "src/ResourceBuilder.ts",
     "src/aks/AzKubernetes.ts",
     "src/aks/ContainerRegistry.ts",
     "src/aks/helpers.ts",
@@ -94,6 +95,8 @@
     "src/vnet/Basion.ts",
     "src/vnet/DnsZone.ts",
     "src/vnet/Firewall.ts",
+    "src/vnet/FirewallPolicies/FirewallPolicyBuilder.ts",
+    "src/vnet/FirewallPolicies/index.ts",
     "src/vnet/IpAddresses.ts",
     "src/vnet/NatGateway.ts",
     "src/vnet/NetworkPeering.ts",
@@ -103,6 +106,9 @@
     "src/vnet/VirtualNetwork.ts",
     "src/vnet/VpnGateway.ts",
     "src/vnet/helpers.ts",
-    "src/vnet/index.ts"
+    "src/vnet/index.ts",
+    "src/vnet/securityRules/SecurityRuleBuilder.ts",
+    "src/vnet/securityRules/commonRules.ts",
+    "src/vnet/securityRules/index.ts"
   ]
 }

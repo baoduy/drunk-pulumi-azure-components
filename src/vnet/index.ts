@@ -10,3 +10,4 @@ export * from './PrivateEndpoint';
 export * from './RouteTable';
 export * from './VirtualNetwork';
 export * from './VpnGateway';
+export * from './securityRules';

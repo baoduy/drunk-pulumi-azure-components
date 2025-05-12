@@ -62,7 +62,7 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
     const { rsGroup, groupRoles, vaultInfo } = this.args;
     return new UserAssignedIdentity(
       this.name,
-      { rsGroup, groupRoles, vaultInfo, memberof: groupRoles ? [groupRoles.contributor] : undefined },
+      { rsGroup, vaultInfo, memberof: groupRoles ? [groupRoles.contributor] : undefined },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }

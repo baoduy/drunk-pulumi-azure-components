@@ -4,7 +4,7 @@ import { RoleAssignment, rsRoleDefinitions, RsRoleDefinitionType } from '../azAd
 import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
 import * as types from '../types';
 
-export interface RsGroupArgs extends BaseArgs, resources.ResourceGroupArgs {
+export interface RsGroupArgs extends BaseArgs, Omit<resources.ResourceGroupArgs, 'managedBy' | 'location'> {
   /** if the role definition is not provided the readonly role will be added to this group by default  */
   roleAssignments?: RsRoleDefinitionType[];
   lock?: boolean;

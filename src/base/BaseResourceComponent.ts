@@ -34,10 +34,10 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
    * @param opts - Optional component resource options
    */
   constructor(
-    private type: string,
-    public name: string,
-    protected args: TArgs,
-    protected opts?: pulumi.ComponentResourceOptions,
+    private readonly type: string,
+    public readonly name: string,
+    protected readonly args: TArgs,
+    protected readonly opts?: pulumi.ComponentResourceOptions,
   ) {
     super(getComponentResourceType(type), name, args, opts);
   }

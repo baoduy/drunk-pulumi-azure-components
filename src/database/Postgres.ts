@@ -205,7 +205,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
 
     return new UserAssignedIdentity(
       this.name,
-      { rsGroup, groupRoles, vaultInfo, memberof: groupRoles ? [groupRoles.readOnly] : undefined },
+      { rsGroup, vaultInfo, memberof: groupRoles ? [groupRoles.readOnly] : undefined },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }

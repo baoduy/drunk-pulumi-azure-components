@@ -96,6 +96,7 @@
     "src/vnet/DnsZone.ts",
     "src/vnet/Firewall.ts",
     "src/vnet/FirewallPolicies/FirewallPolicyBuilder.ts",
+    "src/vnet/FirewallPolicies/commonPolicies.ts",
     "src/vnet/FirewallPolicies/index.ts",
     "src/vnet/IpAddresses.ts",
     "src/vnet/NatGateway.ts",

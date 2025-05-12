@@ -19,8 +19,8 @@ export class RandomPassword extends pulumi.ComponentResource<RandomPasswordArgs>
   public readonly value: pulumi.Output<string>;
 
   constructor(
-    public name: string,
-    private args: RandomPasswordArgs = { length: 50, policy: 'yearly' },
+    public readonly name: string,
+    private readonly args: RandomPasswordArgs = { length: 50, policy: 'yearly' },
     opts?: pulumi.ComponentResourceOptions,
   ) {
     super(getComponentResourceType('RandomPassword'), name, args, opts);

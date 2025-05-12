@@ -1,17 +1,17 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
 import { stackInfo } from '../helpers';
-import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+import { getComponentResourceType } from '../base/helpers';
 
-export interface AzRoleArgs extends BaseArgs, Pick<azAd.GroupArgs, 'owners' | 'members' | 'preventDuplicateNames'> {}
+export interface AzRoleArgs extends Pick<azAd.GroupArgs, 'members' | 'owners' | 'preventDuplicateNames'> {}
 
-export class AzRole extends BaseResourceComponent<AzRoleArgs> {
+export class AzRole extends pulumi.ComponentResource<AzRoleArgs> {
   public readonly objectId: pulumi.Output<string>;
   public readonly displayName: pulumi.Output<string>;
 
-  constructor(name: string, args: AzRoleArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: AzRoleArgs = {}, opts?: pulumi.ComponentResourceOptions) {
     const n = `rol-${name.toLowerCase().replace(/\s+/g, '-')}`;
-    super('AzRole', n, args, opts);
+    super(getComponentResourceType('AzRole'), n, args, opts);
 
     const roleName = name.includes(stackInfo.stack)
       ? `ROL ${name}`.toUpperCase()
@@ -32,11 +32,6 @@ export class AzRole extends BaseResourceComponent<AzRoleArgs> {
       },
       { parent: this },
     );
-
-    this.addSecrets({
-      id: role.objectId,
-      displayName: role.displayName,
-    });
 
     this.objectId = role.objectId;
     this.displayName = role.displayName;

@@ -4,6 +4,16 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 
+export type RulePolicyArgs = {
+  priority: number;
+  name: string;
+  ruleCollections?: pulumi.Input<
+    pulumi.Input<
+      inputs.network.FirewallPolicyFilterRuleCollectionArgs | inputs.network.FirewallPolicyNatRuleCollectionArgs
+    >[]
+  >;
+};
+
 export interface FirewallArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
@@ -41,15 +51,8 @@ export interface FirewallArgs
   > & {
     basePolicy?: types.ResourceInputs;
     transportSecurityCA?: pulumi.Input<inputs.network.FirewallPolicyCertificateAuthorityArgs>;
-    rules?: Array<{
-      priority: number;
-      name: string;
-      ruleCollections?: pulumi.Input<
-        pulumi.Input<
-          inputs.network.FirewallPolicyFilterRuleCollectionArgs | inputs.network.FirewallPolicyNatRuleCollectionArgs
-        >[]
-      >;
-    }>;
+    /** The rule collections for this Firewall. Recommend to use "FirewallPolicyBuilder" to build this rules */
+    rules?: Array<RulePolicyArgs>;
   };
 
   logs?: {

@@ -1,4 +1,5 @@
 import * as inputs from '@pulumi/azure-native/types/input';
+import * as network from '@pulumi/azure-native/network';
 
 type RuleItemArgs = Partial<
   Pick<
@@ -17,13 +18,14 @@ type RuleItemArgs = Partial<
 >;
 
 export class SecurityRuleBuilder {
-  private rules: inputs.network.SecurityRuleArgs[] = [];
+  private _rules: inputs.network.SecurityRuleArgs[] = [];
 
-  public allowInbound(name: string, props: RuleItemArgs): SecurityRuleBuilder {
-    this.rules.push({
+  private addRule(
+    name: string,
+    props: RuleItemArgs & { access: network.SecurityRuleAccess; direction: network.SecurityRuleDirection },
+  ): SecurityRuleBuilder {
+    this._rules.push({
       name,
-      access: 'Allow',
-      direction: 'Inbound',
       protocol: '*',
       sourceAddressPrefix: '*',
       sourcePortRange: '*',
@@ -31,28 +33,48 @@ export class SecurityRuleBuilder {
       destinationPortRange: '*',
       ...props,
     });
+
     return this;
+  }
+
+  public allowInbound(name: string, props: RuleItemArgs): SecurityRuleBuilder {
+    return this.addRule(name, {
+      access: 'Allow',
+      direction: 'Inbound',
+      ...props,
+    });
+  }
+
+  public denyInbound(name: string, props: RuleItemArgs): SecurityRuleBuilder {
+    return this.addRule(name, {
+      access: 'Deny',
+      direction: 'Inbound',
+      ...props,
+    });
   }
 
   public allowOutbound(name: string, props: RuleItemArgs) {
-    this.rules.push({
-      name,
+    return this.addRule(name, {
       access: 'Allow',
       direction: 'Outbound',
-      protocol: '*',
-      sourceAddressPrefix: '*',
-      sourcePortRange: '*',
-      destinationAddressPrefix: '*',
-      destinationPortRange: '*',
       ...props,
     });
-    return this;
+  }
+
+  public denyOutbound(name: string, props: RuleItemArgs) {
+    return this.addRule(name, {
+      access: 'Deny',
+      direction: 'Outbound',
+      ...props,
+    });
   }
 
   build(startPriority: number = 300) {
-    this.rules.forEach((rule, index) => {
+    const rules = this._rules.map((rule, index) => {
       rule.priority = startPriority + index;
+      return rule;
     });
-    return this.rules;
+
+    return rules;
   }
 }

@@ -1,14 +1,13 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
 import * as types from '../types';
-import { AzRole } from './AzRole';
+import { AzRole, AzRoleArgs } from './AzRole';
 
 export interface GroupRoleArgs
-  extends BaseArgs,
-    Pick<azAd.GroupArgs, 'owners'>,
-    Partial<Record<types.GroupRoleTypes, Pick<azAd.GroupArgs, 'members'>>> {
+  extends Pick<AzRoleArgs, 'owners' | 'preventDuplicateNames'>,
+    Partial<Record<types.GroupRoleTypes, Pick<AzRoleArgs, 'members'>>> {
   preventDuplicateNames?: pulumi.Input<boolean>;
 }
 
@@ -16,13 +15,18 @@ export interface GroupRoleOutput {
   objectId: string;
   displayName: string;
 }
-export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
+
+export class GroupRole extends pulumi.ComponentResource<GroupRoleArgs> {
   public readonly admin: pulumi.Output<GroupRoleOutput>;
   public readonly contributor: pulumi.Output<GroupRoleOutput>;
   public readonly readOnly: pulumi.Output<GroupRoleOutput>;
 
-  constructor(name: string = stackInfo.stack, args: GroupRoleArgs = {}, opts?: pulumi.ComponentResourceOptions) {
-    super('GroupRole', name, args, opts);
+  constructor(
+    private readonly name: string = stackInfo.stack,
+    args: GroupRoleArgs = {},
+    opts?: pulumi.ComponentResourceOptions,
+  ) {
+    super(getComponentResourceType('GroupRole'), name, args, opts);
 
     const roles = ['admin', 'contributor', 'readOnly'] as const;
 
@@ -32,7 +36,6 @@ export class GroupRole extends BaseResourceComponent<GroupRoleArgs> {
         new AzRole(
           `${name} ${role}`,
           {
-            vaultInfo: args.vaultInfo,
             owners: args.owners,
             members: args[role]?.members,
             preventDuplicateNames: args.preventDuplicateNames,

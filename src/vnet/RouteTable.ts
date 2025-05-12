@@ -24,7 +24,11 @@ export class RouteTable extends pulumi.ComponentResource<RouteTableArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(public name: string, private args: RouteTableArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(
+    public readonly name: string,
+    private readonly args: RouteTableArgs,
+    opts?: pulumi.ComponentResourceOptions,
+  ) {
     super(getComponentResourceType('RouteTable'), name, args, opts);
 
     const { rsGroup, routes = [], ...props } = args;

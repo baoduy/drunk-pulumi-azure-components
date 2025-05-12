@@ -5,7 +5,7 @@ import { BaseArgs, BaseResourceComponent } from '../base';
 import { WithResourceGroupInputs, WithMemberOfArgs } from '../types';
 
 export interface UserAssignedIdentityArgs
-  extends BaseArgs,
+  extends Omit<BaseArgs, 'groupRoles'>,
     WithMemberOfArgs,
     WithResourceGroupInputs {}
 
@@ -14,18 +14,10 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
   public readonly clientId: pulumi.Output<string>;
   public readonly principalId: pulumi.Output<string>;
 
-  constructor(
-    name: string,
-    args: UserAssignedIdentityArgs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, args: UserAssignedIdentityArgs, opts?: pulumi.ComponentResourceOptions) {
     super('UserAssignedIdentity', name, args, opts);
 
-    const managedIdentity = new mid.UserAssignedIdentity(
-      name,
-      { ...args.rsGroup },
-      { ...opts, parent: this },
-    );
+    const managedIdentity = new mid.UserAssignedIdentity(name, { ...args.rsGroup }, { ...opts, parent: this });
 
     this.addSecrets({
       id: managedIdentity.id,

@@ -3,6 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
 import { azureEnv } from '../helpers';
+import { BaseComponent } from '../base/BaseComponent';
 
 export interface VpnGatewayArgs
   extends types.WithResourceGroupInputs,
@@ -15,11 +16,11 @@ export interface VpnGatewayArgs
   subnetId: pulumi.Input<string>;
 }
 
-export class VpnGateway extends pulumi.ComponentResource<VpnGatewayArgs> {
+export class VpnGateway extends BaseComponent<VpnGatewayArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(name: string, private args: VpnGatewayArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: VpnGatewayArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('VpnGateway'), name, args, opts);
 
     const { rsGroup, sku, publicIPAddress, subnetId, ...props } = args;
@@ -67,9 +68,13 @@ export class VpnGateway extends pulumi.ComponentResource<VpnGatewayArgs> {
     this.id = vpn.id;
     this.resourceName = vpn.name;
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 }

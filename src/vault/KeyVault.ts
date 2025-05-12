@@ -35,11 +35,6 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
       name,
       {
         ...args.rsGroup,
-        // vaultName:
-        //   `${stackInfo.stack}-${name}-${stackInfo.organization}-vlt`.substring(
-        //     0,
-        //     24
-        //   ),
         properties: {
           //Default values
           enableRbacAuthorization: true,
@@ -91,11 +86,15 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     this.id = vault.id;
     this.rsGroup = args.rsGroup;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       resourceName: this.resourceName,
       id: this.id,
       rsGroup: this.rsGroup,
-    });
+    };
   }
 
   private createPrivateEndpoint(vault: keyvault.Vault) {

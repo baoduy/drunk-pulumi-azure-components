@@ -67,10 +67,14 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
     this.id = azConfig.id;
     this.resourceName = azConfig.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   private createPrivateLink(azConfig: appConfig.ConfigurationStore) {

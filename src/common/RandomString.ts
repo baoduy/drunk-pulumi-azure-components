@@ -3,6 +3,7 @@ import * as random from '@pulumi/random';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
 import { VaultSecret } from '../vault/VaultSecret';
+import { BaseComponent } from '../base/BaseComponent';
 
 export interface RandomStringArgs extends types.WithVaultInfo {
   type: 'string' | 'uuId';
@@ -15,7 +16,7 @@ export interface RandomStringArgs extends types.WithVaultInfo {
   };
 }
 
-export class RandomString extends pulumi.ComponentResource<RandomStringArgs> {
+export class RandomString extends BaseComponent<RandomStringArgs> {
   public readonly value: pulumi.Output<string>;
 
   constructor(
@@ -57,8 +58,12 @@ export class RandomString extends pulumi.ComponentResource<RandomStringArgs> {
     }
 
     this.value = randomString.result;
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       value: this.value,
-    });
+    };
   }
 }

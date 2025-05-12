@@ -2,6 +2,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import { WithVaultInfo } from '../types';
 import { SecretItemArgs, VaultSecret } from './VaultSecret';
+import { BaseComponent } from '../base/BaseComponent';
 
 export type VaultSecretResult = {
   id: pulumi.Output<string>;
@@ -13,7 +14,7 @@ export interface VaultSecretsArgs extends Required<WithVaultInfo> {
   secrets: { [key: string]: SecretItemArgs };
 }
 
-export class VaultSecrets extends pulumi.ComponentResource<VaultSecretsArgs> {
+export class VaultSecrets extends BaseComponent<VaultSecretsArgs> {
   public readonly results: {
     [key: string]: VaultSecretResult;
   } = {};
@@ -38,8 +39,12 @@ export class VaultSecrets extends pulumi.ComponentResource<VaultSecretsArgs> {
       };
     });
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       results: this.results,
-    });
+    };
   }
 }

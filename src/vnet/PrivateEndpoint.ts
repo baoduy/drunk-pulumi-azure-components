@@ -5,6 +5,7 @@ import * as types from '../types';
 import { rsHelpers } from '../helpers';
 import * as helpers from './helpers';
 import { PrivateDnsZone } from './PrivateDnsZone';
+import { BaseComponent } from '../base/BaseComponent';
 
 export type PrivateEndpointServices =
   | 'azApi'
@@ -38,7 +39,7 @@ export interface PrivateEndpointArgs extends types.WithResourceGroupInputs, Priv
   resourceInfo: pulumi.CustomResource;
 }
 
-export class PrivateEndpoint extends pulumi.ComponentResource<PrivateEndpointArgs> {
+export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
   public readonly privateEndpoint: pulumi.Output<{
     privateIpAddresses: string[];
     id: string;
@@ -48,7 +49,7 @@ export class PrivateEndpoint extends pulumi.ComponentResource<PrivateEndpointArg
     id: string;
   }>;
 
-  constructor(name: string, private args: PrivateEndpointArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: PrivateEndpointArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('PrivateEndpoint'), name, args, opts);
 
     const linkInfo = this.getPrivateEndpointProps();
@@ -118,10 +119,14 @@ export class PrivateEndpoint extends pulumi.ComponentResource<PrivateEndpointArg
 
     this.privateDnsZone = zone.id.apply((id) => ({ id, name }));
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       privateEndpoint: this.privateEndpoint,
       privateDnsZone: this.privateDnsZone,
-    });
+    };
   }
 
   private getPrivateEndpointProps(): {

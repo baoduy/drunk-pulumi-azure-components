@@ -64,7 +64,11 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
       this.ipAddresses[ip.name] = { id: ipAddress.id, resourceName: ipAddress.name, address: ipAddress.ipAddress };
     });
 
-    this.registerOutputs({ ipAddresses: this.ipAddresses });
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return { ipAddresses: this.ipAddresses };
   }
 
   private createIpPrefix() {

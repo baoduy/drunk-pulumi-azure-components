@@ -4,6 +4,7 @@ import { getComponentResourceType } from '../base/helpers';
 import { WithMemberOfArgs, WithVaultInfo } from '../types';
 import { VaultSecret } from '../vault';
 import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
+import { BaseComponent } from '../base/BaseComponent';
 
 export enum GroupMembershipClaimsTypes {
   None = 'None',
@@ -55,7 +56,7 @@ export interface AppRegistrationArgs
   roleAssignments?: Array<Omit<RoleAssignmentArgs, 'roleAssignmentName' | 'principalId' | 'principalType'>>;
 }
 
-export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArgs> {
+export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   public readonly clientId: pulumi.Output<string>;
   public readonly clientSecret?: pulumi.Output<string>;
   public readonly servicePrincipalId?: pulumi.Output<string>;
@@ -63,11 +64,7 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
 
   //private readonly _app: azAd.Application;
 
-  constructor(
-    private name: string,
-    private args: AppRegistrationArgs = { appType: 'native' },
-    private opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, args: AppRegistrationArgs = { appType: 'native' }, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('AppRegistration'), name, args, opts);
     const ops = args.info ?? {
       displayName: name,
@@ -125,12 +122,16 @@ export class AppRegistration extends pulumi.ComponentResource<AppRegistrationArg
     this.addMemberOf(app);
 
     this.clientId = app.clientId;
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       clientId: this.clientId,
       clientSecret: this.clientSecret,
       servicePrincipalId: this.servicePrincipalId,
       servicePrincipalPassword: this.servicePrincipalPassword,
-    });
+    };
   }
 
   private createServicePrincipal(app: azAd.Application) {

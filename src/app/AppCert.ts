@@ -46,9 +46,13 @@ export class AppCert extends BaseResourceComponent<AppCertArgs> {
     this.id = appCert.id;
     this.resourceName = appCert.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 }

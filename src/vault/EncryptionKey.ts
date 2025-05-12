@@ -2,12 +2,13 @@ import { VaultKeyResource } from '@drunk-pulumi/azure-providers';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import { WithVaultInfo } from '../types';
+import { BaseComponent } from '../base/BaseComponent';
 
 export interface EncryptionKeyArgs extends Required<WithVaultInfo> {
   keySize?: 2048 | 3072 | 4096;
 }
 
-export class EncryptionKey extends pulumi.ComponentResource<EncryptionKeyArgs> {
+export class EncryptionKey extends BaseComponent<EncryptionKeyArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly keyName: pulumi.Output<string>;
   public readonly urlWithoutVersion: pulumi.Output<string>;
@@ -34,12 +35,16 @@ export class EncryptionKey extends pulumi.ComponentResource<EncryptionKeyArgs> {
     this.vaultUrl = key.vaultUrl;
     this.version = key.version;
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       keyName: this.keyName,
       urlWithoutVersion: this.urlWithoutVersion,
       vaultUrl: this.vaultUrl,
       version: this.version,
-    });
+    };
   }
 }

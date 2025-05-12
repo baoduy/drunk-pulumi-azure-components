@@ -52,12 +52,15 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
     this.id = auto.id;
     this.resourceName = auto.name;
 
-    this.registerOutputs({
-      id: this.id,
-      resourceName: this.resourceName,
-    });
+    this.registerOutputs();
   }
 
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
+      id: this.id,
+      resourceName: this.resourceName,
+    };
+  }
   private createUAssignedId() {
     const { rsGroup, groupRoles, vaultInfo } = this.args;
     return new UserAssignedIdentity(

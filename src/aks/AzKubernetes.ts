@@ -78,10 +78,14 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     this.id = cluster.id;
     this.resourceName = cluster.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   private createIdentity() {

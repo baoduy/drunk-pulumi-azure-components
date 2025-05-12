@@ -179,12 +179,15 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     this.id = vm.id;
     this.resourceName = vm.name;
 
-    this.registerOutputs({
-      id: this.id,
-      resourceName: this.resourceName,
-    });
+    this.registerOutputs();
   }
 
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
+      id: this.id,
+      resourceName: this.resourceName,
+    };
+  }
   private createNetworkInterface() {
     const { rsGroup, network } = this.args;
     return new nw.NetworkInterface(this.name, {

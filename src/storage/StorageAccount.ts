@@ -177,11 +177,15 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     this.resourceName = stg.name;
     this.rsGroup = args.rsGroup;
 
-    this.registerOutputs({
-      id: this.id,
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       resourceName: this.resourceName,
+      id: this.id,
       rsGroup: this.rsGroup,
-    });
+    };
   }
 
   private createPrivateLink(stg: storage.StorageAccount) {

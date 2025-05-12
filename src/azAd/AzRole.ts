@@ -2,10 +2,11 @@ import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
 import { stackInfo } from '../helpers';
 import { getComponentResourceType } from '../base/helpers';
+import { BaseComponent } from '../base/BaseComponent';
 
 export interface AzRoleArgs extends Pick<azAd.GroupArgs, 'members' | 'owners' | 'preventDuplicateNames'> {}
 
-export class AzRole extends pulumi.ComponentResource<AzRoleArgs> {
+export class AzRole extends BaseComponent<AzRoleArgs> {
   public readonly objectId: pulumi.Output<string>;
   public readonly displayName: pulumi.Output<string>;
 
@@ -36,9 +37,13 @@ export class AzRole extends pulumi.ComponentResource<AzRoleArgs> {
     this.objectId = role.objectId;
     this.displayName = role.displayName;
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       objectId: this.objectId,
       displayName: this.displayName,
-    });
+    };
   }
 }

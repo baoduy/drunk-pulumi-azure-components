@@ -27,11 +27,14 @@ export class SshGenerator extends BaseResourceComponent<SshGeneratorArgs> {
       password: args.password,
     });
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       publicKey: this.publicKey,
       privateKey: this.privateKey,
       password: this.password,
-      vaultSecrets: this.vaultSecrets,
-    });
+    };
   }
 }

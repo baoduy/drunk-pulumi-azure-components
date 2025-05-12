@@ -52,12 +52,15 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     this.id = server.id;
     this.resourceName = server.name;
 
-    this.registerOutputs({
-      id: this.id,
-      resourceName: this.resourceName,
-    });
+    this.registerOutputs();
   }
 
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
+      id: this.id,
+      resourceName: this.resourceName,
+    };
+  }
   private createPostgres() {
     const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
 

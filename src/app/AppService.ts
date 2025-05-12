@@ -97,10 +97,14 @@ export class AppService extends BaseResourceComponent<AppServiceArgs> {
     this.id = appPlan.id;
     this.resourceName = appPlan.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   private createWebApps(appPlan: web.AppServicePlan) {

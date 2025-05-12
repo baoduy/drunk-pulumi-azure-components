@@ -4,6 +4,7 @@ import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
 import * as types from '../types';
 import { AzRole, AzRoleArgs } from './AzRole';
+import { BaseComponent } from '../base/BaseComponent';
 
 export interface GroupRoleArgs
   extends Pick<AzRoleArgs, 'owners' | 'preventDuplicateNames'>,
@@ -16,16 +17,12 @@ export interface GroupRoleOutput {
   displayName: string;
 }
 
-export class GroupRole extends pulumi.ComponentResource<GroupRoleArgs> {
+export class GroupRole extends BaseComponent<GroupRoleArgs> {
   public readonly admin: pulumi.Output<GroupRoleOutput>;
   public readonly contributor: pulumi.Output<GroupRoleOutput>;
   public readonly readOnly: pulumi.Output<GroupRoleOutput>;
 
-  constructor(
-    private readonly name: string = stackInfo.stack,
-    args: GroupRoleArgs = {},
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string = stackInfo.stack, args: GroupRoleArgs = {}, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('GroupRole'), name, args, opts);
 
     const roles = ['admin', 'contributor', 'readOnly'] as const;
@@ -62,11 +59,15 @@ export class GroupRole extends pulumi.ComponentResource<GroupRoleArgs> {
 
     this.configHierarchyRoles(roleInstances);
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       admin: this.admin,
       contributor: this.contributor,
       readOnly: this.readOnly,
-    });
+    };
   }
 
   private configHierarchyRoles(roles: { [k: string]: AzRole }) {

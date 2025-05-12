@@ -81,11 +81,15 @@ export class AzCdn extends BaseResourceComponent<AzCdnArgs> {
       location: args.rsGroup.location,
     });
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       profile: this.profile,
       endpoint: this.endpoint,
       rsGroup: this.rsGroup,
-    });
+    };
   }
 
   private createCertAndDomains(profile: ProfileResourceType, endpoint: cdn.Endpoint) {

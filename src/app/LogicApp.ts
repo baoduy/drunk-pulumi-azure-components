@@ -56,9 +56,13 @@ export class LogicApp extends BaseResourceComponent<LogicAppArgs> {
     this.id = wf.id;
     this.resourceName = wf.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 }

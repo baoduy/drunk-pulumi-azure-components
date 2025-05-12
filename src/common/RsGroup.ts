@@ -30,10 +30,14 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     this.createRoleAssignment();
     if (args.lock) this.lockFromDeleting(group);
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       location: this.location,
       resourceGroupName: this.resourceGroupName,
-    });
+    };
   }
 
   private createRoleAssignment() {

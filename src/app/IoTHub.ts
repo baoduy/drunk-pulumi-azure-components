@@ -48,9 +48,14 @@ export class IoTHub extends BaseResourceComponent<IoTHubArgs> {
 
     this.id = iot.id;
     this.resourceName = iot.name;
-    this.registerOutputs({
+
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 }

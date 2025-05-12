@@ -2,6 +2,7 @@ import * as nw from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
+import { BaseComponent } from '../base/BaseComponent';
 
 export interface BasionArgs
   extends types.WithResourceGroupInputs,
@@ -26,7 +27,7 @@ export interface BasionArgs
   network?: Pick<types.NetworkArgs, 'ipRules'>;
 }
 
-export class Basion extends pulumi.ComponentResource<BasionArgs> {
+export class Basion extends BaseComponent<BasionArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
@@ -63,9 +64,13 @@ export class Basion extends pulumi.ComponentResource<BasionArgs> {
     this.id = bs.id;
     this.resourceName = bs.name;
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 }

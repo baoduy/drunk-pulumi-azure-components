@@ -6,6 +6,7 @@ import { GroupRole, GroupRoleOutput, UserAssignedIdentity } from './azAd';
 import { KeyVault, KeyVaultArgs } from './vault';
 import { Logs, LogsArgs } from './logs';
 import { DiskEncryptionSet } from './vm';
+import { BaseComponent } from './base/BaseComponent';
 
 type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
@@ -21,7 +22,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, 'groupRoles' | 'v
   enableDiskEncryption?: boolean;
 }
 
-export class ResourceBuilder extends pulumi.ComponentResource<ResourceBuilderArgs> {
+export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   public readonly rsGroup: types.ResourceGroupOutputs;
   public readonly vaultInfo?: types.ResourceOutputs;
   public readonly groupRoles?: GroupRoleOutputTypes;
@@ -29,7 +30,7 @@ export class ResourceBuilder extends pulumi.ComponentResource<ResourceBuilderArg
   public readonly logs?: types.LogsOutputs;
   public readonly diskEncryptionSet?: types.ResourceOutputs;
 
-  constructor(public readonly name: string, private args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
 
     const { groupRoles, vault, enableDefaultUAssignId, logs, enableDiskEncryption, ...props } = args;
@@ -85,5 +86,9 @@ export class ResourceBuilder extends pulumi.ComponentResource<ResourceBuilderArg
         opts,
       );
     }
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {};
   }
 }

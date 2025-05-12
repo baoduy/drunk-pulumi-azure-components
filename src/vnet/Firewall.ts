@@ -78,7 +78,11 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
     this.privateIpAddress = firewall.ipConfigurations.apply((config) => config![0].privateIPAddress);
 
     // Export the resource ID
-    this.registerOutputs({ firewall: this.firewall, policy: this.policy, privateIpAddress: this.privateIpAddress });
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return { firewall: this.firewall, policy: this.policy, privateIpAddress: this.privateIpAddress };
   }
 
   private createPolicy(basePolicy?: types.ResourceInputs) {

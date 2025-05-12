@@ -103,10 +103,14 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     this.id = server.id;
     this.resourceName = server.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   private createSql() {

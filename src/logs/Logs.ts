@@ -62,11 +62,15 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
       this.addSecret(`${name}-appInsight-key`, appInsight.instrumentationKey);
     }
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       storage: this.storage,
       workspace: this.workspace,
       appInsight: this.appInsight,
-    });
+    };
   }
 
   private createWorkspace() {

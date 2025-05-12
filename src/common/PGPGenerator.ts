@@ -34,12 +34,15 @@ export class PGPGenerator extends BaseResourceComponent<PGPGeneratorArgs> {
     });
     if (args.passphrase) this.addSecrets({ passphrase: args.passphrase });
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       publicKey: this.publicKey,
       privateKey: this.privateKey,
       passphrase: this.passphrase,
       revocationCertificate: this.revocationCertificate,
-      vaultSecrets: this.vaultSecrets,
-    });
+    };
   }
 }

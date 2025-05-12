@@ -91,10 +91,14 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
     this.id = service.id;
     this.resourceName = service.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   private createPrivateLink(service: ss.SignalR) {

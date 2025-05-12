@@ -3,6 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 import { getDnsRecordName } from './helpers';
+import { BaseComponent } from '../base/BaseComponent';
 
 type DnsZoneRecordArgs = Omit<
   dns.RecordSetArgs,
@@ -18,13 +19,13 @@ export interface DnsZoneArgs extends WithResourceGroupInputs, DnsZoneProps {
   children?: DnsZoneProps[];
 }
 
-export class DnsZone extends pulumi.ComponentResource<DnsZoneArgs> {
+export class DnsZone extends BaseComponent<DnsZoneArgs> {
   private _rsName: string;
 
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(private name: string, private args: DnsZoneArgs, private opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: DnsZoneArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('DnsZone'), name, args, opts);
     this._rsName = name.replace(/\./g, '-');
 
@@ -39,10 +40,14 @@ export class DnsZone extends pulumi.ComponentResource<DnsZoneArgs> {
     this.id = zone.id;
     this.resourceName = zone.name;
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   private createZone({ name, records }: DnsZoneProps, parent?: dns.Zone) {

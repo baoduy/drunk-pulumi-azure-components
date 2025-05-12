@@ -31,11 +31,15 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
 
     this.addMemberOf();
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       clientId: this.clientId,
       principalId: this.principalId,
-    });
+    };
   }
 
   private addMemberOf() {

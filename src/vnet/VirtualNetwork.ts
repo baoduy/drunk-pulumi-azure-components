@@ -104,7 +104,11 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
 
     this.subnets = baseHelpers.recordMap(subnets, (s) => ({ id: s.id, resourceName: s.name.apply((n) => n!) }));
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       securityGroup: this.securityGroup,
       routeTable: this.routeTable,
       natGateway: this.natGateway,
@@ -112,7 +116,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
       firewall: this.firewall,
       vnet: this.vnet,
       subnets: this.subnets,
-    });
+    };
   }
 
   private createSecurityGroup() {

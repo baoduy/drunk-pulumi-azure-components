@@ -47,12 +47,15 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     this.id = server.id;
     this.resourceName = server.name;
 
-    this.registerOutputs({
-      id: this.id,
-      resourceName: this.resourceName,
-    });
+    this.registerOutputs();
   }
 
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
+      id: this.id,
+      resourceName: this.resourceName,
+    };
+  }
   private createRedis() {
     const { rsGroup, network, lock, ...props } = this.args;
 

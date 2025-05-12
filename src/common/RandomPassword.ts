@@ -3,6 +3,7 @@ import * as random from '@pulumi/random';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
 import { VaultSecret } from '../vault/VaultSecret';
+import { BaseComponent } from '../base/BaseComponent';
 
 export interface RandomPasswordArgs extends types.WithVaultInfo {
   policy?: pulumi.Input<'monthly' | 'yearly' | boolean>;
@@ -15,12 +16,12 @@ export interface RandomPasswordArgs extends types.WithVaultInfo {
   };
 }
 
-export class RandomPassword extends pulumi.ComponentResource<RandomPasswordArgs> {
+export class RandomPassword extends BaseComponent<RandomPasswordArgs> {
   public readonly value: pulumi.Output<string>;
 
   constructor(
-    public readonly name: string,
-    private readonly args: RandomPasswordArgs = { length: 50, policy: 'yearly' },
+    name: string,
+    args: RandomPasswordArgs = { length: 50, policy: 'yearly' },
     opts?: pulumi.ComponentResourceOptions,
   ) {
     super(getComponentResourceType('RandomPassword'), name, args, opts);
@@ -58,11 +59,14 @@ export class RandomPassword extends pulumi.ComponentResource<RandomPasswordArgs>
     }
 
     this.value = randomPass.result;
-    this.registerOutputs({
-      value: this.value,
-    });
+    this.registerOutputs(this.getOutputs());
   }
 
+  public getOutputs() {
+    return {
+      value: this.value,
+    };
+  }
   private generateKeepKey() {
     return this.args.policy === 'monthly'
       ? `${new Date().getMonth()}.${new Date().getFullYear()}`

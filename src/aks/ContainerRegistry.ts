@@ -100,10 +100,14 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
     this.id = acr.id;
     this.resourceName = acr.name;
 
-    this.registerOutputs({
+    this.registerOutputs();
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   private createPrivateLink(acr: registry.Registry) {

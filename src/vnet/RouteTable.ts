@@ -2,6 +2,7 @@ import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
+import { BaseComponent } from '../base/BaseComponent';
 
 export type RouteArgs = Omit<
   network.RouteArgs,
@@ -20,15 +21,11 @@ export interface RouteTableArgs
   >;
 }
 
-export class RouteTable extends pulumi.ComponentResource<RouteTableArgs> {
+export class RouteTable extends BaseComponent<RouteTableArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(
-    public readonly name: string,
-    private readonly args: RouteTableArgs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, args: RouteTableArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('RouteTable'), name, args, opts);
 
     const { rsGroup, routes = [], ...props } = args;
@@ -49,10 +46,14 @@ export class RouteTable extends pulumi.ComponentResource<RouteTableArgs> {
       this.addRoute(r.name, { ...r, ...rsGroup });
     });
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
 
   public addRoute(name: string, props: RouteArgs) {

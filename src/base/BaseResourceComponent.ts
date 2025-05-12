@@ -8,6 +8,7 @@ import { EncryptionKey } from '../vault/EncryptionKey';
 import { SecretItemArgs } from '../vault/VaultSecret';
 import { VaultSecretResult, VaultSecrets } from '../vault/VaultSecrets';
 import { getComponentResourceType } from './helpers';
+import { BaseComponent } from './BaseComponent';
 
 /**
  * Base interface for resource component arguments
@@ -18,10 +19,11 @@ export interface BaseArgs extends types.WithVaultInfo, types.WithGroupRolesArgs 
 export interface CommonBaseArgs extends BaseArgs, types.WithResourceGroupInputs {}
 
 /**
+/**
  * Extended base component that handles Azure resources with vault integration
  * Provides secret management and resource group handling capabilities
  */
-export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulumi.ComponentResource<TArgs> {
+export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends BaseComponent<TArgs> {
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
   public vaultSecrets?: { [key: string]: VaultSecretResult };
@@ -95,9 +97,9 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
    * Registers component outputs including vault secrets
    * @param outputs - Optional additional outputs to register
    */
-  protected registerOutputs(outputs?: pulumi.Inputs): void {
+  protected registerOutputs(): void {
     this.postCreated();
-    super.registerOutputs({ ...outputs, vaultSecrets: this.vaultSecrets });
+    super.registerOutputs({ ...this.getOutputs(), vaultSecrets: this.vaultSecrets });
   }
 
   /**
@@ -135,6 +137,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
       { dependsOn: resource, parent: this },
     );
   }
+
   /**
    * Adds a managed identity to a specified Azure AD group role
    * @param type - The type of group role to add the identity to (from GroupRoleTypes enum)
@@ -155,17 +158,5 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends pulu
         memberObjectId: i.principalId,
       });
     });
-  }
-
-  /**
-   * Selectively picks properties from the component instance
-   * @param keys - Array of property keys to pick from the component
-   * @returns Object containing only the selected properties
-   */
-  public PickOutputs<K extends keyof this>(...keys: K[]) {
-    return keys.reduce((acc, key) => {
-      acc[key] = (this as any)[key];
-      return acc;
-    }, {} as Pick<this, K>);
   }
 }

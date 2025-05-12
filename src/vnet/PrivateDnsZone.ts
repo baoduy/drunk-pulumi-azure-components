@@ -4,6 +4,7 @@ import { getComponentResourceType } from '../base/helpers';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
 import { rsHelpers } from '../helpers';
+import { BaseComponent } from '../base/BaseComponent';
 
 export type DnsRecordArgs = Omit<
   privateDns.PrivateRecordSetArgs,
@@ -19,13 +20,13 @@ export interface PrivateDnsZoneArgs extends WithResourceGroupInputs {
   vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
 }
 
-export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs> {
+export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
   private _rsName: string;
 
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
-  constructor(name: string, private args: PrivateDnsZoneArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: PrivateDnsZoneArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('PrivateDnsZone'), name, args, opts);
     this._rsName = name.replace(/\./g, '-');
     const group = this.getRsGroupInfo();
@@ -47,11 +48,16 @@ export class PrivateDnsZone extends pulumi.ComponentResource<PrivateDnsZoneArgs>
 
     this.createARecord();
 
-    this.registerOutputs({
+    this.registerOutputs(this.getOutputs());
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return {
       id: this.id,
       resourceName: this.resourceName,
-    });
+    };
   }
+
   private createARecord() {
     const { aRecords } = this.args;
     if (!aRecords) return;

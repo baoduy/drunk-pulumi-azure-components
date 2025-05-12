@@ -92,4 +92,16 @@ export class GroupRole extends pulumi.ComponentResource<GroupRoleArgs> {
       );
     }
   }
+
+  /**
+   * Selectively picks properties from the component instance
+   * @param keys - Array of property keys to pick from the component
+   * @returns Object containing only the selected properties
+   */
+  public PickOutputs<K extends keyof this>(...keys: K[]) {
+    return keys.reduce((acc, key) => {
+      acc[key] = (this as any)[key];
+      return acc;
+    }, {} as Pick<this, K>);
+  }
 }

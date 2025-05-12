@@ -17,6 +17,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, 'groupRoles' | 'v
   groupRoles?: { createWithName?: string } | GroupRoleOutputTypes;
   vault?: Omit<KeyVaultArgs, 'rsGroup'>;
   logs?: Omit<LogsArgs, 'rsGroup' | 'vaultInfo' | 'groupRoles'>;
+  vnet?: {};
   enableDefaultUAssignId?: boolean;
   enableDiskEncryption?: boolean;
 }

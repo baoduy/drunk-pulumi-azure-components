@@ -1,6 +1,6 @@
-import * as pulumi from '@pulumi/pulumi';
-import { CommonBaseArgs, BaseResourceComponent } from '../base';
 import * as cert from '@pulumi/azure-native/certificateregistration';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 export interface AppCertArgs
   extends CommonBaseArgs,
@@ -49,7 +49,7 @@ export class AppCert extends BaseResourceComponent<AppCertArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

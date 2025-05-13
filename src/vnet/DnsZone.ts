@@ -1,9 +1,9 @@
 import * as dns from '@pulumi/azure-native/dns';
 import * as pulumi from '@pulumi/pulumi';
+import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 import { getDnsRecordName } from './helpers';
-import { BaseComponent } from '../base/BaseComponent';
 
 type DnsZoneRecordArgs = Omit<
   dns.RecordSetArgs,
@@ -43,7 +43,7 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

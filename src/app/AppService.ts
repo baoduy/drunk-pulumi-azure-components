@@ -1,6 +1,6 @@
-import * as pulumi from '@pulumi/pulumi';
-import { CommonBaseArgs, BaseResourceComponent } from '../base';
 import * as web from '@pulumi/azure-native/web';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 /**
  * Represents different kinds of Azure App Service configurations
@@ -100,7 +100,7 @@ export class AppService extends BaseResourceComponent<AppServiceArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

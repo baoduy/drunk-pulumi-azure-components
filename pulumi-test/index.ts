@@ -13,12 +13,12 @@ const rs = (async () => {
     {
       vault: { sku: 'standard' },
       enableDefaultUAssignId: true,
-      enableDiskEncryption: true,
-      logs: {
-        retentionInDays: 30,
-        storage: { enabled: true },
-        workspace: { enabled: false },
-      },
+      //enableDiskEncryption: true,
+      // logs: {
+      //   retentionInDays: 30,
+      //   storage: { enabled: true },
+      //   workspace: { enabled: false },
+      // },
       groupRoles,
       roleAssignments: [rsRoleDefinitions.rsGroup.getReadOnly(), rsRoleDefinitions.keyVault],
     },
@@ -28,7 +28,7 @@ const rs = (async () => {
   const ipAddress = new IpAddresses(
     'ip',
     {
-      ...rs,
+      ...rs.getOutputs(),
       sku: { name: 'Standard' },
       ipAddresses: [{ name: 'outbound' }],
     },
@@ -80,8 +80,8 @@ const rs = (async () => {
   // );
 
   return {
-    rsGroup: rs.getOutputs(),
-    envRole: groupRoles.getOutputs(),
+    ...rs.getOutputs(),
+    ipAddress: ipAddress.ipAddresses,
   };
 })();
 

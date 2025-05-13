@@ -182,7 +182,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

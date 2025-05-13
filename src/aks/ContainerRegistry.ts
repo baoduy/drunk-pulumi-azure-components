@@ -1,8 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
-import { CommonBaseArgs, BaseResourceComponent } from '../base';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
-import * as types from '../types';
 import * as registry from '@pulumi/azure-native/containerregistry';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
+import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
 
 export interface ContainerRegistryArgs
   extends CommonBaseArgs,
@@ -103,7 +103,7 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

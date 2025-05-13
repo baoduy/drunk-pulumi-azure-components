@@ -1,9 +1,9 @@
-import * as pulumi from '@pulumi/pulumi';
-import { CommonBaseArgs, BaseResourceComponent } from '../base';
 import * as appConfig from '@pulumi/azure-native/appconfiguration';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
 import * as vault from '../vault';
+import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
 
 export interface AppConfigArgs
   extends CommonBaseArgs,
@@ -70,7 +70,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

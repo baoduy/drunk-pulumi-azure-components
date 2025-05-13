@@ -8,8 +8,8 @@ import { Firewall, FirewallArgs } from './Firewall';
 import * as helpers from './helpers';
 import { NetworkPeering, NetworkPeeringArgs } from './NetworkPeering';
 import { RouteTable, RouteTableArgs } from './RouteTable';
-import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import { getBasionSecurityRules } from './securityRules';
+import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 
 export type SubnetArgs = Pick<
   network.SubnetArgs,
@@ -107,7 +107,7 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       securityGroup: this.securityGroup,
       routeTable: this.routeTable,

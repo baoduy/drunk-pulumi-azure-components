@@ -1,8 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
-import { CommonBaseArgs, BaseResourceComponent } from '../base';
-import * as types from '../types';
-import { UserAssignedIdentity } from '../azAd';
 import * as automation from '@pulumi/azure-native/automation';
+import * as pulumi from '@pulumi/pulumi';
+import { UserAssignedIdentity } from '../azAd';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 export interface AutomationArgs
   extends CommonBaseArgs,
@@ -55,7 +55,7 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

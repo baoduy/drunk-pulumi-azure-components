@@ -30,7 +30,7 @@ export class SshGenerator extends BaseResourceComponent<SshGeneratorArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       publicKey: this.publicKey,
       privateKey: this.privateKey,

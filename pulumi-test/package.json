@@ -4,6 +4,7 @@
     "scripts": {
         "new-stack": "pulumi stack init --secrets-provider=passphrase",
         "up": "pulumi up --yes --skip-preview",
+        "verify-up": "PULUMI_DEBUG_PROMISE_LEAKS=true pulumi up --yes --skip-preview",
         "reup": "pulumi up --refresh --yes --skip-preview",
         "destroy": "pulumi destroy --yes --skip-preview",
         "update": "npx npm-check-updates -u && npm install",

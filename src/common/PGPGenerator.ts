@@ -37,7 +37,7 @@ export class PGPGenerator extends BaseResourceComponent<PGPGeneratorArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       publicKey: this.publicKey,
       privateKey: this.privateKey,

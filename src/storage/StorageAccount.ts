@@ -1,9 +1,9 @@
-import * as pulumi from '@pulumi/pulumi';
-import * as inputs from '@pulumi/azure-native/types/input';
 import * as storage from '@pulumi/azure-native/storage';
-import * as vault from '../vault';
-import { CommonBaseArgs, BaseResourceComponent } from '../base';
+import * as inputs from '@pulumi/azure-native/types/input';
+import * as pulumi from '@pulumi/pulumi';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
+import * as vault from '../vault';
 import * as vnet from '../vnet';
 
 export interface StorageAccountArgs
@@ -180,7 +180,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       resourceName: this.resourceName,
       id: this.id,

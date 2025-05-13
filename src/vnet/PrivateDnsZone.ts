@@ -1,10 +1,10 @@
 import * as privateDns from '@pulumi/azure-native/privatedns';
 import * as pulumi from '@pulumi/pulumi';
+import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
+import { rsHelpers } from '../helpers';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
-import { rsHelpers } from '../helpers';
-import { BaseComponent } from '../base/BaseComponent';
 
 export type DnsRecordArgs = Omit<
   privateDns.PrivateRecordSetArgs,
@@ -51,7 +51,7 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

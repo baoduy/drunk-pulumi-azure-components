@@ -1,10 +1,10 @@
 import { VaultSecretResource } from '@drunk-pulumi/azure-providers/VaultSecret';
 import * as pulumi from '@pulumi/pulumi';
+import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { configHelper } from '../helpers';
 import { WithVaultInfo } from '../types';
 import * as vaultHelpers from './helpers';
-import { BaseComponent } from '../base/BaseComponent';
 
 export type SecretItemArgs = {
   //** The value of the secret. If it is not provided the value will get from project secret. */
@@ -46,7 +46,7 @@ export class VaultSecret extends BaseComponent<VaultSecretArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       vaultUrl: this.vaultUrl,

@@ -84,7 +84,7 @@ export class AzCdn extends BaseResourceComponent<AzCdnArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       profile: this.profile,
       endpoint: this.endpoint,

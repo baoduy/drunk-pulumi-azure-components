@@ -89,7 +89,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       resourceName: this.resourceName,
       id: this.id,

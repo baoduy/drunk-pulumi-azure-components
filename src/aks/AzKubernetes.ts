@@ -7,8 +7,8 @@ import { SshGenerator } from '../common';
 import { azureEnv, rsHelpers } from '../helpers';
 import * as types from '../types';
 import { VaultSecret } from '../vault';
-import * as aksHelpers from './helpers';
 import { DiskEncryptionSet } from '../vm/DiskEncryptionSet';
+import * as aksHelpers from './helpers';
 
 export interface AzKubernetesArgs
   extends CommonBaseArgs,
@@ -32,7 +32,7 @@ export interface AzKubernetesArgs
     }
   >[];
   attachToAcr?: types.ResourceInputs;
-  features?: {
+  features: {
     enablePrivateCluster: boolean;
     enablePrivateClusterPublicFQDN?: boolean;
     enableVerticalPodAutoscaler?: boolean;
@@ -81,7 +81,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

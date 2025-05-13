@@ -1,10 +1,10 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
+import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
 import * as types from '../types';
 import { AzRole, AzRoleArgs } from './AzRole';
-import { BaseComponent } from '../base/BaseComponent';
 
 export interface GroupRoleArgs
   extends Pick<AzRoleArgs, 'owners' | 'preventDuplicateNames'>,
@@ -62,7 +62,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       admin: this.admin,
       contributor: this.contributor,

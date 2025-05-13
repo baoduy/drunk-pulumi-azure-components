@@ -63,6 +63,8 @@ export type WithVaultInfo = {
   vaultInfo?: ResourceInputs;
 };
 
+export type WithDiskEncryptSet = { diskEncryptionSet: SubResourceInputs };
+
 export type WithMemberOfArgs = {
   /** The Id of the EntraID group */
   memberof?: pulumi.Input<{ objectId: string }>[];

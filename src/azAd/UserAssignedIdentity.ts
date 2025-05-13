@@ -1,8 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as mid from '@pulumi/azure-native/managedidentity';
 import * as azAd from '@pulumi/azuread';
+import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
-import { WithResourceGroupInputs, WithMemberOfArgs } from '../types';
+import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
 
 export interface UserAssignedIdentityArgs
   extends Omit<BaseArgs, 'groupRoles'>,
@@ -34,7 +34,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       clientId: this.clientId,

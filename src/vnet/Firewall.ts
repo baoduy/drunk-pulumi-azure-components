@@ -81,7 +81,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return { firewall: this.firewall, policy: this.policy, privateIpAddress: this.privateIpAddress };
   }
 

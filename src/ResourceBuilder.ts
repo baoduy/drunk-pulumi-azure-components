@@ -6,7 +6,7 @@ import { RsGroup, RsGroupArgs } from './common';
 import { Logs, LogsArgs } from './logs';
 import * as types from './types';
 import { KeyVault, KeyVaultArgs } from './vault';
-import { DiskEncryptionSet } from './vm';
+import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
 
 type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
@@ -20,8 +20,8 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, CommonProps> {
   groupRoles?: { createWithName?: string } | GroupRoleOutputTypes;
   vault?: Omit<KeyVaultArgs, CommonProps>;
   logs?: Omit<LogsArgs, CommonProps>;
+  diskEncryption?: Omit<DiskEncryptionSetArgs, CommonProps>;
   enableDefaultUAssignId?: boolean;
-  enableDiskEncryption?: boolean;
 }
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
@@ -34,47 +34,47 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
-    const { groupRoles, vault, enableDefaultUAssignId, logs, enableDiskEncryption, ...props } = args;
-    const dependsOn: pulumi.Resource[] = [];
+    const { groupRoles, vault, enableDefaultUAssignId, logs, diskEncryption, ...props } = args;
 
     if (groupRoles) {
       if ('createWithName' in groupRoles) {
-        const roles = new GroupRole(groupRoles.createWithName, {}, { dependsOn, parent: this });
-        dependsOn.push(roles);
-        this.groupRoles = roles;
+        this.groupRoles = new GroupRole(
+          groupRoles.createWithName,
+          {},
+          { dependsOn: opts?.dependsOn, parent: this },
+        ).getOutputs();
       } else this.groupRoles = groupRoles as GroupRoleOutputTypes;
     }
 
-    const group = new RsGroup(name, { ...props, groupRoles: this.groupRoles }, { dependsOn, parent: this });
-    dependsOn.push(group);
-    this.rsGroup = group;
+    const group = new RsGroup(
+      name,
+      { ...props, groupRoles: this.groupRoles },
+      { dependsOn: opts?.dependsOn, parent: this },
+    );
+    this.rsGroup = group.getOutputs();
 
     if (vault) {
-      const vlk = new KeyVault(
+      this.vaultInfo = new KeyVault(
         name,
         { ...vault, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
-        { dependsOn, parent: this },
-      );
-      dependsOn.push(vlk);
-      this.vaultInfo = vlk;
+        { dependsOn: group, parent: this },
+      ).getOutputs();
     }
 
     if (enableDefaultUAssignId) {
-      const uId = new UserAssignedIdentity(
+      this.defaultUAssignedId = new UserAssignedIdentity(
         name,
         {
           rsGroup: this.rsGroup,
           vaultInfo: this.vaultInfo,
           memberof: this.groupRoles ? [this.groupRoles.readOnly] : undefined,
         },
-        { dependsOn, parent: this },
-      );
-      dependsOn.push(uId);
-      this.defaultUAssignedId = uId;
+        { dependsOn: group, parent: this },
+      ).getOutputs();
     }
 
     if (logs) {
-      const rs = new Logs(
+      this.logs = new Logs(
         name,
         {
           ...logs,
@@ -82,30 +82,27 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
         },
-        { dependsOn, parent: this },
-      );
-      dependsOn.push(rs);
-      this.logs = rs;
+        { dependsOn: group, parent: this },
+      ).getOutputs();
     }
 
-    if (enableDiskEncryption) {
-      const disk = new DiskEncryptionSet(
+    if (diskEncryption) {
+      this.diskEncryptionSet = new DiskEncryptionSet(
         name,
         {
+          ...diskEncryption,
           rsGroup: this.rsGroup,
           encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
           defaultUAssignedId: this.defaultUAssignedId,
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
         },
-        { dependsOn, parent: this },
-      );
-      dependsOn.push(disk);
-      this.diskEncryptionSet = disk;
+        { dependsOn: group, parent: this },
+      ).getOutputs();
     }
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       groupRoles: this.groupRoles,
       rsGroup: this.rsGroup,

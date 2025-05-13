@@ -1,8 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as azAd from '@pulumi/azuread';
-import { stackInfo } from '../helpers';
-import { getComponentResourceType } from '../base/helpers';
+import * as pulumi from '@pulumi/pulumi';
 import { BaseComponent } from '../base/BaseComponent';
+import { getComponentResourceType } from '../base/helpers';
+import { stackInfo } from '../helpers';
 
 export interface AzRoleArgs extends Pick<azAd.GroupArgs, 'members' | 'owners' | 'preventDuplicateNames'> {}
 
@@ -40,7 +40,7 @@ export class AzRole extends BaseComponent<AzRoleArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       objectId: this.objectId,
       displayName: this.displayName,

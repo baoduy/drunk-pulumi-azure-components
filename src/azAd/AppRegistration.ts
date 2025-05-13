@@ -1,10 +1,10 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
+import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { WithMemberOfArgs, WithVaultInfo } from '../types';
 import { VaultSecret } from '../vault';
 import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
-import { BaseComponent } from '../base/BaseComponent';
 
 export enum GroupMembershipClaimsTypes {
   None = 'None',
@@ -125,7 +125,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       clientId: this.clientId,
       clientSecret: this.clientSecret,

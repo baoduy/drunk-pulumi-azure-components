@@ -37,7 +37,7 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
     {
       id: pulumi.Output<string>;
       resourceName: pulumi.Output<string>;
-      address: pulumi.Output<string | undefined>;
+      ipAddress: pulumi.Output<string | undefined>;
     }
   > = {};
 
@@ -61,19 +61,21 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
         { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this, ignoreChanges: ['natGateway'] },
       );
 
-      this.ipAddresses[ip.name] = { id: ipAddress.id, resourceName: ipAddress.name, address: ipAddress.ipAddress };
+      this.ipAddresses[ip.name] = { id: ipAddress.id, resourceName: ipAddress.name, ipAddress: ipAddress.ipAddress };
+      return ipAddress;
     });
 
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
-    return { ipAddresses: this.ipAddresses };
+  public getOutputs() {
+    return {};
   }
 
   private createIpPrefix() {
     const { prefix, rsGroup, sku } = this.args;
     if (!prefix) return undefined;
+
     return new network.PublicIPPrefix(
       this.name,
       {

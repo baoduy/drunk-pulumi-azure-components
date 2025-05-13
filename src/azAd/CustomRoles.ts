@@ -1,8 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
-import { azureEnv } from '../helpers';
-import { getComponentResourceType } from '../base/helpers';
 import * as auth from '@pulumi/azure-native/authorization';
+import * as pulumi from '@pulumi/pulumi';
 import { BaseComponent } from '../base/BaseComponent';
+import { getComponentResourceType } from '../base/helpers';
+import { azureEnv } from '../helpers';
 
 export interface CustomRoleArgs {
   enableJustInTimeRemoteRole?: boolean;
@@ -17,7 +17,7 @@ export class CustomRoles extends BaseComponent<CustomRoleArgs> {
     }
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {};
   }
 

@@ -1,9 +1,9 @@
 import * as nw from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
-import { getComponentResourceType } from '../base/helpers';
-import * as types from '../types';
-import { azureEnv } from '../helpers';
 import { BaseComponent } from '../base/BaseComponent';
+import { getComponentResourceType } from '../base/helpers';
+import { azureEnv } from '../helpers';
+import * as types from '../types';
 
 export interface VpnGatewayArgs
   extends types.WithResourceGroupInputs,
@@ -71,7 +71,7 @@ export class VpnGateway extends BaseComponent<VpnGatewayArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

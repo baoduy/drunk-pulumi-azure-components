@@ -33,7 +33,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       location: this.location,
       resourceGroupName: this.resourceGroupName,

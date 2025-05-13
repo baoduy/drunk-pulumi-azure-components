@@ -1,8 +1,8 @@
 import { VaultKeyResource } from '@drunk-pulumi/azure-providers';
 import * as pulumi from '@pulumi/pulumi';
+import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { WithVaultInfo } from '../types';
-import { BaseComponent } from '../base/BaseComponent';
 
 export interface EncryptionKeyArgs extends Required<WithVaultInfo> {
   keySize?: 2048 | 3072 | 4096;
@@ -38,7 +38,7 @@ export class EncryptionKey extends BaseComponent<EncryptionKeyArgs> {
     this.registerOutputs(this.getOutputs());
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       keyName: this.keyName,

@@ -65,7 +65,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       storage: this.storage,
       workspace: this.workspace,

@@ -21,11 +21,11 @@ export interface VirtualMachineArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
+    types.WithDiskEncryptSet,
     Omit<
       compute.VirtualMachineArgs,
       'osProfile' | 'storageProfile' | 'identity' | 'networkProfile' | 'resourceGroupName' | 'location'
     > {
-  diskEncryptionSetId?: pulumi.Input<string>;
   osProfile?: Omit<inputs.compute.OSProfileArgs, 'adminPassword' | 'adminUsername'>;
   storageProfile: Pick<
     inputs.compute.StorageProfileArgs,
@@ -63,7 +63,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       osProfile,
       storageProfile,
       vaultInfo,
-      diskEncryptionSetId,
+      diskEncryptionSet,
       lock,
       ...props
     } = args;
@@ -128,13 +128,13 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                 : undefined,
 
             managedDisk: {
-              diskEncryptionSet: diskEncryptionSetId
+              diskEncryptionSet: diskEncryptionSet
                 ? {
-                    id: diskEncryptionSetId,
+                    id: diskEncryptionSet.id,
                   }
                 : undefined,
               securityProfile: {
-                diskEncryptionSet: diskEncryptionSetId ? { id: diskEncryptionSetId } : undefined,
+                diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
                 securityEncryptionType: storageProfile.securityEncryptionType,
               },
               storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
@@ -145,13 +145,13 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
             ? storageProfile.dataDisks.map((d) => ({
                 ...d,
                 managedDisk: {
-                  diskEncryptionSet: diskEncryptionSetId
+                  diskEncryptionSet: diskEncryptionSet
                     ? {
-                        id: diskEncryptionSetId,
+                        id: diskEncryptionSet.id,
                       }
                     : undefined,
                   securityProfile: {
-                    diskEncryptionSet: diskEncryptionSetId ? { id: diskEncryptionSetId } : undefined,
+                    diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
                     securityEncryptionType: storageProfile.securityEncryptionType,
                   },
                   storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
@@ -182,7 +182,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+  public getOutputs() {
     return {
       id: this.id,
       resourceName: this.resourceName,

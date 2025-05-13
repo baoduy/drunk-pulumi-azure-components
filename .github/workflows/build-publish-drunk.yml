@@ -72,6 +72,7 @@ jobs:
         run: |
           cd ./bin
           sed -i 's/"version": "0.0.1"/"version": "${{ env.NEXT_VERSION }}"/' package.json
+          sed -i 's/"version": "1.0.0"/"version": "${{ env.NEXT_VERSION }}"/' package.json
 
       # Create Release
       - name: Create Release

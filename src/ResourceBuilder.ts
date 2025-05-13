@@ -6,7 +6,7 @@ import { RsGroup, RsGroupArgs } from './common';
 import { Logs, LogsArgs } from './logs';
 import * as types from './types';
 import { KeyVault, KeyVaultArgs } from './vault';
-import { DiskEncryptionSet } from './vm';
+import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
 
 type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
@@ -20,8 +20,8 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, CommonProps> {
   groupRoles?: { createWithName?: string } | GroupRoleOutputTypes;
   vault?: Omit<KeyVaultArgs, CommonProps>;
   logs?: Omit<LogsArgs, CommonProps>;
+  diskEncryption?: Omit<DiskEncryptionSetArgs, CommonProps>;
   enableDefaultUAssignId?: boolean;
-  enableDiskEncryption?: boolean;
 }
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
@@ -34,7 +34,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
-    const { groupRoles, vault, enableDefaultUAssignId, logs, enableDiskEncryption, ...props } = args;
+    const { groupRoles, vault, enableDefaultUAssignId, logs, diskEncryption, ...props } = args;
 
     if (groupRoles) {
       if ('createWithName' in groupRoles) {
@@ -86,10 +86,11 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       ).getOutputs();
     }
 
-    if (enableDiskEncryption) {
+    if (diskEncryption) {
       this.diskEncryptionSet = new DiskEncryptionSet(
         name,
         {
+          ...diskEncryption,
           rsGroup: this.rsGroup,
           encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
           defaultUAssignedId: this.defaultUAssignedId,

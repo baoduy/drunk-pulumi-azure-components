@@ -32,7 +32,7 @@ export interface AzKubernetesArgs
     }
   >[];
   attachToAcr?: types.ResourceInputs;
-  features?: {
+  features: {
     enablePrivateCluster: boolean;
     enablePrivateClusterPublicFQDN?: boolean;
     enableVerticalPodAutoscaler?: boolean;

@@ -14,10 +14,12 @@ type GroupRoleOutputTypes = {
   readOnly: pulumi.Output<GroupRoleOutput>;
 };
 
-export interface ResourceBuilderArgs extends Omit<RsGroupArgs, 'groupRoles' | 'vaultInfo' | 'resourceGroupName'> {
+type CommonProps = 'rsGroup' | 'groupRoles' | 'vaultInfo' | 'resourceGroupName';
+
+export interface ResourceBuilderArgs extends Omit<RsGroupArgs, CommonProps> {
   groupRoles?: { createWithName?: string } | GroupRoleOutputTypes;
-  vault?: Omit<KeyVaultArgs, 'rsGroup'>;
-  logs?: Omit<LogsArgs, 'rsGroup' | 'vaultInfo' | 'groupRoles'>;
+  vault?: Omit<KeyVaultArgs, CommonProps>;
+  logs?: Omit<LogsArgs, CommonProps>;
   enableDefaultUAssignId?: boolean;
   enableDiskEncryption?: boolean;
 }
@@ -104,6 +106,13 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   }
 
   public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
-    return {};
+    return {
+      groupRoles: this.groupRoles,
+      rsGroup: this.rsGroup,
+      vaultInfo: this.vaultInfo,
+      defaultUAssignedId: this.defaultUAssignedId,
+      logs: this.logs,
+      diskEncryptionSet: this.diskEncryptionSet,
+    };
   }
 }

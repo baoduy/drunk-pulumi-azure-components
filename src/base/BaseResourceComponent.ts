@@ -7,21 +7,41 @@ import * as types from '../types';
 import { EncryptionKey } from '../vault/EncryptionKey';
 import { SecretItemArgs } from '../vault/VaultSecret';
 import { VaultSecretResult, VaultSecrets } from '../vault/VaultSecrets';
-import { getComponentResourceType } from './helpers';
 import { BaseComponent } from './BaseComponent';
+import { getComponentResourceType } from './helpers';
 
 /**
- * Base interface for resource component arguments
- * Combines vault information and resource group requirements
+ * Base interface for resource component arguments that combines vault information
+ * and Azure AD group role requirements.
+ *
+ * This interface extends:
+ * - WithVaultInfo: Provides Azure Key Vault configuration
+ * - WithGroupRolesArgs: Defines Azure AD group role assignments
  */
 export interface BaseArgs extends types.WithVaultInfo, types.WithGroupRolesArgs {}
 
+/**
+ * Extended interface that includes resource group input parameters
+ * alongside base vault and role requirements
+ */
 export interface CommonBaseArgs extends BaseArgs, types.WithResourceGroupInputs {}
 
 /**
-/**
- * Extended base component that handles Azure resources with vault integration
- * Provides secret management and resource group handling capabilities
+ * BaseResourceComponent serves as a foundational abstract class for Azure resource management
+ * with integrated Key Vault capabilities. It provides:
+ *
+ * Key Features:
+ * - Automated secret management with Azure Key Vault integration
+ * - Resource group handling and organization
+ * - Managed identity role assignments
+ * - Resource locking capabilities
+ * - Random string/password generation
+ * - Encryption key management
+ *
+ * This component is designed to be extended by specific Azure resource implementations
+ * that require secure secret management and standardized resource organization.
+ *
+ * @template TArgs - Type parameter extending BaseArgs to define required component arguments
  */
 export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends BaseComponent<TArgs> {
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
@@ -94,8 +114,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
   }
 
   /**
-   * Registers component outputs including vault secrets
-   * @param outputs - Optional additional outputs to register
+   * Overwrote this method with no parameters as it will be provided by calling getOutputs method.
    */
   protected registerOutputs(): void {
     this.postCreated();
@@ -107,7 +126,9 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    * @returns A new EncryptionKey instance if vaultInfo is provided, undefined otherwise
    */
   protected getEncryptionKey({ name, keySize }: { name?: string; keySize?: 2048 | 3072 | 4096 } = { keySize: 4096 }) {
-    if (!this.args.vaultInfo) throw new Error(`the "vaultInfo" is required to create "EncryptionKey"`);
+    if (!this.args.vaultInfo) {
+      throw new Error(`VaultInfo is required for encryption key creation in component ${this.name}`);
+    }
     return new EncryptionKey(
       name ? `${this.name}-${name}` : this.name,
       { vaultInfo: this.args.vaultInfo, keySize },

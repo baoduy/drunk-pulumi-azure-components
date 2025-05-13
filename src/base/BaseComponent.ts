@@ -2,9 +2,26 @@ import * as pulumi from '@pulumi/pulumi';
 import { getComponentResourceType } from './helpers';
 
 /**
- * Base component class providing common functionalities for resource components
+ * BaseComponent serves as an abstract foundation class for Pulumi resource components.
+ * It provides core functionality and structure for creating custom infrastructure components.
+ *
+ * @template TArgs - Generic type parameter extending pulumi.Inputs to define component arguments
+ * @extends pulumi.ComponentResource<TArgs>
+ */
+/**
+ * @template TArgs - Generic type parameter extending pulumi.Inputs
+ * @example
+ * // Add usage example here
+ * const component = new MyComponent('name', args);
  */
 export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.ComponentResource<TArgs> {
+  /**
+   * Creates a new instance of BaseComponent
+   * @param type - The resource type identifier for this component
+   * @param name - Unique name for this component instance
+   * @param args - Configuration arguments for this component
+   * @param opts - Optional Pulumi resource options to control component behavior
+   */
   constructor(
     type: string,
     public readonly name: string,
@@ -14,20 +31,34 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
     super(getComponentResourceType(type), name, args, opts);
   }
 
+  /**
+   * Registers component outputs with the Pulumi engine.
+   * This method should be overridden by derived classes to ensure proper output registration.
+   * @param outputs - The outputs to register for this component
+   */
   protected registerOutputs(outputs: pulumi.Inputs | pulumi.Output<pulumi.Inputs>): void {
     super.registerOutputs(outputs);
   }
 
   /**
-   * Abstract getter that must be implemented by derived classes
-   * Returns the main resource managed by this component
+   * Abstract method that must be implemented by derived classes to expose component outputs.
+   * This method should return all relevant outputs that consumers of the component might need.
+   * @returns An object containing the component's outputs, either as direct values or Pulumi outputs
    */
   public abstract getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs>;
 
   /**
-   * Selectively picks properties from the component instance
-   * @param keys - Array of property keys to pick from the component
-   * @returns Object containing only the selected properties
+   * Utility method to selectively extract specific properties from the component instance.
+   * Useful for creating a subset of component properties for downstream consumption.
+   *
+   * @template K - Generic type parameter constrained to keys of the component instance
+   * @param keys - Array of property names to extract from the component
+   * @returns A new object containing only the requested properties from the component
+   * @example
+   * ```typescript
+   * const component = new MyComponent();
+   * const subset = component.PickOutputs('name', 'id');
+   * ```
    */
   public PickOutputs<K extends keyof this>(...keys: K[]) {
     return keys.reduce((acc, key) => {

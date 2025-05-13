@@ -1,13 +1,4 @@
-import {
-  AzKubernetes,
-  GroupRole,
-  HubVnet,
-  IpAddresses,
-  KeyVault,
-  RsGroup,
-  rsRoleDefinitions,
-  UserAssignedIdentity,
-} from '@drunk-pulumi/azure-components';
+import { GroupRole, IpAddresses, ResourceBuilder, rsRoleDefinitions } from '@drunk-pulumi/azure-components';
 import * as pulumi from '@pulumi/pulumi';
 
 const rs = (async () => {
@@ -17,42 +8,31 @@ const rs = (async () => {
     preventDuplicateNames: true,
   });
 
-  const rsGroup = new RsGroup(
+  const rs = new ResourceBuilder(
     'common',
     {
-      lock: false,
+      vault: { sku: 'standard' },
+      enableDefaultUAssignId: true,
+      enableDiskEncryption: true,
+      logs: {
+        retentionInDays: 30,
+        storage: { enabled: true },
+        workspace: { enabled: false },
+      },
       groupRoles,
       roleAssignments: [rsRoleDefinitions.rsGroup.getReadOnly(), rsRoleDefinitions.keyVault],
     },
     { dependsOn: groupRoles },
   );
 
-  const vaultInfo = new KeyVault(
-    'vault',
-    {
-      rsGroup,
-    },
-    { dependsOn: rsGroup },
-  );
-
-  const userAssignedId = new UserAssignedIdentity(
-    'azure-test',
-    {
-      rsGroup,
-      vaultInfo: vaultInfo,
-      memberof: [groupRoles.readOnly],
-    },
-    { dependsOn: [rsGroup, groupRoles, vaultInfo] },
-  );
-
   const ipAddress = new IpAddresses(
     'ip',
     {
-      rsGroup,
+      ...rs,
       sku: { name: 'Standard' },
       ipAddresses: [{ name: 'outbound' }],
     },
-    { dependsOn: rsGroup },
+    { dependsOn: rs },
   );
 
   // const hub = new HubVnet(
@@ -100,7 +80,7 @@ const rs = (async () => {
   // );
 
   return {
-    rsGroup: rsGroup.getOutputs(),
+    rsGroup: rs.getOutputs(),
     envRole: groupRoles.getOutputs(),
   };
 })();

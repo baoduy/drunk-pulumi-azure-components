@@ -100,8 +100,8 @@ const rs = (async () => {
   // );
 
   return {
-    rsGroup: rsGroup.PickOutputs('resourceGroupName', 'location'),
-    envRole: groupRoles.PickOutputs('admin', 'contributor', 'readOnly'),
+    rsGroup: rsGroup.getOutputs(),
+    envRole: groupRoles.getOutputs(),
   };
 })();
 

@@ -1,12 +1,12 @@
 import * as pulumi from '@pulumi/pulumi';
-import { getComponentResourceType } from './base/helpers';
-import * as types from './types';
-import { RsGroup, RsGroupArgs } from './common';
 import { GroupRole, GroupRoleOutput, UserAssignedIdentity } from './azAd';
-import { KeyVault, KeyVaultArgs } from './vault';
-import { Logs, LogsArgs } from './logs';
-import { DiskEncryptionSet } from './vm';
 import { BaseComponent } from './base/BaseComponent';
+import { getComponentResourceType } from './base/helpers';
+import { RsGroup, RsGroupArgs } from './common';
+import { Logs, LogsArgs } from './logs';
+import * as types from './types';
+import { KeyVault, KeyVaultArgs } from './vault';
+import { DiskEncryptionSet } from './vm';
 
 type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
@@ -32,36 +32,47 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
-
     const { groupRoles, vault, enableDefaultUAssignId, logs, enableDiskEncryption, ...props } = args;
+    const dependsOn: pulumi.Resource[] = [];
 
     if (groupRoles) {
-      this.groupRoles =
-        'createWithName' in groupRoles
-          ? new GroupRole(groupRoles.createWithName, {}, opts)
-          : (groupRoles as GroupRoleOutputTypes);
+      if ('createWithName' in groupRoles) {
+        const roles = new GroupRole(groupRoles.createWithName, {}, { dependsOn, parent: this });
+        dependsOn.push(roles);
+        this.groupRoles = roles;
+      } else this.groupRoles = groupRoles as GroupRoleOutputTypes;
     }
 
-    this.rsGroup = new RsGroup(name, { ...props, groupRoles: this.groupRoles }, opts);
+    const group = new RsGroup(name, { ...props, groupRoles: this.groupRoles }, { dependsOn, parent: this });
+    dependsOn.push(group);
+    this.rsGroup = group;
 
     if (vault) {
-      this.vaultInfo = new KeyVault(name, { ...vault, rsGroup: this.rsGroup, groupRoles: this.groupRoles }, opts);
+      const vlk = new KeyVault(
+        name,
+        { ...vault, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
+        { dependsOn, parent: this },
+      );
+      dependsOn.push(vlk);
+      this.vaultInfo = vlk;
     }
 
     if (enableDefaultUAssignId) {
-      this.defaultUAssignedId = new UserAssignedIdentity(
+      const uId = new UserAssignedIdentity(
         name,
         {
           rsGroup: this.rsGroup,
           vaultInfo: this.vaultInfo,
           memberof: this.groupRoles ? [this.groupRoles.readOnly] : undefined,
         },
-        opts,
+        { dependsOn, parent: this },
       );
+      dependsOn.push(uId);
+      this.defaultUAssignedId = uId;
     }
 
     if (logs) {
-      this.logs = new Logs(
+      const rs = new Logs(
         name,
         {
           ...logs,
@@ -69,12 +80,14 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
         },
-        opts,
+        { dependsOn, parent: this },
       );
+      dependsOn.push(rs);
+      this.logs = rs;
     }
 
     if (enableDiskEncryption) {
-      this.diskEncryptionSet = new DiskEncryptionSet(
+      const disk = new DiskEncryptionSet(
         name,
         {
           rsGroup: this.rsGroup,
@@ -83,8 +96,10 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
         },
-        opts,
+        { dependsOn, parent: this },
       );
+      dependsOn.push(disk);
+      this.diskEncryptionSet = disk;
     }
   }
 

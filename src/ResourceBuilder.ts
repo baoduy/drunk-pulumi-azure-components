@@ -51,7 +51,8 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           {},
           { dependsOn: opts?.dependsOn, parent: this },
         ).getOutputs();
-      } else this.groupRoles = groupRoles as GroupRoleOutputTypes;
+      } else if (groupRoles instanceof GroupRole) this.groupRoles = groupRoles.getOutputs();
+      else this.groupRoles = groupRoles as GroupRoleOutputTypes;
     }
 
     this.rsGroup = new RsGroup(

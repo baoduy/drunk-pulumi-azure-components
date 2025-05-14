@@ -14,26 +14,26 @@ const rs = (async () => {
       vault: { sku: 'standard' },
       enableDefaultUAssignId: true,
       diskEncryption: { encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys' },
-      logs: {
-        retentionInDays: 30,
-        storage: { enabled: true },
-        workspace: { enabled: false },
-      },
+      // logs: {
+      //   retentionInDays: 30,
+      //   storage: { enabled: true },
+      //   workspace: { enabled: false },
+      // },
       groupRoles,
       roleAssignments: [rsRoleDefinitions.rsGroup.getReadOnly(), rsRoleDefinitions.keyVault],
     },
     { dependsOn: groupRoles },
   );
 
-  const ipAddress = new IpAddresses(
-    'ip',
-    {
-      ...rs.getOutputs(),
-      sku: { name: 'Standard' },
-      ipAddresses: [{ name: 'outbound' }],
-    },
-    { dependsOn: rs },
-  );
+  // const ipAddress = new IpAddresses(
+  //   'ip',
+  //   {
+  //     ...rs.getOutputs(),
+  //     sku: { name: 'Standard' },
+  //     ipAddresses: [{ name: 'outbound' }],
+  //   },
+  //   { dependsOn: rs },
+  // );
 
   // const hub = new HubVnet(
   //   'env',
@@ -81,7 +81,6 @@ const rs = (async () => {
 
   return {
     ...rs.getOutputs(),
-    ipAddress: ipAddress.ipAddresses,
   };
 })();
 

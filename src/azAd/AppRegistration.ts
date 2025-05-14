@@ -34,13 +34,10 @@ export interface AppRegistrationArgs
   >;
   groupMembershipClaims?: pulumi.Input<GroupMembershipClaimsTypes[]>;
   identifierUris?: pulumi.Input<pulumi.Input<string>[]>;
-  enableClientSecret?: pulumi.Input<boolean>;
   servicePrincipal?: Pick<
     azAd.ServicePrincipalArgs,
     'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn' | 'appRoleAssignmentRequired'
-  > & {
-    enabled: boolean;
-  };
+  >;
   appType?: 'web' | 'singlePageApplication' | 'native';
   /** This is require when the appType is 'web' or 'singlePageApplication' */
   redirectUris?: pulumi.Input<pulumi.Input<string>[]>;
@@ -66,58 +63,15 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
 
   constructor(name: string, args: AppRegistrationArgs = { appType: 'native' }, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('AppRegistration'), name, args, opts);
-    const ops = args.info ?? {
-      displayName: name,
-      description: name,
-    };
+
     //Application
-    const app = new azAd.Application(
-      name,
-      {
-        ...ops,
-        preventDuplicateNames: true,
-        signInAudience: 'AzureADMyOrg',
+    const app = this.createAppRegistration();
+    const secret = this.createClientSecret(app);
+    this.clientSecret = secret.clientSecret;
 
-        featureTags: args.featureTags,
-        oauth2PostResponseRequired: args.oauth2PostResponseRequired,
-        identifierUris: args.identifierUris,
-
-        requiredResourceAccesses: args.requiredResourceAccesses,
-        optionalClaims: args.optionalClaims,
-        groupMembershipClaims: args.groupMembershipClaims,
-
-        appRoles: args.appRoles,
-        //Expose the API
-        api: args.api,
-        owners: args.owners,
-
-        //Clients Apps
-        web:
-          args.appType == 'web'
-            ? {
-                redirectUris: args.redirectUris,
-                logoutUrl: args.logoutUrl,
-                implicitGrant: args.implicitGrant,
-                homepageUrl: args.homepageUrl,
-              }
-            : undefined,
-        singlePageApplication:
-          args.appType == 'singlePageApplication' ? { redirectUris: args.redirectUris } : undefined,
-      },
-      { ...opts, parent: this },
-    );
-
-    this.addSecret('client-id', app.clientId);
-
-    if (args.enableClientSecret) {
-      const secret = this.createClientSecret(app);
-      this.clientSecret = secret.clientSecret;
-    }
-    if (args.servicePrincipal?.enabled) {
-      const sp = this.createServicePrincipal(app);
-      this.servicePrincipalId = sp.servicePrincipalId;
-      this.servicePrincipalPassword = sp.servicePrincipalPassword;
-    }
+    const sp = this.createServicePrincipal(app);
+    this.servicePrincipalId = sp.servicePrincipalId;
+    this.servicePrincipalPassword = sp.servicePrincipalPassword;
 
     this.addMemberOf(app);
 
@@ -132,6 +86,40 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       servicePrincipalId: this.servicePrincipalId,
       servicePrincipalPassword: this.servicePrincipalPassword,
     };
+  }
+
+  private createAppRegistration() {
+    const ops = this.args.info ?? {
+      displayName: this.name,
+      description: this.name,
+    };
+
+    const app = new azAd.Application(
+      this.name,
+      {
+        ...this.args,
+        ...ops,
+        preventDuplicateNames: true,
+        signInAudience: 'AzureADMyOrg',
+
+        //Clients Apps
+        web:
+          this.args.appType == 'web'
+            ? {
+                redirectUris: this.args.redirectUris,
+                logoutUrl: this.args.logoutUrl,
+                implicitGrant: this.args.implicitGrant,
+                homepageUrl: this.args.homepageUrl,
+              }
+            : undefined,
+        singlePageApplication:
+          this.args.appType == 'singlePageApplication' ? { redirectUris: this.args.redirectUris } : undefined,
+      },
+      { ...this.opts, parent: this },
+    );
+
+    this.addSecret('client-id', app.clientId);
+    return app;
   }
 
   private createServicePrincipal(app: azAd.Application) {

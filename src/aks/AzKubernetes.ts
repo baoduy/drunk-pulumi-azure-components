@@ -94,8 +94,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return new AppRegistration(
       `${this.name}-identity`,
       {
-        enableClientSecret: true,
-        servicePrincipal: { enabled: true },
         vaultInfo,
         memberof: groupRoles ? [groupRoles.readOnly] : undefined,
         roleAssignments: [

@@ -26,7 +26,6 @@ export interface KeyVaultArgs
 export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
   public readonly resourceName: pulumi.Output<string>;
   public readonly id: pulumi.Output<string>;
-  public readonly rsGroup: ResourceGroupInputs;
 
   constructor(name: string, args: KeyVaultArgs, opts?: pulumi.ComponentResourceOptions) {
     super('KeyVault', name, args, opts);
@@ -84,7 +83,6 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
 
     this.resourceName = vault.name;
     this.id = vault.id;
-    this.rsGroup = args.rsGroup;
 
     this.registerOutputs();
   }
@@ -93,7 +91,6 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     return {
       resourceName: this.resourceName,
       id: this.id,
-      rsGroup: this.rsGroup,
     };
   }
 

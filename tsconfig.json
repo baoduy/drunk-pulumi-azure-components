@@ -18,9 +18,7 @@
     "importsNotUsedAsValues": "remove",
     "verbatimModuleSyntax": false
   },
-  "exclude": [
-    "node_modules"
-  ],
+  "exclude": ["node_modules", "**/__tests__"],
   "files": [
     "src/ResourceBuilder.ts",
     "src/aks/AzKubernetes.ts",

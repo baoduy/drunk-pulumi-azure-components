@@ -25,25 +25,26 @@
   "license": "MIT",
   "dependencies": {
     "@drunk-pulumi/azure-providers": "^1.0.9",
-    "@pulumi/azure-native": "^3.3.0",
-    "@pulumi/azuread": "^6.4.0",
-    "@pulumi/pulumi": "^3.167.0",
-    "@pulumi/random": "^4.18.2",
+    "@pulumi/azure-native": "^3.6.1",
+    "@pulumi/azuread": "^6.5.2",
+    "@pulumi/pulumi": "^3.187.0",
+    "@pulumi/random": "^4.18.3",
+    "lodash": "^4.17.21",
     "netmask": "^2.0.2",
-    "openpgp": "^6.1.0",
-    "lodash": "^4.17.21"
+    "openpgp": "^6.2.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.20",
     "@types/netmask": "^2.0.5",
-    "@types/node": "22.15.3",
+    "@types/node": "24.1.0",
     "cpy-cli": "^5.0.0",
-    "cross-env": "^7.0.3",
-    "eslint-plugin-import": "^2.31.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.3.3",
+    "cross-env": "^10.0.0",
+    "eslint-plugin-import": "^2.32.0",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "prettier": {
     "semi": true,

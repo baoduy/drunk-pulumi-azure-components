@@ -18,7 +18,7 @@ export class ResourceLocker extends pulumi.ComponentResource<ResourceLockerArgs>
         scope: args.resource.id,
         notes: `Lock ${name} from ${args.level}`,
       },
-      { ...opts, parent: this },
+      { ...opts, parent: this, retentionOnDelete: true },
     );
   }
 }

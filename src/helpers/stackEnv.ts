@@ -7,6 +7,7 @@ import { registerAutoTags } from './autoTags';
  */
 export const isDryRun = Boolean(process.env.PULUMI_NODEJS_DRY_RUN);
 
+export const isTesting = process.env.NODE_ENV === 'test';
 /**
  * The Pulumi organization name
  * @type {string}
@@ -43,8 +44,10 @@ console.log('Pulumi Environments:', {
   isDryRun,
 });
 
-registerAutoTags({
-  environment: stack,
-  organization: organization,
-  'pulumi-project': projectName,
-});
+if (!isDryRun && !isTesting) {
+  registerAutoTags({
+    environment: stack,
+    organization: organization,
+    'pulumi-project': projectName,
+  });
+}

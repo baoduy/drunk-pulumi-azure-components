@@ -4,7 +4,6 @@ import { BaseComponent } from './base/BaseComponent';
 import { getComponentResourceType } from './base/helpers';
 import { RsGroup, RsGroupArgs } from './common';
 import { Logs, LogsArgs } from './logs';
-import * as types from './types';
 import { KeyVault, KeyVaultArgs } from './vault';
 import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
 
@@ -12,6 +11,15 @@ type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
   contributor: pulumi.Output<GroupRoleOutput>;
   readOnly: pulumi.Output<GroupRoleOutput>;
+};
+
+export type ResourceBuilderOutputs = {
+  groupRoles?: GroupRoleOutputTypes;
+  rsGroup: ReturnType<RsGroup['getOutputs']>;
+  vaultInfo?: ReturnType<KeyVault['getOutputs']>;
+  defaultUAssignedId?: ReturnType<UserAssignedIdentity['getOutputs']>;
+  logs?: ReturnType<Logs['getOutputs']>;
+  diskEncryptionSet?: ReturnType<DiskEncryptionSet['getOutputs']>;
 };
 
 type CommonProps = 'rsGroup' | 'groupRoles' | 'vaultInfo' | 'resourceGroupName';
@@ -25,12 +33,12 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, CommonProps> {
 }
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
-  public readonly rsGroup: types.ResourceGroupOutputs;
-  public readonly vaultInfo?: types.ResourceOutputs;
+  public readonly rsGroup: RsGroup;
+  public readonly vaultInfo?: KeyVault;
   public readonly groupRoles?: GroupRoleOutputTypes;
-  public readonly defaultUAssignedId?: types.UserAssignedIdentityOutputs;
-  public readonly logs?: types.LogsOutputs;
-  public readonly diskEncryptionSet?: types.ResourceOutputs;
+  public readonly defaultUAssignedId?: UserAssignedIdentity;
+  public readonly logs?: Logs;
+  public readonly diskEncryptionSet?: DiskEncryptionSet;
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
@@ -43,22 +51,22 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           {},
           { dependsOn: opts?.dependsOn, parent: this },
         ).getOutputs();
-      } else this.groupRoles = groupRoles as GroupRoleOutputTypes;
+      } else if (groupRoles instanceof GroupRole) this.groupRoles = groupRoles.getOutputs();
+      else this.groupRoles = groupRoles as GroupRoleOutputTypes;
     }
 
-    const group = new RsGroup(
+    this.rsGroup = new RsGroup(
       name,
       { ...props, groupRoles: this.groupRoles },
       { dependsOn: opts?.dependsOn, parent: this },
     );
-    this.rsGroup = group.getOutputs();
 
     if (vault) {
       this.vaultInfo = new KeyVault(
         name,
         { ...vault, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
-        { dependsOn: group, parent: this },
-      ).getOutputs();
+        { dependsOn: this.rsGroup, parent: this },
+      );
     }
 
     if (enableDefaultUAssignId) {
@@ -69,8 +77,8 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           vaultInfo: this.vaultInfo,
           memberof: this.groupRoles ? [this.groupRoles.readOnly] : undefined,
         },
-        { dependsOn: group, parent: this },
-      ).getOutputs();
+        { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+      );
     }
 
     if (logs) {
@@ -82,8 +90,8 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
         },
-        { dependsOn: group, parent: this },
-      ).getOutputs();
+        { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+      );
     }
 
     if (diskEncryption) {
@@ -97,19 +105,19 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
         },
-        { dependsOn: group, parent: this },
-      ).getOutputs();
+        { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+      );
     }
   }
 
-  public getOutputs() {
+  public getOutputs(): ResourceBuilderOutputs {
     return {
       groupRoles: this.groupRoles,
-      rsGroup: this.rsGroup,
-      vaultInfo: this.vaultInfo,
-      defaultUAssignedId: this.defaultUAssignedId,
-      logs: this.logs,
-      diskEncryptionSet: this.diskEncryptionSet,
+      rsGroup: this.rsGroup.getOutputs(),
+      vaultInfo: this.vaultInfo?.getOutputs(),
+      defaultUAssignedId: this.defaultUAssignedId?.getOutputs(),
+      logs: this.logs?.getOutputs(),
+      diskEncryptionSet: this.diskEncryptionSet?.getOutputs(),
     };
   }
 }

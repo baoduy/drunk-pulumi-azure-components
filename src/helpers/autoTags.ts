@@ -1,4 +1,4 @@
-import { runtime } from '@pulumi/pulumi';
+import * as pulumi from '@pulumi/pulumi';
 
 /**
  * List of resource types that should be excluded from automatic tagging.
@@ -29,7 +29,7 @@ const ignoredTags = [
  * @returns void - The function registers a stack transformation with Pulumi runtime
  */
 export const registerAutoTags = (autoTags: Record<string, string>) =>
-  runtime.registerStackTransformation((resource) => {
+  pulumi.runtime.registerStackTransformation((resource) => {
     //Check and ignore tag
     if (
       !resource.type.toLowerCase().includes('resourcegroup') &&

@@ -1,20 +1,16 @@
 export * from './rsRoleDefinition';
 
-import { AppRegistration } from '../AppRegistration';
-import { getGraphPermissions } from './graphBuiltIn';
-import { RoleAssignment } from '../RoleAssignment';
 import { azureEnv } from '../../helpers';
 import { ResourceInputs } from '../../types';
+import { AppRegistration } from '../AppRegistration';
+import { RoleAssignment } from '../RoleAssignment';
+import { getGraphPermissions } from './graphBuiltIn';
 
-export const createAzureDevOpsAppRegistration = (
-  name: string,
-  vaultInfo: ResourceInputs
-) => {
+export const createAzureDevOpsAppRegistration = (name: string, vaultInfo: ResourceInputs) => {
   const graphAccess = getGraphPermissions({ name: 'User.Read', type: 'Scope' });
 
   const identity = new AppRegistration(name, {
     appType: 'native',
-    servicePrincipal: { enabled: true },
     requiredResourceAccesses: [graphAccess],
     vaultInfo,
   });
@@ -27,6 +23,6 @@ export const createAzureDevOpsAppRegistration = (
       roleName: 'Owner',
       scope: azureEnv.defaultSubScope,
     },
-    { dependsOn: identity, parent: this }
+    { dependsOn: identity, parent: this },
   );
 };

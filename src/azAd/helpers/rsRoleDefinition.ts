@@ -9,9 +9,13 @@ const rsRoles = {
     readOnly: ['Reader'],
   },
   aks: {
-    readOnly: ['Azure Kubernetes Service RBAC Reader', 'Azure Kubernetes Service Cluster User Role'],
-    contributor: ['Azure Kubernetes Service Contributor Role', 'Azure Kubernetes Service Cluster User Role'],
-    admin: ['Azure Kubernetes Service RBAC Cluster Admin'],
+    readOnly: [
+      'Azure Arc Kubernetes Viewer',
+      'Azure Kubernetes Service Cluster User Role',
+      'Azure Kubernetes Service RBAC Reader',
+    ],
+    contributor: ['Azure Arc Kubernetes Writer'],
+    admin: ['Azure Arc Kubernetes Admin'],
   },
   iotHub: {
     readOnly: ['IoT Hub Data Reader'],

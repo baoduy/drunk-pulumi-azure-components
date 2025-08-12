@@ -18,7 +18,8 @@
     "copy-pkg": "ts-node ./.tasks/npm-package.ts && cpy README.md bin/ && cpy PulumiPlugin.yaml bin/",
     "update-tsconfig": "ts-node ./.tasks/update-tsconfig.ts",
     "update": "npx npm-check-updates -u && pnpm install",
-    "test": "jest"
+    "test": "jest",
+    "docs": "ts-node ./.tasks/generate-docs.ts"
   },
   "keywords": [],
   "author": "Steven Hoang",

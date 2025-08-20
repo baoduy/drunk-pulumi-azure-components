@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@azure/identity':
-        specifier: ^4.9.1
-        version: 4.9.1
+        specifier: ^4.10.2
+        version: 4.11.1
       '@drunk-pulumi/azure-components':
         specifier: file:/../bin
         version: file:../bin
@@ -18,20 +18,24 @@ importers:
         specifier: ^1.0.9
         version: 1.0.9
       '@pulumi/azure-native':
-        specifier: ^3.3.0
-        version: 3.3.0
+        specifier: ^3.6.1
+        version: 3.7.1
       '@pulumi/pulumi':
-        specifier: ^3.167.0
-        version: 3.167.0
+        specifier: ^3.187.0
+        version: 3.190.0
       openpgp:
-        specifier: ^6.1.0
-        version: 6.1.0
+        specifier: ^6.2.0
+        version: 6.2.0
     devDependencies:
       '@types/node':
-        specifier: ^22
-        version: 22.15.3
+        specifier: ^24
+        version: 24.3.0
 
 packages:
+
+  '@azure-rest/core-client@2.5.0':
+    resolution: {integrity: sha512-KMVIPxG6ygcQ1M2hKHahF7eddKejYsWTjoLIfTWiqnaj42dBkYzj4+S8rK9xxmlOaEHKZHcMrRbm0NfN4kgwHw==}
+    engines: {node: '>=20.0.0'}
 
   '@azure/abort-controller@1.1.0':
     resolution: {integrity: sha512-TrRLIoSQVzfAJX9H1JeFjzAoDGcoK1IYX1UImfceTZpsyYfWr09Ss1aHW1y5TrrR3iq6RZLBwJ3E24uwPhwahw==}
@@ -53,9 +57,17 @@ packages:
     resolution: {integrity: sha512-MYwIfwtvN7JvjbKQC9iakOHKMWvdcfZn8agiduNqNY8Rw/MWkGb39kpOLK/SeW36tfaNStuXoW/ijsxAzqQ40A==}
     engines: {node: '>=18.0.0'}
 
+  '@azure/arm-compute@23.0.0':
+    resolution: {integrity: sha512-e3u/H/PCLDQTrYQ32xpLb0Zq5QXM1+gaBhDajI35MePNekwGA0uR16lulJQrNW4CWPQynz6o7VSQOcQds725vw==}
+    engines: {node: '>=20.0.0'}
+
   '@azure/arm-containerservice@21.6.0':
     resolution: {integrity: sha512-DrelRh6wzeGAZsCKNLBA02LSzSgyD7jCaIzZ33Iy3nTvpYjuaISSTJyTCcf1QOCclUBUS19Pg2TbBG6KxMOuQg==}
     engines: {node: '>=18.0.0'}
+
+  '@azure/arm-containerservice@22.2.0':
+    resolution: {integrity: sha512-xb2Zp1Eq8rGvFt3e+q3UWhGbfBXM3X70+6E+wqOlOh4eZ33ELe99T+qZzEIR60wNWNvmkV/ayBrBsLlqxtUm6Q==}
+    engines: {node: '>=20.0.0'}
 
   '@azure/arm-keyvault@3.2.0':
     resolution: {integrity: sha512-LZMEl/i/FeQTsIqNpAyddki07OSO8UcqbArN5Ge3Ka76lvRkr6PYMtBBWfAT0EHNvFtqONsfRYFzDNtTz3A6Mg==}
@@ -67,6 +79,10 @@ packages:
 
   '@azure/arm-network@33.5.0':
     resolution: {integrity: sha512-wXD34p4/J2kZrkWylabtxLzrea5TK2m9NRwYtBLCvgQXN5NFTQohHgOFhoi/7DgV6w1qaM+qGz9mo5HRxpU70w==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/arm-network@34.0.0':
+    resolution: {integrity: sha512-66fbNK1/0HiW+aTQdcRJ4Z4ws1LOuimgmTYIuAbRsvrbnKc16tHgQpUHkLtixqX5UwAaALqG+OIIlTcLa2m3rA==}
     engines: {node: '>=18.0.0'}
 
   '@azure/arm-postgresql-flexible@8.0.0':
@@ -109,8 +125,12 @@ packages:
     resolution: {integrity: sha512-13IyjTQgABPARvG90+N2dXpC+hwp466XCdQXPCRlbWHgd3SJd5Q1VvaBGv6k1BIa4MQm6hAF1UBU1m8QUxV8sQ==}
     engines: {node: '>=18.0.0'}
 
-  '@azure/identity@4.9.1':
-    resolution: {integrity: sha512-986D7Cf1AOwYqSDtO/FnMAyk/Jc8qpftkGsxuehoh4F85MhQ4fICBGX/44+X1y78lN4Sqib3Bsoaoh/FvOGgmg==}
+  '@azure/identity@4.11.1':
+    resolution: {integrity: sha512-0ZdsLRaOyLxtCYgyuqyWqGU5XQ9gGnjxgfoNTt1pvELGkkUFrMATABZFIq8gusM7N1qbqpVtwLOhk0d/3kacLg==}
+    engines: {node: '>=20.0.0'}
+
+  '@azure/keyvault-certificates@4.10.0':
+    resolution: {integrity: sha512-45fqZ5nLYu2jBNjGLy7718kUb11wEMG1Kt32ycFFqBcfw6s+du1wl2CEuvBJyz/J4T0b7o7NibRyGKtY5MkuNw==}
     engines: {node: '>=18.0.0'}
 
   '@azure/keyvault-certificates@4.9.0':
@@ -121,8 +141,16 @@ packages:
     resolution: {integrity: sha512-wRLVaroQtOqfg60cxkzUkGKrKMsCP6uYXAOomOIysSMyt1/YM0eUn9LqieAWM8DLcU4+07Fio2YGpPeqUbpP9w==}
     engines: {node: '>=18.0.0'}
 
+  '@azure/keyvault-keys@4.10.0':
+    resolution: {integrity: sha512-eDT7iXoBTRZ2n3fLiftuGJFD+yjkiB1GNqzU2KbY1TLYeXeSPVTVgn2eJ5vmRTZ11978jy2Kg2wI7xa9Tyr8ag==}
+    engines: {node: '>=18.0.0'}
+
   '@azure/keyvault-keys@4.9.0':
     resolution: {integrity: sha512-ZBP07+K4Pj3kS4TF4XdkqFcspWwBHry3vJSOFM5k5ZABvf7JfiMonvaFk2nBF6xjlEbMpz5PE1g45iTMme0raQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/keyvault-secrets@4.10.0':
+    resolution: {integrity: sha512-WvXc3h2hqHL1pMzUU7ANE2RBKoxjK3JQc0YNn6GUFvOWQtf2ZR+sH4/5cZu8zAg62v9qLCduBN7065nHKl+AOA==}
     engines: {node: '>=18.0.0'}
 
   '@azure/keyvault-secrets@4.9.0':
@@ -147,7 +175,9 @@ packages:
 
   '@drunk-pulumi/azure-components@file:../bin':
     resolution: {directory: ../bin, type: directory}
-    name: '@drunk-pulumi/azure-components'
+
+  '@drunk-pulumi/azure-providers@1.0.10':
+    resolution: {integrity: sha512-4Di2/rQHfXsxAL4boq4wybJS0PGBHIlOUxkOa+cRL6MEabiMQPSz9sZAJIvF/c8gRIRTMWqJh8680kZdWSobNw==}
 
   '@drunk-pulumi/azure-providers@1.0.9':
     resolution: {integrity: sha512-Pobpn8Mx6uG77XR0Edma5M4fuOAByQMnbX5UoVJsNrtyOEa5fB8s1hV6fMnzLyVIHxa1eCLRAX5cuM+7/AQVBg==}
@@ -350,15 +380,15 @@ packages:
   '@protobufjs/utf8@1.1.0':
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
 
-  '@pulumi/azure-native@3.3.0':
-    resolution: {integrity: sha512-cg6MKABH4Gs3iwbHHW+o8ooAe/J1A/pQ4w0KfaM+pcVhg+H6EEcJDTsCgbxlCa2gJoU18P363Nvd0LRy/B4Y5A==}
+  '@pulumi/azure-native@3.7.1':
+    resolution: {integrity: sha512-unr2AaNDOTC7+cih1pNEmM7sf68EZe7O6Syd2y+jll41/zftaXLhb0wEqEw4wbVKfGDM+dHYLar6Tb2vnblLIQ==}
 
-  '@pulumi/azuread@6.4.0':
-    resolution: {integrity: sha512-C3Iym3GtFjdh2QwOs/q6qFAIjvFWJxrsjwSeD1XnjoYT5SUh2a+Z9zKnKUBQCH/VaK8QFeSHqUTQwyFpvuxurg==}
+  '@pulumi/azuread@6.5.2':
+    resolution: {integrity: sha512-wlIdqaTUlNCtSaPloux7fmUoab/XLOmCoOiPMcqlyKUnlZhkt5g7loGROGej9/WjKSTUJ9hfrAodvmucyv3OPg==}
 
-  '@pulumi/pulumi@3.167.0':
-    resolution: {integrity: sha512-nqqG9ya86CO8eRpPSL34K0NWhQbH2hXAlVo+lCvi7I51nKFqaJITvfgfVEqwKU0g3KJspK8ZG0/1OZBRe0Dogg==}
-    engines: {node: '>=18'}
+  '@pulumi/pulumi@3.190.0':
+    resolution: {integrity: sha512-dYMqL3TxZQaMS3yWXub8/XnT7fbq2FpJlaP/qItn62Ycs009wWNpp2mg9QF5+BW1Hd2DiVmdwXZCA+29pss3pg==}
+    engines: {node: '>=20'}
     peerDependencies:
       ts-node: '>= 7.0.1 < 12'
       typescript: '>= 3.8.3 < 6'
@@ -368,8 +398,8 @@ packages:
       typescript:
         optional: true
 
-  '@pulumi/random@4.18.2':
-    resolution: {integrity: sha512-jC0HfgkFKwgUGmocM7Tw6UyOrpLFXGO8kYfV6f5Q9R/yziaVxEVPQ0Uup2HfosDh926EZHJrt2EUIJHWCyOvFA==}
+  '@pulumi/random@4.18.3':
+    resolution: {integrity: sha512-2OKJPNTZu0YyxOMvxnHiUzh3qGm5EowIffAx9dKNUQRQLHOqm3TM2HQ0jYMQUrydrRbXopaiRavFFPD0QKyJEg==}
 
   '@sigstore/bundle@2.3.2':
     resolution: {integrity: sha512-wueKWDk70QixNLB363yHc2D2ItTgYiMTdPwK8D9dKQMR3ZQ0c35IxP5xnwQ8cNLoCgCRcHf14kE+CLIvNX1zmA==}
@@ -423,8 +453,8 @@ packages:
   '@types/keyv@3.1.4':
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
 
-  '@types/node@22.15.3':
-    resolution: {integrity: sha512-lX7HFZeHf4QG/J7tBZqrCAXwz9J5RD56Y6MpP0eJkka8p+K0RY/yBTW7CYFJ4VGCclxqOLKmiGP5juQc6MKgcw==}
+  '@types/node@24.3.0':
+    resolution: {integrity: sha512-aPTXCrfwnDLj4VvXrm+UUCQjNEvJgNA8s5F1cvwQU+3KNltTOkBm1j30uNLyqqPNe7gE3KFzImYoZEfLhp4Yow==}
 
   '@types/responselike@1.0.3':
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
@@ -441,6 +471,10 @@ packages:
   '@typespec/ts-http-runtime@0.2.2':
     resolution: {integrity: sha512-Gz/Sm64+Sq/vklJu1tt9t+4R2lvnud8NbTD/ZfpZtMiUX7YeVpCA8j6NSW8ptwcoLL+NmYANwqP8DV0q/bwl2w==}
     engines: {node: '>=18.0.0'}
+
+  '@typespec/ts-http-runtime@0.3.0':
+    resolution: {integrity: sha512-sOx1PKSuFwnIl7z4RN0Ls7N9AQawmR9r66eI5rFCzLDIs8HTIYrIpH9QjYWoX0lkgGrkLxXhi4QnK7MizPRrIg==}
+    engines: {node: '>=20.0.0'}
 
   abbrev@2.0.0:
     resolution: {integrity: sha512-6/mh1E2u2YgEsCHdY0Yx5oW+61gZU+1vXaoiHHrpKeuRNNgFvS+/jrwHiQhB5apAf5oB7UB7E19ol2R2LKH8hQ==}
@@ -844,6 +878,9 @@ packages:
   lodash.once@4.1.1:
     resolution: {integrity: sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==}
 
+  lodash@4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+
   long@5.3.2:
     resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
 
@@ -1000,8 +1037,8 @@ packages:
     resolution: {integrity: sha512-cxN6aIDPz6rm8hbebcP7vrQNhvRcveZoJU72Y7vskh4oIm+BZwBECnx5nTmrlres1Qapvx27Qo1Auukpf8PKXw==}
     engines: {node: '>=18'}
 
-  openpgp@6.1.0:
-    resolution: {integrity: sha512-fRTeitP+hoGJD3kbdUlAI++wE6MvfvXw1rBqHwmBMxIpLjowatJ2zb5ThkORpIkSz5F12wO+xCYRSTbT7M4qKA==}
+  openpgp@6.2.0:
+    resolution: {integrity: sha512-zKbgazxMeGrTqUEWicKufbdcjv2E0om3YVxw+I3hRykp8ODp+yQOJIDqIr1UXJjP8vR2fky3bNQwYoQXyFkYMA==}
     engines: {node: '>= 18.0.0'}
 
   p-cancelable@2.1.1:
@@ -1237,8 +1274,8 @@ packages:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
 
-  tmp@0.2.3:
-    resolution: {integrity: sha512-nZD7m9iCPC5g0pYmcaxogYKggSfLsdxl8of3Q/oIbqCqLLIO9IAF0GWjX1z9NZRHPiXv8Wex4yDCaZsgEw0Y8w==}
+  tmp@0.2.5:
+    resolution: {integrity: sha512-voyz6MApa1rQGUxT3E+BK7/ROe8itEx7vD8/HEvt4xwXucvQ5G5oeEiHkmHZJuBO21RpOf+YYm9MOivj709jow==}
     engines: {node: '>=14.14'}
 
   treeverse@3.0.0:
@@ -1252,8 +1289,8 @@ packages:
     resolution: {integrity: sha512-GwIJau9XaA8nLVbUXsN3IlFi7WmQ48gBUrl3FTkkL/XLu/POhBzfmX9hd33FNMX1qAsfl6ozO1iMmW9NC8YniA==}
     engines: {node: ^16.14.0 || >=18.0.0}
 
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+  undici-types@7.10.0:
+    resolution: {integrity: sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag==}
 
   unique-filename@3.0.0:
     resolution: {integrity: sha512-afXhuC55wkAmZ0P18QsVE6kp8JaxrEokN2HGIoIVv2ijHQd419H0+6EigAFcIzXeMIkcIkNBpB3L/DXB3cTS/g==}
@@ -1334,6 +1371,17 @@ packages:
 
 snapshots:
 
+  '@azure-rest/core-client@2.5.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-rest-pipeline': 1.20.0
+      '@azure/core-tracing': 1.2.0
+      '@typespec/ts-http-runtime': 0.3.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@azure/abort-controller@1.1.0':
     dependencies:
       tslib: 2.8.1
@@ -1378,7 +1426,31 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@azure/arm-compute@23.0.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-client': 1.9.4
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.20.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@azure/arm-containerservice@21.6.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-client': 1.9.4
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.20.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/arm-containerservice@22.2.0':
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
@@ -1415,6 +1487,18 @@ snapshots:
       - supports-color
 
   '@azure/arm-network@33.5.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-client': 1.9.4
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.20.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/arm-network@34.0.0':
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
@@ -1515,7 +1599,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@azure/identity@4.9.1':
+  '@azure/identity@4.11.1':
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
@@ -1527,6 +1611,23 @@ snapshots:
       '@azure/msal-browser': 4.11.1
       '@azure/msal-node': 3.5.2
       open: 10.1.2
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/keyvault-certificates@4.10.0':
+    dependencies:
+      '@azure-rest/core-client': 2.5.0
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-http-compat': 2.3.0
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.20.0
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.12.0
+      '@azure/keyvault-common': 2.0.0
+      '@azure/logger': 1.2.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -1561,11 +1662,45 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@azure/keyvault-keys@4.10.0':
+    dependencies:
+      '@azure-rest/core-client': 2.5.0
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-http-compat': 2.3.0
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.20.0
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.12.0
+      '@azure/keyvault-common': 2.0.0
+      '@azure/logger': 1.2.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@azure/keyvault-keys@4.9.0':
     dependencies:
       '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.9.0
       '@azure/core-client': 1.9.4
+      '@azure/core-http-compat': 2.3.0
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.20.0
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.12.0
+      '@azure/keyvault-common': 2.0.0
+      '@azure/logger': 1.2.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/keyvault-secrets@4.10.0':
+    dependencies:
+      '@azure-rest/core-client': 2.5.0
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
       '@azure/core-http-compat': 2.3.0
       '@azure/core-lro': 2.7.2
       '@azure/core-paging': 1.6.2
@@ -1616,13 +1751,40 @@ snapshots:
 
   '@drunk-pulumi/azure-components@file:../bin':
     dependencies:
-      '@drunk-pulumi/azure-providers': 1.0.9
-      '@pulumi/azure-native': 3.3.0
-      '@pulumi/azuread': 6.4.0
-      '@pulumi/pulumi': 3.167.0
-      '@pulumi/random': 4.18.2
+      '@drunk-pulumi/azure-providers': 1.0.10
+      '@pulumi/azure-native': 3.7.1
+      '@pulumi/azuread': 6.5.2
+      '@pulumi/pulumi': 3.190.0
+      '@pulumi/random': 4.18.3
+      lodash: 4.17.21
       netmask: 2.0.2
-      openpgp: 6.1.0
+      openpgp: 6.2.0
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@drunk-pulumi/azure-providers@1.0.10':
+    dependencies:
+      '@azure/arm-apimanagement': 10.0.0
+      '@azure/arm-cdn': 9.1.0
+      '@azure/arm-compute': 23.0.0
+      '@azure/arm-containerservice': 22.2.0
+      '@azure/arm-keyvault': 3.2.0
+      '@azure/arm-mysql-flexible': 3.1.0
+      '@azure/arm-network': 34.0.0
+      '@azure/arm-postgresql-flexible': 8.0.0
+      '@azure/arm-sql': 10.0.0
+      '@azure/identity': 4.11.1
+      '@azure/keyvault-certificates': 4.10.0
+      '@azure/keyvault-keys': 4.10.0
+      '@azure/keyvault-secrets': 4.10.0
+      '@openpgp/web-stream-tools': 0.0.11
+      '@pulumi/azure-native': 3.7.1
+      '@pulumi/pulumi': 3.190.0
+      node-forge: 1.3.1
+      openpgp: 6.2.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -1640,15 +1802,15 @@ snapshots:
       '@azure/arm-network': 33.5.0
       '@azure/arm-postgresql-flexible': 8.0.0
       '@azure/arm-sql': 10.0.0
-      '@azure/identity': 4.9.1
+      '@azure/identity': 4.11.1
       '@azure/keyvault-certificates': 4.9.0
       '@azure/keyvault-keys': 4.9.0
       '@azure/keyvault-secrets': 4.9.0
       '@openpgp/web-stream-tools': 0.0.11
-      '@pulumi/azure-native': 3.3.0
-      '@pulumi/pulumi': 3.167.0
+      '@pulumi/azure-native': 3.7.1
+      '@pulumi/pulumi': 3.190.0
       node-forge: 1.3.1
-      openpgp: 6.1.0
+      openpgp: 6.2.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -1925,25 +2087,25 @@ snapshots:
 
   '@protobufjs/utf8@1.1.0': {}
 
-  '@pulumi/azure-native@3.3.0':
+  '@pulumi/azure-native@3.7.1':
     dependencies:
-      '@pulumi/pulumi': 3.167.0
+      '@pulumi/pulumi': 3.190.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumi/azuread@6.4.0':
+  '@pulumi/azuread@6.5.2':
     dependencies:
-      '@pulumi/pulumi': 3.167.0
+      '@pulumi/pulumi': 3.190.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumi/pulumi@3.167.0':
+  '@pulumi/pulumi@3.190.0':
     dependencies:
       '@grpc/grpc-js': 1.13.3
       '@logdna/tail-file': 2.2.0
@@ -1971,15 +2133,15 @@ snapshots:
       require-from-string: 2.0.2
       semver: 7.7.1
       source-map-support: 0.5.21
-      tmp: 0.2.3
+      tmp: 0.2.5
       upath: 1.2.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
 
-  '@pulumi/random@4.18.2':
+  '@pulumi/random@4.18.3':
     dependencies:
-      '@pulumi/pulumi': 3.167.0
+      '@pulumi/pulumi': 3.190.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -2035,7 +2197,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 22.15.3
+      '@types/node': 24.3.0
       '@types/responselike': 1.0.3
 
   '@types/google-protobuf@3.15.12': {}
@@ -2044,15 +2206,15 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 22.15.3
+      '@types/node': 24.3.0
 
-  '@types/node@22.15.3':
+  '@types/node@24.3.0':
     dependencies:
-      undici-types: 6.21.0
+      undici-types: 7.10.0
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 22.15.3
+      '@types/node': 24.3.0
 
   '@types/semver@7.7.0': {}
 
@@ -2061,6 +2223,14 @@ snapshots:
   '@types/tmp@0.2.6': {}
 
   '@typespec/ts-http-runtime@0.2.2':
+    dependencies:
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@typespec/ts-http-runtime@0.3.0':
     dependencies:
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.6
@@ -2240,7 +2410,7 @@ snapshots:
   exponential-backoff@3.1.2: {}
 
   fdir@6.4.4(picomatch@3.0.1):
-    dependencies:
+    optionalDependencies:
       picomatch: 3.0.1
 
   find-up@6.3.0:
@@ -2455,6 +2625,8 @@ snapshots:
 
   lodash.once@4.1.1: {}
 
+  lodash@4.17.21: {}
+
   long@5.3.2: {}
 
   lowercase-keys@2.0.0: {}
@@ -2628,7 +2800,7 @@ snapshots:
       is-inside-container: 1.0.0
       is-wsl: 3.1.0
 
-  openpgp@6.1.0: {}
+  openpgp@6.2.0: {}
 
   p-cancelable@2.1.1: {}
 
@@ -2724,7 +2896,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 22.15.3
+      '@types/node': 24.3.0
       long: 5.3.2
 
   pump@3.0.2:
@@ -2876,7 +3048,7 @@ snapshots:
       mkdirp: 1.0.4
       yallist: 4.0.0
 
-  tmp@0.2.3: {}
+  tmp@0.2.5: {}
 
   treeverse@3.0.0: {}
 
@@ -2890,7 +3062,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  undici-types@6.21.0: {}
+  undici-types@7.10.0: {}
 
   unique-filename@3.0.0:
     dependencies:

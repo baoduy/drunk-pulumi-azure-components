@@ -38,9 +38,26 @@ src/
 - [pnpm](https://pnpm.io/) (or npm/yarn)
 
 ### Installation
-Clone the repository and install dependencies:
+
+You can install this library as an npm package in your Pulumi project:
+
 ```bash
-git clone <repo-url>
+# Using npm
+npm install @drunk-pulumi/azure-components
+
+# Using yarn
+yarn add @drunk-pulumi/azure-components
+
+# Using pnpm
+pnpm add @drunk-pulumi/azure-components
+```
+
+### Development Setup
+
+If you want to contribute or modify the components, clone the repository:
+
+```bash
+git clone https://github.com/baoduy/drunk-pulumi-azure-components.git
 cd drunk-pulumi-azure-components
 pnpm install
 ```
@@ -50,7 +67,7 @@ You can use the components in your own Pulumi project or in the provided `pulumi
 
 #### Example: Creating a Resource Group with Key Vault and Logging
 ```typescript
-import { ResourceBuilder } from '../src/ResourceBuilder';
+import { ResourceBuilder } from '@drunk-pulumi/azure-components';
 
 const builder = new ResourceBuilder('my-stack', {
   groupRoles: { createWithName: 'my-rg-roles' },
@@ -87,10 +104,10 @@ See `pulumi-test/samples/` for more usage examples.
 - **services/**: Automation, Search, Service Bus
 
 ## Contributing
-1. Fork the repository
+1. Follow the [Development Setup](#development-setup) instructions to clone and set up the repository
 2. Create a new branch (`git checkout -b feature/my-feature`)
 3. Make your changes
-4. Run tests and linting
+4. Run tests and linting (`pnpm test` and `pnpm run build`)
 5. Submit a pull request
 
 ## License

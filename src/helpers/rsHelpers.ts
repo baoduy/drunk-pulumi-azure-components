@@ -15,7 +15,12 @@ export function removeDashes(s: string) {
   return s.replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
 }
 
-export function getNameNormalize(name: string) {
+/**
+ * Normalizes a name by replacing non-alphanumeric characters with dashes and removing leading/trailing dashes
+ * @param name - The input name to normalize
+ * @returns The normalized name
+ */
+export function getNameNormalized(name: string) {
   const n = name
     .replace(/[^a-zA-Z0-9]/g, '-') // Replace any non-alphanumeric character with "-"
     .toLowerCase(); // Convert the result to lowercase

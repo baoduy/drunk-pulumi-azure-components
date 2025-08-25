@@ -5,5 +5,5 @@ export function getSecretName(name: string) {
   const sanitizedStack = _.escapeRegExp(stackInfo.stack);
   const n = name.replace(new RegExp(sanitizedStack, 'g'), ''); // Replace occurrences of "stack" variable with "-"
 
-  return rsHelpers.getNameNormalize(n);
+  return rsHelpers.getNameNormalized(n);
 }

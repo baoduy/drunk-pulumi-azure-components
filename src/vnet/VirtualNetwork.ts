@@ -29,7 +29,7 @@ export type SubnetArgs = Pick<
   disableNatGateway?: boolean;
 };
 
-export interface HubVnetArgs extends CommonBaseArgs {
+export interface VnetArgs extends CommonBaseArgs {
   /**
    * An array of public ip addresses associated with the nat gateway resource.
    */
@@ -70,7 +70,7 @@ export interface HubVnetArgs extends CommonBaseArgs {
   };
 }
 
-export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
+export class Vnet extends BaseResourceComponent<VnetArgs> {
   public readonly basion?: types.ResourceOutputs;
   public readonly securityGroup?: types.ResourceOutputs;
   public readonly routeTable: types.ResourceOutputs;
@@ -80,8 +80,8 @@ export class HubVnet extends BaseResourceComponent<HubVnetArgs> {
   public readonly vnet: types.ResourceOutputs;
   public readonly subnets: Record<string, types.ResourceOutputs>;
 
-  constructor(name: string, args: HubVnetArgs, opts?: pulumi.ComponentResourceOptions) {
-    super('HubVnet', name, args, opts);
+  constructor(name: string, args: VnetArgs, opts?: pulumi.ComponentResourceOptions) {
+    super('Vnet', name, args, opts);
 
     const securityGroup = this.createSecurityGroup();
     const routeTable = this.createRouteTable();

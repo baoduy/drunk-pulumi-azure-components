@@ -2,6 +2,7 @@ import * as compute from '@pulumi/azure-native/compute';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
+import { rsHelpers } from '../helpers';
 
 export interface DiskEncryptionSetArgs
   extends CommonBaseArgs,

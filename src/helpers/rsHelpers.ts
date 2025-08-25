@@ -4,6 +4,13 @@ import * as azureEnv from './azureEnv';
 import * as stackInfo from './stackEnv';
 
 /**
+ * Delays the execution for a specified amount of time.
+ * @param ms - The number of milliseconds to delay.
+ * @returns A promise that resolves after the specified delay.
+ */
+export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
  * Removes leading and trailing dashes from a string and replaces multiple consecutive dashes with a single dash
  * @param s - The input string to process
  * @returns The string with leading/trailing dashes removed and multiple dashes replaced with single dash

@@ -9,7 +9,7 @@ export interface KeyVaultArgs
   extends BaseArgs,
     WithResourceGroupInputs,
     WithNetworkArgs,
-    Pick<keyvault.VaultArgs, 'tags'> {
+    Partial<Pick<keyvault.VaultArgs, 'tags'>> {
   sku?: 'standard' | 'premium';
 
   properties?: {

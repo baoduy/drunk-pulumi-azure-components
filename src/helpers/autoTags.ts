@@ -16,6 +16,7 @@ const ignoredTags = [
   'cloudflare',
   'providers',
   'dynamic:Resource',
+  'StackReference',
 ];
 
 /**

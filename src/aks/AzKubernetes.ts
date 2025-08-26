@@ -6,15 +6,14 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { SshGenerator } from '../common';
 import { azureEnv, rsHelpers } from '../helpers';
 import * as types from '../types';
-import { VaultSecret } from '../vault';
 import { DiskEncryptionSet } from '../vm/DiskEncryptionSet';
-import * as aksHelpers from './helpers';
 
 export interface AzKubernetesArgs
   extends CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
+    types.WithDiskEncryptSet,
     Partial<
       Pick<
         ccs.ManagedClusterArgs,
@@ -22,6 +21,7 @@ export interface AzKubernetesArgs
       >
     > {
   sku: ccs.ManagedClusterSKUTier;
+  nodeResourceGroup?: pulumi.Input<string>;
   agentPoolProfiles: pulumi.Input<
     inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
       vmSize: pulumi.Input<string>;
@@ -125,8 +125,9 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private createDiskEncryptionSet() {
-    const { rsGroup, enableEncryption, defaultUAssignedId, vaultInfo } = this.args;
+    const { rsGroup, enableEncryption, diskEncryptionSet, defaultUAssignedId, vaultInfo } = this.args;
     if (!enableEncryption) return undefined;
+    if (diskEncryptionSet) return diskEncryptionSet;
 
     return new DiskEncryptionSet(
       `${this.name}-disk-encryption-set`,
@@ -137,7 +138,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
-    );
+    ).getOutputs();
   }
 
   private createCluster(app: AppRegistration) {
@@ -146,8 +147,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       vaultInfo,
       groupRoles,
       defaultUAssignedId,
-
       enableEncryption,
+      nodeResourceGroup,
       features,
       addonProfiles,
       network,
@@ -155,7 +156,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       sku,
       ...props
     } = this.args;
-    const nodeResourceGroup = pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
+    const nodeRg = nodeResourceGroup ?? pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
     const login = this.createUserNameAndSshKeys();
     const diskEncryptionSet = this.createDiskEncryptionSet();
 
@@ -164,7 +165,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       {
         ...props,
         ...rsGroup,
-        nodeResourceGroup,
+        nodeResourceGroup: nodeRg,
         dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
 
         enableRBAC: true,
@@ -323,7 +324,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     const { rsGroup, attachToAcr } = this.args;
     pulumi.all([aks.identity, aks.identityProfile]).apply(([identity, identityProfile]) => {
       //User Assigned Identity
-      if (identityProfile?.kubeletIdentity.principalId) {
+      if (identityProfile?.kubeletIdentity?.principalId) {
         this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletIdentity!.principalId! });
 
         if (attachToAcr) {

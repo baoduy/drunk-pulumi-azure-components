@@ -108,10 +108,10 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
         {
           ...diskEncryptionCreate,
           rsGroup: this.rsGroup,
-          encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
           defaultUAssignedId: this.defaultUAssignedId,
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
+          encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
         },
         { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
       );

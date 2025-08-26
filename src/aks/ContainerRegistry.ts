@@ -7,9 +7,8 @@ import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
 export interface ContainerRegistryArgs
   extends CommonBaseArgs,
     types.WithEncryptionEnabler,
-    types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
-    Pick<registry.RegistryArgs, 'dataEndpointEnabled' | 'zoneRedundancy'> {
+    Partial<Pick<registry.RegistryArgs, 'dataEndpointEnabled' | 'zoneRedundancy'>> {
   sku: registry.SkuName;
   retentionDaysPolicy?: number;
   network?: Omit<types.NetworkArgs, 'vnetRules'>;
@@ -22,12 +21,12 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
   constructor(name: string, args: ContainerRegistryArgs, opts?: pulumi.ComponentResourceOptions) {
     super('ContainerRegistry', name, args, opts);
 
-    const { rsGroup, enableEncryption, groupRoles, defaultUAssignedId, retentionDaysPolicy, sku, network, ...props } =
-      args;
-    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
+    const { rsGroup, enableEncryption, defaultUAssignedId, retentionDaysPolicy, sku, network, ...props } = args;
+    const encryptionKey = sku === 'Premium' && enableEncryption ? this.getEncryptionKey() : undefined;
+    const alphanumericString = (name.match(/[a-zA-Z0-9]+/g) || []).join('');
 
     const acr = new registry.Registry(
-      name,
+      alphanumericString,
       {
         ...props,
         ...rsGroup,
@@ -42,13 +41,13 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
             ? registry.ResourceIdentityType.SystemAssigned_UserAssigned
             : registry.ResourceIdentityType.SystemAssigned,
 
-          userAssignedIdentities: defaultUAssignedId
-            ? pulumi.output(defaultUAssignedId.id).apply((id) => ({ [id]: defaultUAssignedId }))
-            : undefined,
+          // userAssignedIdentities: defaultUAssignedId
+          //   ? pulumi.output(defaultUAssignedId).apply((id) => ({ [id.id]: id }))
+          //   : undefined,
         },
 
         encryption:
-          sku === 'Premium' && encryptionKey && defaultUAssignedId
+          encryptionKey && defaultUAssignedId
             ? {
                 keyVaultProperties: {
                   identity: defaultUAssignedId.clientId,

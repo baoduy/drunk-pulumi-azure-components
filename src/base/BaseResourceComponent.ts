@@ -126,12 +126,14 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    * @returns A new EncryptionKey instance if vaultInfo is provided, undefined otherwise
    */
   protected getEncryptionKey({ name, keySize }: { name?: string; keySize?: 2048 | 3072 | 4096 } = { keySize: 4096 }) {
-    if (!this.args.vaultInfo) {
-      throw new Error(`VaultInfo is required for encryption key creation in component ${this.name}`);
+    const vault = this.args.vaultInfo;
+    if (!vault) {
+      throw new Error(`The VaultInfo is required for encryption key creation in component "${this.type}:${this.name}"`);
     }
+
     return new EncryptionKey(
       name ? `${this.name}-${name}` : this.name,
-      { vaultInfo: this.args.vaultInfo, keySize },
+      { vaultInfo: vault, keySize },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }

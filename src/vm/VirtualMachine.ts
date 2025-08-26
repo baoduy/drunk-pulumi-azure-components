@@ -67,13 +67,10 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       ...props
     } = args;
 
-    const adminLogin = pulumi.interpolate`${this.name}-vn-admin-${
-      this.createRandomString({ type: 'string', length: 6 }).value
-    }`;
-    const password = this.createPassword();
-    const keyEncryption = enableEncryption ? this.getEncryptionKey({ name: 'key' }) : undefined;
-    const diskEncryption = enableEncryption ? this.getEncryptionKey({ name: 'disk' }) : undefined;
+    const keyEncryption = enableEncryption && !diskEncryptionSet ? this.getEncryptionKey({ name: 'key' }) : undefined;
+    const diskEncryption = enableEncryption && !diskEncryptionSet ? this.getEncryptionKey({ name: 'disk' }) : undefined;
     const nic = this.createNetworkInterface();
+    const credential = this.createCredentials();
 
     const vm = new compute.VirtualMachine(
       this.name,
@@ -92,11 +89,13 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           networkInterfaces: [{ id: nic.id, primary: true }],
         },
         //az feature register --name EncryptionAtHost  --namespace Microsoft.Compute
-        securityProfile: props.securityProfile ?? { encryptionAtHost: true },
+        securityProfile: props.securityProfile ?? {
+          encryptionAtHost: true,
+        },
         osProfile: {
           ...osProfile,
-          adminUsername: adminLogin,
-          adminPassword: password.value,
+          adminUsername: credential.login,
+          adminPassword: credential.pass,
         },
         storageProfile: {
           ...storageProfile,
@@ -108,7 +107,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                 ? {
                     diskEncryptionKey: diskEncryption
                       ? {
-                          secretUrl: diskEncryption.id,
+                          secretUrl: pulumi.interpolate`${diskEncryption.vaultUrl}/secrets/${diskEncryption.keyName}/${diskEncryption.version}`,
                           sourceVault: {
                             id: vaultInfo!.id,
                           },
@@ -116,7 +115,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                       : undefined,
                     keyEncryptionKey: keyEncryption
                       ? {
-                          keyUrl: keyEncryption.id,
+                          keyUrl: pulumi.interpolate`${keyEncryption.vaultUrl}/keys/${keyEncryption.keyName}/${keyEncryption.version}`,
                           sourceVault: {
                             id: vaultInfo!.id,
                           },
@@ -132,10 +131,13 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                     id: diskEncryptionSet.id,
                   }
                 : undefined,
-              securityProfile: {
-                diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
-                securityEncryptionType: storageProfile.securityEncryptionType,
-              },
+
+              securityProfile: storageProfile.securityEncryptionType
+                ? {
+                    diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
+                    securityEncryptionType: storageProfile.securityEncryptionType,
+                  }
+                : undefined,
               storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
             },
           },
@@ -149,10 +151,12 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                         id: diskEncryptionSet.id,
                       }
                     : undefined,
-                  securityProfile: {
-                    diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
-                    securityEncryptionType: storageProfile.securityEncryptionType,
-                  },
+                  securityProfile: storageProfile.securityEncryptionType
+                    ? {
+                        diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
+                        securityEncryptionType: storageProfile.securityEncryptionType,
+                      }
+                    : undefined,
                   storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
                 },
               }))
@@ -170,11 +174,6 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     this.createExtensions(vm);
     if (lock) this.lockFromDeleting(vm);
 
-    this.addSecrets({
-      login: adminLogin,
-      pass: password.value,
-    });
-
     this.id = vm.id;
     this.resourceName = vm.name;
 
@@ -187,13 +186,32 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       resourceName: this.resourceName,
     };
   }
+
+  private createCredentials() {
+    const adminLogin = pulumi.interpolate`${this.name}-admin-${
+      this.createRandomString({ type: 'string', length: 6 }).value
+    }`.apply((s) => s.substring(0, 20));
+    const password = this.createPassword();
+
+    this.addSecrets({
+      login: adminLogin,
+      pass: password.value,
+    });
+
+    return { login: adminLogin, pass: password.value };
+  }
+
   private createNetworkInterface() {
     const { rsGroup, network } = this.args;
-    return new nw.NetworkInterface(this.name, {
-      ...rsGroup,
-      ipConfigurations: [{ name: 'ipconfig', subnet: { id: network.subnetId }, primary: true }],
-      nicType: network.nicType ?? nw.NetworkInterfaceNicType.Standard,
-    });
+    return new nw.NetworkInterface(
+      this.name,
+      {
+        ...rsGroup,
+        ipConfigurations: [{ name: 'ipconfig', subnet: { id: network.subnetId }, primary: true }],
+        nicType: network.nicType ?? nw.NetworkInterfaceNicType.Standard,
+      },
+      { ...this.opts, parent: this, retainOnDelete: true },
+    );
   }
 
   private createSchedule(vm: compute.VirtualMachine) {
@@ -216,7 +234,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           webhookUrl: schedule.webHook,
         },
       },
-      { dependsOn: vm, parent: this },
+      { dependsOn: vm, parent: this, retainOnDelete: true },
     );
   }
 

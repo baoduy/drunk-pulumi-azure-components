@@ -25,7 +25,8 @@ export class DiskEncryptionSet extends BaseResourceComponent<DiskEncryptionSetAr
       name,
       {
         ...rsGroup,
-        rotationToLatestKeyVersionEnabled: true,
+        rotationToLatestKeyVersionEnabled:
+          encryptionType !== compute.DiskEncryptionSetType.ConfidentialVmEncryptedWithCustomerKey,
         encryptionType: encryptionType ?? compute.DiskEncryptionSetType.EncryptionAtRestWithPlatformAndCustomerKeys,
         identity: {
           type: defaultUAssignedId

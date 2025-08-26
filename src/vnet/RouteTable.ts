@@ -13,7 +13,7 @@ export type RouteArgs = Omit<
 
 export interface RouteTableArgs
   extends types.WithResourceGroupInputs,
-    Pick<network.RouteTableArgs, 'disableBgpRoutePropagation'> {
+    Partial<Pick<network.RouteTableArgs, 'disableBgpRoutePropagation'>> {
   routes?: Array<
     RouteArgs & {
       name: string;

@@ -30,6 +30,7 @@ export type SubnetArgs = Partial<
   disableSecurityGroup?: boolean;
   disableRouteTable?: boolean;
   disableNatGateway?: boolean;
+  defaultOutboundAccess?: boolean;
 };
 
 export interface VnetArgs extends CommonBaseArgs {
@@ -37,7 +38,7 @@ export interface VnetArgs extends CommonBaseArgs {
    * An array of public ip addresses associated with the nat gateway resource.
    */
   publicIpAddresses?: types.ResourceInputs[];
-  publicIpCreate?: IpAddressesArgs & { name: string };
+  publicIpCreate?: Omit<IpAddressesArgs, 'rsGroup' | 'vaultInfo'>;
 
   securityGroupCreate?: Partial<Pick<network.NetworkSecurityGroupArgs, 'flushConnection'>> & {
     securityRules?: pulumi.Input<inputs.network.SecurityRuleArgs>[];
@@ -73,7 +74,6 @@ export interface VnetArgs extends CommonBaseArgs {
     | 'virtualNetworkName'
     | 'virtualNetworkPeerings'
   > & {
-    defaultOutboundAccess?: pulumi.Input<boolean>;
     addressPrefixes?: pulumi.Input<string>[];
     subnets: Array<SubnetArgs>;
   };
@@ -183,14 +183,18 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   }
 
   private createPublicIpAddresses(): types.ResourceInputs[] {
-    const { publicIpCreate, publicIpAddresses } = this.args;
+    const { publicIpCreate, publicIpAddresses, rsGroup } = this.args;
     if (publicIpAddresses) return publicIpAddresses;
     if (!publicIpCreate) return [];
 
-    this.ipAddressInstance = new IpAddresses(publicIpCreate.name, publicIpCreate, {
-      dependsOn: this.opts?.dependsOn,
-      parent: this,
-    });
+    this.ipAddressInstance = new IpAddresses(
+      `${this.name}-ip`,
+      { ...publicIpCreate, rsGroup },
+      {
+        dependsOn: this.opts?.dependsOn,
+        parent: this,
+      },
+    );
     return Object.values(this.ipAddressInstance.ipAddresses);
   }
 
@@ -393,10 +397,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     routeTable: RouteTable;
     securityGroup?: network.NetworkSecurityGroup;
   }) {
-    const {
-      rsGroup,
-      vnet: { defaultOutboundAccess },
-    } = this.args;
+    const { rsGroup } = this.args;
     const rs: Record<string, network.Subnet> = {};
 
     subnets
@@ -411,7 +412,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
               virtualNetworkName: vnet.name,
 
               //Not allows outbound by default and it will be controlling by NatGateway or Firewall
-              defaultOutboundAccess: defaultOutboundAccess ?? false,
+              defaultOutboundAccess: s.defaultOutboundAccess ?? false,
               routeTable: s.disableRouteTable ? undefined : routeTable ? { id: routeTable.id } : undefined,
               networkSecurityGroup: s.disableSecurityGroup
                 ? undefined

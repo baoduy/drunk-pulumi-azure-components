@@ -6,15 +6,17 @@ import { rsHelpers } from '../helpers';
 
 export type PeeringDirectionType = 'Unidirectional' | 'Bidirectional';
 
-type NetworkPeeringProps = Omit<
-  network.VirtualNetworkPeeringArgs,
-  | 'id'
-  | 'name'
-  | 'peeringState'
-  | 'resourceGroupName'
-  | 'virtualNetworkName'
-  | 'virtualNetworkPeeringName'
-  | 'syncRemoteAddressSpace'
+type NetworkPeeringProps = Partial<
+  Omit<
+    network.VirtualNetworkPeeringArgs,
+    | 'id'
+    | 'name'
+    | 'peeringState'
+    | 'resourceGroupName'
+    | 'virtualNetworkName'
+    | 'virtualNetworkPeeringName'
+    | 'syncRemoteAddressSpace'
+  >
 > & { syncRemoteAddressSpace: 'true' | 'false' };
 
 const defaultProps: NetworkPeeringProps = {

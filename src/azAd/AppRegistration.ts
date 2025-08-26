@@ -73,8 +73,6 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     this.servicePrincipalId = sp.servicePrincipalId;
     this.servicePrincipalPassword = sp.servicePrincipalPassword;
 
-    this.addMemberOf(app);
-
     this.clientId = app.clientId;
     this.registerOutputs(this.getOutputs());
   }
@@ -145,6 +143,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     );
 
     this.addRoleAssignments(sp);
+    this.addMemberOf(sp);
     this.addSecret('sp-pass', spPass.value);
 
     return {
@@ -179,12 +178,12 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         new RoleAssignment(
           `${this.name}-${role.roleName}`,
           { ...role, principalId: sv.objectId, principalType: 'ServicePrincipal' },
-          { dependsOn: sv, parent: this },
+          { dependsOn: sv, deletedWith: sv, parent: this },
         ),
     );
   }
 
-  private addMemberOf(app: azAd.Application) {
+  private addMemberOf(sv: azAd.ServicePrincipal) {
     if (!this.args.memberof) return;
     this.args.memberof.map((group) =>
       pulumi.output(group).apply(
@@ -193,9 +192,9 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
             `${this.name}-${id.objectId}`,
             {
               groupObjectId: id.objectId,
-              memberObjectId: app.objectId,
+              memberObjectId: sv.objectId,
             },
-            { dependsOn: app, parent: this },
+            { dependsOn: sv, deletedWith: sv, parent: this },
           ),
       ),
     );

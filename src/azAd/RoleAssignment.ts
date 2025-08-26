@@ -23,7 +23,7 @@ export class RoleAssignment extends BaseComponent<RoleAssignmentArgs> {
         ...props,
         roleDefinitionId: role.id,
       },
-      { ...opts, parent: this },
+      { ...opts, deletedWith: this, parent: this },
     );
 
     this.id = assignment.id;

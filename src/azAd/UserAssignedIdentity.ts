@@ -53,7 +53,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
               groupObjectId: id.objectId,
               memberObjectId: this.principalId,
             },
-            { parent: this },
+            { parent: this, deletedWith: this },
           ),
       ),
     );

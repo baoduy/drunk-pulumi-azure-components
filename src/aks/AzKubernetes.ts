@@ -127,6 +127,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private createDiskEncryptionSet() {
     const { rsGroup, enableEncryption, defaultUAssignedId, vaultInfo } = this.args;
     if (!enableEncryption) return undefined;
+
     return new DiskEncryptionSet(
       `${this.name}-disk-encryption-set`,
       {
@@ -321,23 +322,26 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private assignPermission(aks: ccs.ManagedCluster) {
     const { rsGroup, attachToAcr } = this.args;
     pulumi.all([aks.identity, aks.identityProfile]).apply(([identity, identityProfile]) => {
-      if (identityProfile?.kubeletIdentity) {
-        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletIdentity!.objectId! });
+      //User Assigned Identity
+      if (identityProfile?.kubeletIdentity.principalId) {
+        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletIdentity!.principalId! });
 
         if (attachToAcr) {
           new RoleAssignment(
             `${this.name}-aks-acr`,
             {
-              principalId: identityProfile.kubeletIdentity!.objectId!,
+              principalId: identityProfile.kubeletIdentity!.principalId!,
               principalType: 'ServicePrincipal',
               roleName: 'acr-pull',
               scope: attachToAcr.id,
             },
-            { dependsOn: aks, parent: this },
+            { dependsOn: aks, deletedWith: aks, parent: this },
           );
         }
       }
-      if (identity) {
+
+      //System Managed Identity
+      if (identity?.principalId) {
         new RoleAssignment(
           `${this.name}-aks-identity`,
           {
@@ -346,7 +350,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             roleName: 'Contributor',
             scope: rsHelpers.getRsGroupIdFrom(rsGroup),
           },
-          { dependsOn: aks, parent: this },
+          { dependsOn: aks, deletedWith: aks, parent: this },
         );
       }
     });

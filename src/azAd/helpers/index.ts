@@ -23,6 +23,6 @@ export const createAzureDevOpsAppRegistration = (name: string, vaultInfo: Resour
       roleName: 'Owner',
       scope: azureEnv.defaultSubScope,
     },
-    { dependsOn: identity, parent: this },
+    { dependsOn: identity, deletedWith: identity, parent: this },
   );
 };

@@ -8,7 +8,7 @@ export interface AutomationArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
-    Pick<automation.AutomationAccountArgs, 'sku'> {}
+    Partial<Pick<automation.AutomationAccountArgs, 'sku'>> {}
 
 export class Automation extends BaseResourceComponent<AutomationArgs> {
   public readonly id: pulumi.Output<string>;
@@ -17,21 +17,22 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
   constructor(name: string, args: AutomationArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Automation', name, args, opts);
 
-    const { rsGroup, enableEncryption, groupRoles, defaultUAssignedId, ...props } = args;
+    const { rsGroup, enableEncryption, defaultUAssignedId } = args;
     const uAssignedId = this.createUAssignedId();
-    const encryptionKey = args.enableEncryption ? this.getEncryptionKey() : undefined;
+    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
 
     const auto = new automation.AutomationAccount(
       name,
       {
-        ...props,
         ...rsGroup,
+        automationAccountName: name,
+        sku: { name: 'Free' },
         publicNetworkAccess: false,
         disableLocalAuth: true,
 
         identity: {
-          type: automation.ResourceIdentityType.SystemAssigned_UserAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [uAssignedId.id, defaultUAssignedId.id] : [uAssignedId.id],
+          type: automation.ResourceIdentityType.UserAssigned,
+          userAssignedIdentities: [uAssignedId.id],
         },
 
         encryption: {
@@ -61,6 +62,7 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
       resourceName: this.resourceName,
     };
   }
+
   private createUAssignedId() {
     const { rsGroup, groupRoles, vaultInfo } = this.args;
     return new UserAssignedIdentity(

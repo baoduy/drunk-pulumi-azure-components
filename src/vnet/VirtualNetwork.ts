@@ -79,6 +79,16 @@ export interface VnetArgs extends CommonBaseArgs {
   };
 }
 
+export type VnetOutputs = {
+  securityGroup?: types.ResourceOutputs;
+  routeTable: types.ResourceOutputs;
+  natGateway?: types.ResourceOutputs;
+  vpnGateway?: types.ResourceOutputs;
+  firewall?: types.ResourceOutputs;
+  vnet: types.ResourceOutputs;
+  subnets: Record<string, types.ResourceOutputs>;
+};
+
 export class Vnet extends BaseResourceComponent<VnetArgs> {
   public readonly basion?: types.ResourceOutputs;
   public readonly securityGroup?: types.ResourceOutputs;
@@ -118,7 +128,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): VnetOutputs {
     return {
       securityGroup: this.securityGroup,
       routeTable: this.routeTable,

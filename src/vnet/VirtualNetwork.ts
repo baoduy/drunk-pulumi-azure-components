@@ -10,17 +10,20 @@ import { NetworkPeering, NetworkPeeringArgs } from './NetworkPeering';
 import { RouteTable, RouteTableArgs } from './RouteTable';
 import { getBasionSecurityRules } from './securityRules';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
+import { IpAddresses, IpAddressesArgs } from './IpAddresses';
 
-export type SubnetArgs = Pick<
-  network.SubnetArgs,
-  | 'applicationGatewayIPConfigurations'
-  | 'delegations'
-  | 'ipamPoolPrefixAllocations'
-  | 'privateEndpointNetworkPolicies'
-  | 'privateLinkServiceNetworkPolicies'
-  | 'serviceEndpointPolicies'
-  | 'serviceEndpoints'
-  | 'sharingScope'
+export type SubnetArgs = Partial<
+  Pick<
+    network.SubnetArgs,
+    | 'applicationGatewayIPConfigurations'
+    | 'delegations'
+    | 'ipamPoolPrefixAllocations'
+    | 'privateEndpointNetworkPolicies'
+    | 'privateLinkServiceNetworkPolicies'
+    | 'serviceEndpointPolicies'
+    | 'serviceEndpoints'
+    | 'sharingScope'
+  >
 > & {
   subnetName: string;
   addressPrefix: pulumi.Input<string>;
@@ -34,22 +37,28 @@ export interface VnetArgs extends CommonBaseArgs {
    * An array of public ip addresses associated with the nat gateway resource.
    */
   publicIpAddresses?: types.ResourceInputs[];
+  publicIpCreate?: IpAddressesArgs & { name: string };
 
-  securityGroup?: Pick<network.NetworkSecurityGroupArgs, 'flushConnection'> & {
+  securityGroupCreate?: Partial<Pick<network.NetworkSecurityGroupArgs, 'flushConnection'>> & {
     securityRules?: pulumi.Input<inputs.network.SecurityRuleArgs>[];
   };
-  routeTable?: Omit<RouteTableArgs, 'rsGroup'>;
-  natGateway?: Pick<network.NatGatewayArgs, 'idleTimeoutInMinutes' | 'zones'> & { sku: network.NatGatewaySkuName };
-  vpnGateway?: Omit<VpnGatewayArgs, 'rsGroup' | 'subnetId'> & { subnetPrefix: pulumi.Input<string> };
+  routeTableCreate?: Omit<RouteTableArgs, 'rsGroup'>;
+  natGatewayCreate?: Partial<Pick<network.NatGatewayArgs, 'idleTimeoutInMinutes' | 'zones'>> & {
+    sku: network.NatGatewaySkuName;
+  };
+  vpnGatewayCreate?: Omit<VpnGatewayArgs, 'rsGroup' | 'subnetId'> & { subnetPrefix: pulumi.Input<string> };
   basion?: Omit<BasionArgs, 'rsGroup' | 'subnetId'> & {
     subnetPrefix: pulumi.Input<string>;
   };
-  firewall?: Omit<FirewallArgs, 'managementIpConfiguration' | 'ipConfigurations' | 'hubIPAddresses' | 'rsGroup'> & {
+  firewallCreate?: Omit<
+    FirewallArgs,
+    'managementIpConfiguration' | 'ipConfigurations' | 'hubIPAddresses' | 'rsGroup'
+  > & {
     subnetPrefix: pulumi.Input<string>;
     managementSubnetPrefix?: pulumi.Input<string>;
     managementPublicIpAddress?: types.SubResourceInputs;
   };
-  vnetPeering?: Omit<NetworkPeeringArgs, 'firstVnet' | 'secondVnet'> & {
+  vnetPeeringCreate?: Omit<NetworkPeeringArgs, 'firstVnet' | 'secondVnet'> & {
     vnet: types.ResourceInputs;
   };
   vnet: Omit<
@@ -79,13 +88,15 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   public readonly firewall?: types.ResourceOutputs;
   public readonly vnet: types.ResourceOutputs;
   public readonly subnets: Record<string, types.ResourceOutputs>;
+  private ipAddressInstance: IpAddresses | undefined;
 
   constructor(name: string, args: VnetArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Vnet', name, args, opts);
 
     const securityGroup = this.createSecurityGroup();
     const routeTable = this.createRouteTable();
-    const natGateway = this.createNatGateway();
+    const ipAddresses = this.createPublicIpAddresses();
+    const natGateway = this.createNatGateway(ipAddresses);
     const { vnet, subnets } = this.createVnet({ natGateway, routeTable, securityGroup });
     const firewall = this.createFirewall(subnets);
     const basion = this.createBasion(subnets);
@@ -120,9 +131,9 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   }
 
   private createSecurityGroup() {
-    const { rsGroup, securityGroup, basion } = this.args;
-    if (!securityGroup) return undefined;
-    const { securityRules = [], ...props } = securityGroup;
+    const { rsGroup, securityGroupCreate, basion } = this.args;
+    if (!securityGroupCreate) return undefined;
+    const { securityRules = [], ...props } = securityGroupCreate;
 
     if (basion) {
       securityRules.push(...getBasionSecurityRules({ bastionAddressPrefix: basion.subnetPrefix }));
@@ -140,10 +151,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   }
 
   private createRouteTable() {
-    const { rsGroup, firewall, routeTable = {} } = this.args;
-    const { routes = [], ...routeProps } = routeTable;
+    const { rsGroup, firewallCreate, routeTableCreate = {} } = this.args;
+    const { routes = [], ...routeProps } = routeTableCreate;
 
-    if (firewall) {
+    if (firewallCreate) {
       routes.push({
         name: 'Internet',
         ...helpers.defaultRouteRules.defaultInternetRoute,
@@ -161,32 +172,44 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     );
   }
 
-  private createNatGateway() {
-    const { rsGroup, natGateway, publicIpAddresses } = this.args;
-    if (!natGateway) return undefined;
-    if (!publicIpAddresses) throw new Error('PublicIpAddresses is required when NatGateway is created');
+  private createPublicIpAddresses(): types.ResourceInputs[] {
+    const { publicIpCreate, publicIpAddresses } = this.args;
+    if (publicIpAddresses) return publicIpAddresses;
+    if (!publicIpCreate) return [];
+
+    this.ipAddressInstance = new IpAddresses(publicIpCreate.name, publicIpCreate, {
+      dependsOn: this.opts?.dependsOn,
+      parent: this,
+    });
+    return Object.values(this.ipAddressInstance.ipAddresses);
+  }
+
+  private createNatGateway(ipAddresses: types.ResourceInputs[]) {
+    const { rsGroup, natGatewayCreate } = this.args;
+    if (!natGatewayCreate) return undefined;
+    if (!ipAddresses) throw new Error('PublicIpAddresses is required when NatGateway is created');
 
     return new network.NatGateway(
       `${this.name}-ngw`,
       {
         ...rsGroup,
-        ...natGateway,
-        sku: { name: natGateway.sku },
-        publicIpAddresses,
+        ...natGatewayCreate,
+        sku: { name: natGatewayCreate.sku },
+        publicIpAddresses: ipAddresses,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },
     );
   }
 
   private createVpnGateway(subnets: Record<string, network.Subnet>) {
-    const { rsGroup, vpnGateway } = this.args;
-    if (!vpnGateway) return undefined;
+    const { rsGroup, vpnGatewayCreate } = this.args;
+    if (!vpnGatewayCreate) return undefined;
 
     const vpnSubnet = subnets[helpers.AzureSubnetNames.GatewaySubnetName];
     return new VpnGateway(
       `${this.name}-vpn`,
       {
-        ...vpnGateway,
+        ...vpnGatewayCreate,
         rsGroup,
         subnetId: vpnSubnet.id,
       },
@@ -195,8 +218,8 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   }
 
   private createFirewall(subnets: Record<string, network.Subnet>) {
-    const { rsGroup, natGateway, publicIpAddresses, firewall } = this.args;
-    if (!firewall) return undefined;
+    const { rsGroup, natGatewayCreate, publicIpAddresses, firewallCreate } = this.args;
+    if (!firewallCreate) return undefined;
 
     const firewallSubnet = subnets[helpers.AzureSubnetNames.AzFirewallSubnet];
     const firewallManageSubnet = subnets[helpers.AzureSubnetNames.AzFirewallManagementSubnet];
@@ -204,13 +227,13 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     return new Firewall(
       `${this.name}-fw`,
       {
-        ...firewall,
+        ...firewallCreate,
         rsGroup,
         managementIpConfiguration:
-          firewallManageSubnet && firewall.managementPublicIpAddress
+          firewallManageSubnet && firewallCreate.managementPublicIpAddress
             ? {
                 name: `${this.name}-fw-management`,
-                publicIPAddress: firewall.managementPublicIpAddress,
+                publicIPAddress: firewallCreate.managementPublicIpAddress,
                 subnet: { id: firewallManageSubnet.id },
               }
             : undefined,
@@ -220,7 +243,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
               ips.map((i, index) => ({
                 name: `${this.name}-${i.resourceName}-ip-config`,
                 //Only link the public Ip Address when nateGateway not created.
-                publicIPAddress: natGateway ? undefined : i,
+                publicIPAddress: natGatewayCreate ? undefined : i,
                 //Only link the subnet to the first ipConfigurations
                 subnet: index === 0 ? { id: firewallSubnet.id } : undefined,
               })),
@@ -262,11 +285,11 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     routeTable: RouteTable;
     securityGroup?: network.NetworkSecurityGroup;
   }) {
-    const { rsGroup, firewall, basion, vpnGateway, vnet } = this.args;
+    const { rsGroup, firewallCreate, basion, vpnGatewayCreate, vnet } = this.args;
     const subnets = vnet.subnets ?? [];
     const dependsOn: pulumi.Input<pulumi.Resource>[] = [];
 
-    if (firewall) {
+    if (firewallCreate) {
       //If NateGateway is together with Firewall, then NatGateway must be link to the Firewall Subnet only.
       if (natGateway) {
         subnets.forEach((s) => {
@@ -276,16 +299,16 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
 
       subnets.push({
         subnetName: helpers.AzureSubnetNames.AzFirewallSubnet,
-        addressPrefix: firewall.subnetPrefix,
+        addressPrefix: firewallCreate.subnetPrefix,
         disableSecurityGroup: true,
         disableRouteTable: false,
         disableNatGateway: false,
       });
 
-      if (firewall.managementSubnetPrefix) {
+      if (firewallCreate.managementSubnetPrefix) {
         subnets.push({
           subnetName: helpers.AzureSubnetNames.AzFirewallManagementSubnet,
-          addressPrefix: firewall.managementSubnetPrefix,
+          addressPrefix: firewallCreate.managementSubnetPrefix,
           disableSecurityGroup: true,
           disableRouteTable: true,
           disableNatGateway: true,
@@ -301,10 +324,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         disableNatGateway: true,
       });
     }
-    if (vpnGateway) {
+    if (vpnGatewayCreate) {
       subnets.push({
         subnetName: helpers.AzureSubnetNames.GatewaySubnetName,
-        addressPrefix: vpnGateway.subnetPrefix,
+        addressPrefix: vpnGatewayCreate.subnetPrefix,
         disableSecurityGroup: true,
         disableRouteTable: true,
         disableNatGateway: true,
@@ -409,15 +432,15 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   // }
 
   private createPeering(vnet: network.VirtualNetwork) {
-    const { vnetPeering } = this.args;
-    if (!vnetPeering) return undefined;
+    const { vnetPeeringCreate } = this.args;
+    if (!vnetPeeringCreate) return undefined;
 
     return new NetworkPeering(
       `${this.name}-peering`,
       {
-        ...vnetPeering,
+        ...vnetPeeringCreate,
         firstVnet: { id: vnet.id, resourceName: vnet.name },
-        secondVnet: vnetPeering.vnet,
+        secondVnet: vnetPeeringCreate.vnet,
       },
       { dependsOn: vnet, parent: this },
     );

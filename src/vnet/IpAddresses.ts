@@ -28,7 +28,7 @@ export interface IpAddressesArgs extends CommonBaseArgs {
     | 'publicIPAllocationMethod'
     | 'natGateway'
   >;
-  ipAddresses: Array<Pick<network.PublicIPAddressArgs, 'zones'> & { name: string; sku?: IpSku }>;
+  ipAddresses: Array<Partial<Pick<network.PublicIPAddressArgs, 'zones'>> & { name: string; sku?: IpSku }>;
 }
 
 export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
@@ -69,7 +69,7 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
   }
 
   public getOutputs() {
-    return {};
+    return this.ipAddresses;
   }
 
   private createIpPrefix() {

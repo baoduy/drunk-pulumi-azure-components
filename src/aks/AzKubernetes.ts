@@ -15,14 +15,11 @@ export interface AzKubernetesArgs
     types.WithEncryptionEnabler,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
-    Pick<
-      ccs.ManagedClusterArgs,
-      | 'dnsPrefix'
-      | 'supportPlan'
-      | 'autoScalerProfile'
-      | 'autoUpgradeProfile'
-      | 'disableLocalAccounts'
-      | 'storageProfile'
+    Partial<
+      Pick<
+        ccs.ManagedClusterArgs,
+        'dnsPrefix' | 'supportPlan' | 'autoScalerProfile' | 'autoUpgradeProfile' | 'storageProfile'
+      >
     > {
   sku: ccs.ManagedClusterSKUTier;
   agentPoolProfiles: pulumi.Input<
@@ -73,7 +70,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
     this.createMaintenance(cluster);
     this.assignPermission(cluster);
-    this.addAksCredentialToVault(cluster);
+    //this.addAksCredentialToVault(cluster);
 
     this.id = cluster.id;
     this.resourceName = cluster.name;
@@ -170,6 +167,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
 
         enableRBAC: true,
+        disableLocalAccounts: true,
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,
@@ -354,27 +352,27 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     });
   }
 
-  private addAksCredentialToVault(aks: ccs.ManagedCluster) {
-    const { rsGroup, disableLocalAccounts, vaultInfo } = this.args;
-    if (!vaultInfo) return undefined;
-    return pulumi.all([aks.name, rsGroup.resourceGroupName, disableLocalAccounts]).apply(([name, rgName, disabled]) => {
-      if (!name) return;
+  // private addAksCredentialToVault(aks: ccs.ManagedCluster) {
+  //   const { rsGroup, disableLocalAccounts, vaultInfo } = this.args;
+  //   if (!vaultInfo) return undefined;
+  //   return pulumi.all([aks.name, rsGroup.resourceGroupName, disableLocalAccounts]).apply(([name, rgName, disabled]) => {
+  //     if (!name) return;
 
-      const credential = aksHelpers.getAksConfig({
-        resourceName: name,
-        resourceGroupName: rgName,
-        disableLocalAccounts: disabled,
-      });
+  //     const credential = aksHelpers.getAksConfig({
+  //       resourceName: name,
+  //       resourceGroupName: rgName,
+  //       disableLocalAccounts: disabled,
+  //     });
 
-      return new VaultSecret(
-        `${this.name}-credential`,
-        {
-          vaultInfo,
-          value: credential,
-          contentType: `AzKubernetes ${this.name} aks config`,
-        },
-        { dependsOn: aks, parent: this, retainOnDelete: true },
-      );
-    });
-  }
+  //     return new VaultSecret(
+  //       `${this.name}-credential`,
+  //       {
+  //         vaultInfo,
+  //         value: credential,
+  //         contentType: `AzKubernetes ${this.name} aks config`,
+  //       },
+  //       { dependsOn: aks, parent: this, retainOnDelete: true },
+  //     );
+  //   });
+  // }
 }

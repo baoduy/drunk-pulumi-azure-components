@@ -1,5 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
-import { GroupRole, GroupRoleOutput, UserAssignedIdentity } from './azAd';
+import { GroupRole, GroupRoleArgs, GroupRoleOutput, UserAssignedIdentity } from './azAd';
 import { BaseComponent } from './base/BaseComponent';
 import { getComponentResourceType } from './base/helpers';
 import { RsGroup, RsGroupArgs } from './common';
@@ -25,11 +25,12 @@ export type ResourceBuilderOutputs = {
 type CommonProps = 'rsGroup' | 'groupRoles' | 'vaultInfo' | 'resourceGroupName';
 
 export interface ResourceBuilderArgs extends Omit<RsGroupArgs, CommonProps> {
-  groupRoles?: { createWithName?: string } | GroupRoleOutputTypes;
-  vault?: Omit<KeyVaultArgs, CommonProps>;
-  logs?: Omit<LogsArgs, CommonProps>;
-  diskEncryption?: Omit<DiskEncryptionSetArgs, CommonProps>;
-  enableDefaultUAssignId?: boolean;
+  groupRolesCreate?: { name: string } & GroupRoleArgs;
+  groupRoles?: GroupRoleOutputTypes | GroupRole;
+  vaultCreate?: Omit<KeyVaultArgs, CommonProps>;
+  logsCreate?: Omit<LogsArgs, CommonProps>;
+  diskEncryptionCreate?: Omit<DiskEncryptionSetArgs, CommonProps>;
+  defaultUAssignIdCreate?: boolean;
 }
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
@@ -42,17 +43,24 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
-    const { groupRoles, vault, enableDefaultUAssignId, logs, diskEncryption, ...props } = args;
+    const {
+      groupRolesCreate,
+      groupRoles,
+      vaultCreate,
+      defaultUAssignIdCreate,
+      logsCreate,
+      diskEncryptionCreate,
+      ...props
+    } = args;
 
     if (groupRoles) {
-      if ('createWithName' in groupRoles) {
-        this.groupRoles = new GroupRole(
-          groupRoles.createWithName,
-          {},
-          { dependsOn: opts?.dependsOn, parent: this },
-        ).getOutputs();
-      } else if (groupRoles instanceof GroupRole) this.groupRoles = groupRoles.getOutputs();
-      else this.groupRoles = groupRoles as GroupRoleOutputTypes;
+      if (groupRoles instanceof GroupRole) this.groupRoles = groupRoles.getOutputs();
+      else this.groupRoles = groupRoles;
+    } else if (groupRolesCreate) {
+      this.groupRoles = new GroupRole(groupRolesCreate.name, groupRolesCreate, {
+        dependsOn: opts?.dependsOn,
+        parent: this,
+      }).getOutputs();
     }
 
     this.rsGroup = new RsGroup(
@@ -61,15 +69,15 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       { dependsOn: opts?.dependsOn, parent: this },
     );
 
-    if (vault) {
+    if (vaultCreate) {
       this.vaultInfo = new KeyVault(
         name,
-        { ...vault, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
+        { ...vaultCreate, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
         { dependsOn: this.rsGroup, parent: this },
       );
     }
 
-    if (enableDefaultUAssignId) {
+    if (defaultUAssignIdCreate) {
       this.defaultUAssignedId = new UserAssignedIdentity(
         name,
         {
@@ -81,11 +89,11 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       );
     }
 
-    if (logs) {
+    if (logsCreate) {
       this.logs = new Logs(
         name,
         {
-          ...logs,
+          ...logsCreate,
           rsGroup: this.rsGroup,
           vaultInfo: this.vaultInfo,
           groupRoles: this.groupRoles,
@@ -94,11 +102,11 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       );
     }
 
-    if (diskEncryption) {
+    if (diskEncryptionCreate) {
       this.diskEncryptionSet = new DiskEncryptionSet(
         name,
         {
-          ...diskEncryption,
+          ...diskEncryptionCreate,
           rsGroup: this.rsGroup,
           encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
           defaultUAssignedId: this.defaultUAssignedId,

@@ -71,6 +71,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
   }
 
   private configHierarchyRoles(roles: { [k: string]: AzRole }) {
+    const deps = Object.values(roles);
     if (this.admin && this.contributor) {
       new azAd.GroupMember(
         `${this.name}-admin2contributor`,
@@ -78,7 +79,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
           groupObjectId: this.contributor.objectId,
           memberObjectId: this.admin.objectId,
         },
-        { dependsOn: Object.values(roles), parent: this },
+        { dependsOn: deps, parent: this, retainOnDelete: true },
       );
     }
 
@@ -89,7 +90,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
           groupObjectId: this.readOnly.objectId,
           memberObjectId: this.contributor.objectId,
         },
-        { dependsOn: Object.values(roles), parent: this },
+        { dependsOn: deps, parent: this, retainOnDelete: true },
       );
     }
   }

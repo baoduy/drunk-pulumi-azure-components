@@ -5,6 +5,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
+import { rsHelpers } from '../helpers';
 
 export type VmScheduleType = {
   /** The time zone ID: https://stackoverflow.com/questions/7908343/list-of-timezone-ids-for-use-with-findtimezonebyid-in-c */
@@ -190,7 +191,8 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
   private createCredentials() {
     const adminLogin = pulumi.interpolate`${this.name}-admin-${
       this.createRandomString({ type: 'string', length: 6 }).value
-    }`.apply((s) => s.substring(0, 20));
+    }`.apply((s) => rsHelpers.removeDashes(s.substring(0, 20)));
+
     const password = this.createPassword();
 
     this.addSecrets({

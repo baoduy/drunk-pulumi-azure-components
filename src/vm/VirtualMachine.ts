@@ -217,24 +217,31 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
   private createSchedule(vm: compute.VirtualMachine) {
     const { rsGroup, schedule } = this.args;
     if (!schedule) return undefined;
-    return new devtestlab.GlobalSchedule(
-      this.name,
-      {
-        ...rsGroup,
-        dailyRecurrence: { time: schedule.autoShutdownTime },
-        timeZoneId: schedule.timeZone,
-        status: 'Enabled',
-        targetResourceId: vm.id,
-        taskType: 'ComputeVmShutdownTask',
-        notificationSettings: {
-          status: schedule.webHook || schedule.emailNotification ? 'Enabled' : 'Disabled',
-          emailRecipient: schedule.emailNotification?.join(';'),
-          notificationLocale: 'en',
-          timeInMinutes: 30,
-          webhookUrl: schedule.webHook,
-        },
-      },
-      { dependsOn: vm, parent: this, retainOnDelete: true },
+
+    return vm.name.apply(
+      (n) =>
+        new devtestlab.GlobalSchedule(
+          `shutdown-computevm-${n}`,
+          {
+            ...rsGroup,
+            name: `shutdown-computevm-${n}`,
+            dailyRecurrence: { time: schedule.autoShutdownTime },
+
+            timeZoneId: schedule.timeZone,
+            status: 'Enabled',
+            targetResourceId: vm.id,
+            taskType: 'ComputeVmShutdownTask',
+
+            notificationSettings: {
+              status: schedule.webHook || schedule.emailNotification ? 'Enabled' : 'Disabled',
+              emailRecipient: schedule.emailNotification?.join(';'),
+              notificationLocale: 'en',
+              timeInMinutes: 30,
+              webhookUrl: schedule.webHook,
+            },
+          },
+          { dependsOn: vm, parent: this, deleteBeforeReplace: true, deletedWith: vm },
+        ),
     );
   }
 

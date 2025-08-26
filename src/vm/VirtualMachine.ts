@@ -27,9 +27,8 @@ export interface VirtualMachineArgs
       'osProfile' | 'storageProfile' | 'identity' | 'networkProfile' | 'resourceGroupName' | 'location'
     > {
   osProfile?: Omit<inputs.compute.OSProfileArgs, 'adminPassword' | 'adminUsername'>;
-  storageProfile: Pick<
-    inputs.compute.StorageProfileArgs,
-    'imageReference' | 'alignRegionalDisksToVMZone' | 'diskControllerType'
+  storageProfile: Partial<
+    Pick<inputs.compute.StorageProfileArgs, 'imageReference' | 'alignRegionalDisksToVMZone' | 'diskControllerType'>
   > & {
     osDisk: Omit<inputs.compute.OSDiskArgs, 'encryptionSettings'>;
     dataDisks?: Omit<inputs.compute.DataDiskArgs, 'managedDisk'>[];

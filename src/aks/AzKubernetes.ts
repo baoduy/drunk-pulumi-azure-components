@@ -26,6 +26,8 @@ export interface AzKubernetesArgs
     inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
       vmSize: pulumi.Input<string>;
       vnetSubnetID: pulumi.Input<string>;
+      enableEncryptionAtHost: pulumi.Input<boolean>;
+      osDiskSizeGB: pulumi.Input<number>;
     }
   >[];
   attachToAcr?: types.ResourceInputs;
@@ -34,7 +36,7 @@ export interface AzKubernetesArgs
     enablePrivateClusterPublicFQDN?: boolean;
     enableVerticalPodAutoscaler?: boolean;
     /** KEDA (Kubernetes Event-driven Autoscaling) settings for the workload auto-scaler profile. */
-    enableKeda?: boolean;
+    //enableKeda?: boolean;
     enableWorkloadIdentity?: boolean;
     enablePodIdentity?: boolean;
   };
@@ -70,7 +72,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
     this.createMaintenance(cluster);
     this.assignPermission(cluster);
-    //this.addAksCredentialToVault(cluster);
 
     this.id = cluster.id;
     this.resourceName = cluster.name;
@@ -154,6 +155,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       network,
       logWorkspace,
       sku,
+      autoScalerProfile,
       ...props
     } = this.args;
     const nodeRg = nodeResourceGroup ?? pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
@@ -235,12 +237,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           ssh: { publicKeys: [{ keyData: login.sshPublicKey }] },
         },
         windowsProfile: undefined,
-
         workloadAutoScalerProfile: {
           verticalPodAutoscaler: {
             enabled: features?.enableVerticalPodAutoscaler || false,
           },
-          keda: { enabled: features?.enableKeda || false },
+          keda: { enabled: true },
         },
 
         //azureMonitorProfile: { metrics: { enabled } },
@@ -280,6 +281,10 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
         },
 
+        // identityProfile: defaultUAssignedId
+        //   ? pulumi.output(defaultUAssignedId).apply((uID) => ({ [uID.id]: uID }))
+        //   : undefined,
+
         networkProfile: {
           ...network,
           networkMode: ccs.NetworkMode.Transparent,
@@ -288,6 +293,30 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
           loadBalancerSku: 'Standard',
           outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
+        },
+
+        autoScalerProfile: autoScalerProfile ?? {
+          balanceSimilarNodeGroups: 'false',
+          expander: 'random',
+          maxEmptyBulkDelete: '10',
+          maxGracefulTerminationSec: '600',
+          maxNodeProvisionTime: '15m',
+          maxTotalUnreadyPercentage: '45',
+          newPodScaleUpDelay: '0s',
+          okTotalUnreadyCount: '3',
+          scaleDownDelayAfterAdd: '10m',
+          scaleDownDelayAfterDelete: '10s',
+          scaleDownDelayAfterFailure: '3m',
+          scaleDownUnneededTime: '10m',
+          scaleDownUnreadyTime: '20m',
+          scaleDownUtilizationThreshold: '0.5',
+          scanInterval: '10s',
+          skipNodesWithLocalStorage: 'false',
+          skipNodesWithSystemPods: 'true',
+        },
+        autoUpgradeProfile: {
+          nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,
+          upgradeChannel: ccs.UpgradeChannel.Stable,
         },
       },
       {
@@ -300,41 +329,41 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
   private createMaintenance(aks: ccs.ManagedCluster) {
     const { rsGroup, maintenance } = this.args;
-    if (!maintenance) return undefined;
 
     return new ccs.MaintenanceConfiguration(
       `${this.name}-MaintenanceConfiguration`,
       {
         ...rsGroup,
-        ...maintenance,
         configName: 'default',
         resourceName: aks.name,
-        timeInWeek: maintenance.timeInWeek ?? [
+        timeInWeek: maintenance?.timeInWeek ?? [
           {
             day: ccs.WeekDay.Sunday,
             hourSlots: [0, 23],
           },
         ],
+        notAllowedTime: maintenance?.notAllowedTime,
       },
-      { dependsOn: aks, deleteBeforeReplace: true },
+      { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
     );
   }
 
   private assignPermission(aks: ccs.ManagedCluster) {
     const { rsGroup, attachToAcr } = this.args;
-    pulumi.all([aks.identity, aks.identityProfile]).apply(([identity, identityProfile]) => {
+    pulumi.all([aks.identity, aks.identityProfile, attachToAcr]).apply(([identity, identityProfile, acr]) => {
       //User Assigned Identity
-      if (identityProfile?.kubeletIdentity?.principalId) {
-        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletIdentity!.principalId! });
+      //console.log(Object.values(identityProfile!));
+      if (identityProfile?.kubeletidentity) {
+        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletidentity!.objectId! });
 
-        if (attachToAcr) {
+        if (acr) {
           new RoleAssignment(
             `${this.name}-aks-acr`,
             {
-              principalId: identityProfile.kubeletIdentity!.principalId!,
+              principalId: identityProfile.kubeletidentity!.objectId!,
               principalType: 'ServicePrincipal',
-              roleName: 'acr-pull',
-              scope: attachToAcr.id,
+              roleName: 'AcrPull',
+              scope: acr.id,
             },
             { dependsOn: aks, deletedWith: aks, parent: this },
           );

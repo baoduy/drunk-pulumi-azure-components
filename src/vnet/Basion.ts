@@ -88,7 +88,7 @@ export class Basion extends BaseComponent<BasionArgs> {
       `${this.name}-ip`,
       {
         rsGroup,
-        sku: { name: 'Basic' },
+        sku: { name: 'Standard' },
         ipAddresses: [{ name: n }],
       },
       { parent: this },

@@ -212,7 +212,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
         ipConfigurations: [{ name: 'ipconfig', subnet: { id: network.subnetId }, primary: true }],
         nicType: network.nicType ?? nw.NetworkInterfaceNicType.Standard,
       },
-      { ...this.opts, parent: this, retainOnDelete: true },
+      { ...this.opts, parent: this },
     );
   }
 

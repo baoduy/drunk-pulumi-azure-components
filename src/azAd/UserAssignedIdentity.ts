@@ -1,13 +1,17 @@
 import * as mid from '@pulumi/azure-native/managedidentity';
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
+import { azureEnv } from '../helpers';
 import { BaseArgs, BaseResourceComponent } from '../base';
 import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
 
 export interface UserAssignedIdentityArgs
   extends Omit<BaseArgs, 'groupRoles'>,
     WithMemberOfArgs,
-    WithResourceGroupInputs {}
+    WithResourceGroupInputs {
+  federation?: Partial<Pick<mid.FederatedIdentityCredentialArgs, 'audiences' | 'issuer'>> &
+    Pick<mid.FederatedIdentityCredentialArgs, 'subject'>;
+}
 
 export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIdentityArgs> {
   public readonly id: pulumi.Output<string>;
@@ -16,8 +20,23 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
 
   constructor(name: string, args: UserAssignedIdentityArgs, opts?: pulumi.ComponentResourceOptions) {
     super('UserAssignedIdentity', name, args, opts);
+    const { rsGroup, federation } = args;
 
-    const managedIdentity = new mid.UserAssignedIdentity(name, { ...args.rsGroup }, { ...opts, parent: this });
+    const managedIdentity = new mid.UserAssignedIdentity(name, { ...rsGroup }, { ...opts, parent: this });
+
+    if (federation) {
+      new mid.FederatedIdentityCredential(
+        name,
+        {
+          ...rsGroup,
+          audiences: federation.audiences ?? ['api://AzureADTokenExchange'],
+          issuer: federation.issuer ?? pulumi.interpolate`https://login.microsoftonline.com/${azureEnv.tenantId}/v2.0`,
+          subject: federation.subject,
+          resourceName: managedIdentity.name,
+        },
+        { dependsOn: managedIdentity, parent: this },
+      );
+    }
 
     this.addSecrets({
       id: managedIdentity.id,
@@ -30,7 +49,6 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     this.principalId = managedIdentity.principalId;
 
     this.addMemberOf();
-
     this.registerOutputs();
   }
 

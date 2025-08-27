@@ -20,7 +20,7 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
   constructor(name: string, args: AutomationArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Automation', name, args, opts);
 
-    const { rsGroup, enableEncryption, defaultUAssignedId } = args;
+    const { rsGroup, enableEncryption, defaultUAssignedId, sku } = args;
     const uAssignedId = this.createUAssignedId();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
 
@@ -28,8 +28,7 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
       name,
       {
         ...rsGroup,
-        automationAccountName: name,
-        sku: { name: 'Free' },
+        sku: sku ?? { name: 'Free' },
         publicNetworkAccess: false,
         disableLocalAuth: true,
 

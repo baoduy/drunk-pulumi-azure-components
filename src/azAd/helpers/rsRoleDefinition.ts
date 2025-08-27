@@ -104,6 +104,11 @@ const rsRoles = {
     contributor: ['Redis Cache Contributor'],
     admin: [],
   },
+  virtualMachine: {
+    readOnly: ['Virtual Machine User Login', 'Virtual Machine Local User Login'],
+    contributor: ['Virtual Machine Contributor'],
+    admin: [],
+  },
 };
 
 type RsRoleDefinitionWithMethods = RsRoleDefinitionType & {

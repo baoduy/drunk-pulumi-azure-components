@@ -1,7 +1,7 @@
 import * as mid from '@pulumi/azure-native/managedidentity';
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { azureEnv } from '../helpers';
+import { azureEnv, rsHelpers } from '../helpers';
 import { BaseArgs, BaseResourceComponent } from '../base';
 import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
 
@@ -9,8 +9,10 @@ export interface UserAssignedIdentityArgs
   extends Omit<BaseArgs, 'groupRoles'>,
     WithMemberOfArgs,
     WithResourceGroupInputs {
-  federation?: Partial<Pick<mid.FederatedIdentityCredentialArgs, 'audiences' | 'issuer'>> &
-    Pick<mid.FederatedIdentityCredentialArgs, 'subject'>;
+  federations?: Record<
+    string,
+    Partial<Pick<mid.FederatedIdentityCredentialArgs, 'issuer'>> & Pick<mid.FederatedIdentityCredentialArgs, 'subject'>
+  >;
 }
 
 export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIdentityArgs> {
@@ -20,23 +22,11 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
 
   constructor(name: string, args: UserAssignedIdentityArgs, opts?: pulumi.ComponentResourceOptions) {
     super('UserAssignedIdentity', name, args, opts);
-    const { rsGroup, federation } = args;
+    const { rsGroup } = args;
 
     const managedIdentity = new mid.UserAssignedIdentity(name, { ...rsGroup }, { ...opts, parent: this });
 
-    if (federation) {
-      new mid.FederatedIdentityCredential(
-        name,
-        {
-          ...rsGroup,
-          audiences: federation.audiences ?? ['api://AzureADTokenExchange'],
-          issuer: federation.issuer ?? pulumi.interpolate`https://login.microsoftonline.com/${azureEnv.tenantId}/v2.0`,
-          subject: federation.subject,
-          resourceName: managedIdentity.name,
-        },
-        { dependsOn: managedIdentity, parent: this },
-      );
-    }
+    this.createFederations(managedIdentity);
 
     this.addSecrets({
       id: managedIdentity.id,
@@ -58,6 +48,27 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
       clientId: this.clientId,
       principalId: this.principalId,
     };
+  }
+
+  private createFederations(managedIdentity: mid.UserAssignedIdentity) {
+    const { rsGroup, federations } = this.args;
+    if (!federations) return undefined;
+    return rsHelpers.dictReduce(
+      federations,
+      (name, props) =>
+        new mid.FederatedIdentityCredential(
+          `${this.name}-${name}`,
+          {
+            ...rsGroup,
+            federatedIdentityCredentialResourceName: name,
+            audiences: ['api://AzureADTokenExchange'],
+            issuer: props.issuer ?? pulumi.interpolate`https://login.microsoftonline.com/${azureEnv.tenantId}/v2.0`,
+            subject: props.subject,
+            resourceName: managedIdentity.name,
+          },
+          { dependsOn: managedIdentity, parent: this, deletedWith: managedIdentity },
+        ),
+    );
   }
 
   private addMemberOf() {

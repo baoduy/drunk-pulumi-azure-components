@@ -1,10 +1,11 @@
 import * as pulumi from '@pulumi/pulumi';
-import { GroupRole, GroupRoleArgs, GroupRoleOutput, UserAssignedIdentity } from './azAd';
+import { GroupRole, GroupRoleArgs, GroupRoleOutput, UserAssignedIdentity, UserAssignedIdentityArgs } from './azAd';
 import { BaseComponent } from './base/BaseComponent';
 import { getComponentResourceType } from './base/helpers';
 import { RsGroup, RsGroupArgs } from './common';
 import { Logs, LogsArgs } from './logs';
 import { KeyVault, KeyVaultArgs } from './vault';
+import * as types from './types';
 import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
 
 type GroupRoleOutputTypes = {
@@ -22,15 +23,15 @@ export type ResourceBuilderOutputs = {
   diskEncryptionSet?: ReturnType<DiskEncryptionSet['getOutputs']>;
 };
 
-type CommonProps = 'rsGroup' | 'groupRoles' | 'vaultInfo' | 'resourceGroupName';
-
-export interface ResourceBuilderArgs extends Omit<RsGroupArgs, CommonProps> {
+export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps> {
   groupRolesCreate?: { name: string } & GroupRoleArgs;
   groupRoles?: GroupRoleOutputTypes | GroupRole;
-  vaultCreate?: Omit<KeyVaultArgs, CommonProps>;
-  logsCreate?: Omit<LogsArgs, CommonProps>;
-  diskEncryptionCreate?: Omit<DiskEncryptionSetArgs, CommonProps>;
-  defaultUAssignIdCreate?: boolean;
+  vaultCreate?: Omit<KeyVaultArgs, types.CommonProps>;
+  logsCreate?: Omit<LogsArgs, types.CommonProps>;
+  diskEncryptionCreate?: Omit<DiskEncryptionSetArgs, types.CommonProps>;
+  defaultUAssignedIdCreate?: Omit<UserAssignedIdentityArgs, types.CommonProps | 'memberof'> & {
+    memberof?: types.GroupRoleTypes;
+  };
 }
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
@@ -47,21 +48,13 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       groupRolesCreate,
       groupRoles,
       vaultCreate,
-      defaultUAssignIdCreate,
+      defaultUAssignedIdCreate,
       logsCreate,
       diskEncryptionCreate,
       ...props
     } = args;
 
-    if (groupRoles) {
-      if (groupRoles instanceof GroupRole) this.groupRoles = groupRoles.getOutputs();
-      else this.groupRoles = groupRoles;
-    } else if (groupRolesCreate) {
-      this.groupRoles = new GroupRole(groupRolesCreate.name, groupRolesCreate, {
-        dependsOn: opts?.dependsOn,
-        parent: this,
-      }).getOutputs();
-    }
+    this.groupRoles = this.createGroupRoles();
 
     this.rsGroup = new RsGroup(
       name,
@@ -69,53 +62,10 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       { dependsOn: opts?.dependsOn, parent: this },
     );
 
-    if (vaultCreate) {
-      this.vaultInfo = new KeyVault(
-        name,
-        { ...vaultCreate, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
-        { dependsOn: this.rsGroup, parent: this },
-      );
-    }
-
-    if (defaultUAssignIdCreate) {
-      this.defaultUAssignedId = new UserAssignedIdentity(
-        name,
-        {
-          rsGroup: this.rsGroup,
-          vaultInfo: this.vaultInfo,
-          memberof: this.groupRoles ? [this.groupRoles.readOnly] : undefined,
-        },
-        { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
-      );
-    }
-
-    if (logsCreate) {
-      this.logs = new Logs(
-        name,
-        {
-          ...logsCreate,
-          rsGroup: this.rsGroup,
-          vaultInfo: this.vaultInfo,
-          groupRoles: this.groupRoles,
-        },
-        { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
-      );
-    }
-
-    if (diskEncryptionCreate) {
-      this.diskEncryptionSet = new DiskEncryptionSet(
-        name,
-        {
-          ...diskEncryptionCreate,
-          rsGroup: this.rsGroup,
-          defaultUAssignedId: this.defaultUAssignedId,
-          vaultInfo: this.vaultInfo,
-          groupRoles: this.groupRoles,
-          encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
-        },
-        { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
-      );
-    }
+    this.vaultInfo = this.createVault();
+    this.defaultUAssignedId = this.createUserIdentity();
+    this.logs = this.createLogs();
+    this.diskEncryptionSet = this.createDiskEncryptionSet();
   }
 
   public getOutputs(): ResourceBuilderOutputs {
@@ -127,5 +77,88 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       logs: this.logs?.getOutputs(),
       diskEncryptionSet: this.diskEncryptionSet?.getOutputs(),
     };
+  }
+
+  private createGroupRoles() {
+    const { groupRoles, groupRolesCreate } = this.args;
+    if (groupRoles) {
+      return groupRoles instanceof GroupRole ? groupRoles.getOutputs() : groupRoles;
+    }
+
+    if (groupRolesCreate) {
+      return new GroupRole(groupRolesCreate.name, groupRolesCreate, {
+        dependsOn: this.opts?.dependsOn,
+        parent: this,
+      }).getOutputs();
+    }
+  }
+
+  private createVault() {
+    const { vaultCreate } = this.args;
+    if (!vaultCreate) return undefined;
+
+    return new KeyVault(
+      this.name,
+      { ...vaultCreate, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
+      {
+        dependsOn: this.rsGroup,
+        parent: this,
+      },
+    );
+  }
+
+  private createUserIdentity() {
+    const { defaultUAssignedIdCreate } = this.args;
+    if (!defaultUAssignedIdCreate) return undefined;
+
+    return new UserAssignedIdentity(
+      this.name,
+      {
+        ...defaultUAssignedIdCreate,
+        memberof: this.groupRoles ? [this.groupRoles[defaultUAssignedIdCreate.memberof ?? 'readOnly']] : undefined,
+
+        rsGroup: this.rsGroup,
+        vaultInfo: this.vaultInfo,
+      },
+      {
+        dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup,
+        parent: this,
+      },
+    );
+  }
+
+  private createLogs() {
+    const { logsCreate } = this.args;
+    if (!logsCreate) return undefined;
+
+    return new Logs(
+      this.name,
+      {
+        ...logsCreate,
+        rsGroup: this.rsGroup,
+        vaultInfo: this.vaultInfo,
+        groupRoles: this.groupRoles,
+      },
+      { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+    );
+  }
+
+  private createDiskEncryptionSet() {
+    const { diskEncryptionCreate } = this.args;
+    if (!diskEncryptionCreate) return undefined;
+
+    return new DiskEncryptionSet(
+      this.name,
+      {
+        ...diskEncryptionCreate,
+        encryptionType: diskEncryptionCreate.encryptionType ?? 'EncryptionAtRestWithPlatformAndCustomerKeys',
+
+        rsGroup: this.rsGroup,
+        defaultUAssignedId: this.defaultUAssignedId,
+        vaultInfo: this.vaultInfo,
+        groupRoles: this.groupRoles,
+      },
+      { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+    );
   }
 }

@@ -5,6 +5,15 @@ export type DnsRecordTypes = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'PTR' | 'SOA
 
 export type GroupRoleTypes = 'admin' | 'contributor' | 'readOnly';
 
+export type CommonProps =
+  | 'rsGroup'
+  | 'groupRoles'
+  | 'vaultInfo'
+  | 'resourceGroupName'
+  | 'location'
+  | 'resourceName'
+  | 'tags';
+
 type AsInput<T> = {
   [K in keyof T]: T[K] extends object
     ? T[K] extends Array<any>

@@ -1,6 +1,6 @@
 import * as automation from '@pulumi/azure-native/automation';
 import * as pulumi from '@pulumi/pulumi';
-import { UserAssignedIdentity } from '../azAd';
+import { UserAssignedIdentity, UserAssignedIdentityArgs } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 
@@ -8,7 +8,10 @@ export interface AutomationArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
-    Partial<Pick<automation.AutomationAccountArgs, 'sku'>> {}
+    Partial<Pick<automation.AutomationAccountArgs, 'sku'>>,
+    Omit<UserAssignedIdentityArgs, types.CommonProps | 'memberof'> {
+  memberof?: types.GroupRoleTypes;
+}
 
 export class Automation extends BaseResourceComponent<AutomationArgs> {
   public readonly id: pulumi.Output<string>;
@@ -64,10 +67,10 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
   }
 
   private createUAssignedId() {
-    const { rsGroup, groupRoles, vaultInfo } = this.args;
+    const { rsGroup, groupRoles, vaultInfo, federations, memberof } = this.args;
     return new UserAssignedIdentity(
-      this.name,
-      { rsGroup, vaultInfo, memberof: groupRoles ? [groupRoles.contributor] : undefined },
+      `${this.name}-auto`,
+      { rsGroup, vaultInfo, federations, memberof: groupRoles ? [groupRoles[memberof ?? 'contributor']] : undefined },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }

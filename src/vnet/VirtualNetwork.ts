@@ -1,7 +1,8 @@
 import * as network from '@pulumi/azure-native/network';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs, baseHelpers } from '../base';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { dictReduce } from '../helpers/rsHelpers';
 import * as types from '../types';
 import { Basion, BasionArgs } from './Basion';
 import { Firewall, FirewallArgs } from './Firewall';
@@ -123,7 +124,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     if (firewall) this.firewall = firewall.firewall;
     this.vnet = { id: vnet.id, resourceName: vnet.name };
 
-    this.subnets = baseHelpers.recordMap(subnets, (s) => ({ id: s.id, resourceName: s.name.apply((n) => n!) }));
+    this.subnets = dictReduce(subnets, (name, s) => ({ id: s.id, resourceName: s.name.apply((n) => n!) }));
 
     this.registerOutputs();
   }

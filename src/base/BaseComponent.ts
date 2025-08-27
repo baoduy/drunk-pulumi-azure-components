@@ -46,24 +46,4 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
    * @returns An object containing the component's outputs, either as direct values or Pulumi outputs
    */
   public abstract getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs>;
-
-  /**
-   * Utility method to selectively extract specific properties from the component instance.
-   * Useful for creating a subset of component properties for downstream consumption.
-   *
-   * @template K - Generic type parameter constrained to keys of the component instance
-   * @param keys - Array of property names to extract from the component
-   * @returns A new object containing only the requested properties from the component
-   * @example
-   * ```typescript
-   * const component = new MyComponent();
-   * const subset = component.PickOutputs('name', 'id');
-   * ```
-   */
-  public PickOutputs<K extends keyof this>(...keys: K[]) {
-    return keys.reduce((acc, key) => {
-      acc[key] = (this as any)[key];
-      return acc;
-    }, {} as Pick<this, K>);
-  }
 }

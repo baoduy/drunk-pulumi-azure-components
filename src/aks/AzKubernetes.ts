@@ -22,6 +22,7 @@ export interface AzKubernetesArgs
     > {
   sku: ccs.ManagedClusterSKUTier;
   nodeResourceGroup?: pulumi.Input<string>;
+  namespaces?: Record<string, ccs.NamespaceArgs['properties']>;
   agentPoolProfiles: pulumi.Input<
     inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
       vmSize: pulumi.Input<string>;
@@ -63,6 +64,7 @@ export interface AzKubernetesArgs
 export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
+  public readonly namespaces: Record<string, types.ResourceOutputs>;
 
   constructor(name: string, args: AzKubernetesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzKubernetes', name, args, opts);
@@ -72,9 +74,15 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
     this.createMaintenance(cluster);
     this.assignPermission(cluster);
+    const nss = this.createNameSpaces(cluster);
 
     this.id = cluster.id;
     this.resourceName = cluster.name;
+
+    this.namespaces = rsHelpers.dictReduce(nss, (n, ns) => ({
+      id: ns.id,
+      resourceName: ns.name.apply((n) => n!),
+    }));
 
     this.registerOutputs();
   }
@@ -83,6 +91,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      namespaces: this.namespaces,
     };
   }
 
@@ -327,6 +336,26 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     );
   }
 
+  private createNameSpaces(aks: ccs.ManagedCluster) {
+    const { rsGroup, namespaces } = this.args;
+    if (!namespaces) return {} as Record<string, ccs.Namespace>;
+
+    return rsHelpers.dictReduce(
+      namespaces,
+      (n, props) =>
+        new ccs.Namespace(
+          `${this.name}-ns-${n}`,
+          {
+            ...rsGroup,
+            resourceName: aks.name,
+            namespaceName: n,
+            properties: props,
+          },
+          { dependsOn: aks, parent: this, retainOnDelete: true },
+        ),
+    );
+  }
+
   private createMaintenance(aks: ccs.ManagedCluster) {
     const { rsGroup, maintenance } = this.args;
 
@@ -385,28 +414,4 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       }
     });
   }
-
-  // private addAksCredentialToVault(aks: ccs.ManagedCluster) {
-  //   const { rsGroup, disableLocalAccounts, vaultInfo } = this.args;
-  //   if (!vaultInfo) return undefined;
-  //   return pulumi.all([aks.name, rsGroup.resourceGroupName, disableLocalAccounts]).apply(([name, rgName, disabled]) => {
-  //     if (!name) return;
-
-  //     const credential = aksHelpers.getAksConfig({
-  //       resourceName: name,
-  //       resourceGroupName: rgName,
-  //       disableLocalAccounts: disabled,
-  //     });
-
-  //     return new VaultSecret(
-  //       `${this.name}-credential`,
-  //       {
-  //         vaultInfo,
-  //         value: credential,
-  //         contentType: `AzKubernetes ${this.name} aks config`,
-  //       },
-  //       { dependsOn: aks, parent: this, retainOnDelete: true },
-  //     );
-  //   });
-  // }
 }

@@ -4,6 +4,18 @@ import * as azureEnv from './azureEnv';
 import * as stackInfo from './stackEnv';
 
 /**
+ * Reduces a dictionary (object) by applying a processor function to each key-value pair.
+ * @param inputs - The input dictionary to process.
+ * @param processor - The function to apply to each key-value pair.
+ * @returns A new dictionary with the processed values.
+ */
+export const dictReduce = <K extends keyof any, T, O>(inputs: Record<K, T>, processor: (key: K, props: T) => O) =>
+  Object.entries(inputs).reduce((acc, [key, value]) => {
+    acc[key as K] = processor(key as K, value as T);
+    return acc;
+  }, {} as Record<K, O>);
+
+/**
  * Delays the execution for a specified amount of time.
  * @param ms - The number of milliseconds to delay.
  * @returns A promise that resolves after the specified delay.

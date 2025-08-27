@@ -1,4 +1,5 @@
 import * as types from '../../types';
+import { dictReduce } from '../../helpers/rsHelpers';
 
 export type RsRoleDefinitionType = Record<types.GroupRoleTypes, string[]>;
 
@@ -104,30 +105,50 @@ const rsRoles = {
     admin: [],
   },
 };
-export type RsRoleDefinitionObject = {
-  [K in keyof typeof rsRoles]: RsRoleDefinitionType & {
-    getReadOnly: () => RsRoleDefinitionType;
-    getContributor: () => RsRoleDefinitionType;
-  };
+
+type RsRoleDefinitionWithMethods = RsRoleDefinitionType & {
+  getReadOnly: () => RsRoleDefinitionType;
+  getContributor: () => RsRoleDefinitionType;
 };
 
-function getRsRoleDefinitions(): RsRoleDefinitionObject {
-  return Object.entries(rsRoles).reduce((acc, [key, roles]) => {
-    acc[key as keyof typeof rsRoles] = {
-      ...roles,
-      getReadOnly: () => ({
-        admin: [],
-        contributor: [],
-        readOnly: roles.readOnly,
-      }),
-      getContributor: () => ({
-        admin: [],
-        contributor: roles.contributor,
-        readOnly: roles.readOnly,
-      }),
-    };
-    return acc;
-  }, {} as RsRoleDefinitionObject);
+export type RsRoleDefinitionObject = {
+  [K in keyof typeof rsRoles]: RsRoleDefinitionWithMethods;
+};
+
+function getRsRoleDefinitions() {
+  // return Object.entries(rsRoles).reduce((acc, [key, roles]) => {
+  //   acc[key as keyof typeof rsRoles] = {
+  //     ...roles,
+  //     getReadOnly: () => ({
+  //       admin: [],
+  //       contributor: [],
+  //       readOnly: roles.readOnly,
+  //     }),
+  //     getContributor: () => ({
+  //       admin: [],
+  //       contributor: roles.contributor,
+  //       readOnly: roles.readOnly,
+  //     }),
+  //   };
+  //   return acc;
+  // }, {} as RsRoleDefinitionObject);
+  return dictReduce(
+    rsRoles,
+    (key, roles) =>
+      ({
+        ...roles,
+        getReadOnly: () => ({
+          admin: [],
+          contributor: [],
+          readOnly: roles.readOnly,
+        }),
+        getContributor: () => ({
+          admin: [],
+          contributor: roles.contributor,
+          readOnly: roles.readOnly,
+        }),
+      } as RsRoleDefinitionWithMethods),
+  );
 }
 
 export const rsRoleDefinitions = getRsRoleDefinitions();

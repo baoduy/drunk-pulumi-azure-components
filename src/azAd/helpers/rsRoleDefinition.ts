@@ -67,20 +67,12 @@ const rsRoles = {
     ],
   },
   containerRegistry: {
-    readOnly: [
-      //'ACR Registry Catalog Lister',
-      'ACR Repository Reader',
-      'AcrQuarantineReader',
-      //'AcrPull',
-    ],
+    readOnly: ['Container Registry Repository Reader', 'AcrPull'],
     contributor: [
-      'AcrImageSigner',
-      'AcrPull',
+      'Container Registry Repository Writer',
       'AcrPush',
-
-      //'ACR Repository Contributor',
-      //'ACR Repository Writer',
-      //'AcrQuarantineWriter',
+      'Container Registry Repository Contributor',
+      'Container Registry Data Importer and Data Reader',
     ],
     admin: ['AcrDelete'],
   },

@@ -5,8 +5,8 @@ export type RsRoleDefinitionType = Record<types.GroupRoleTypes, string[]>;
 
 const rsRoles = {
   rsGroup: {
-    admin: ['Contributor'],
-    contributor: [],
+    admin: [],
+    contributor: ['Contributor'],
     readOnly: ['Reader'],
   },
   aks: {

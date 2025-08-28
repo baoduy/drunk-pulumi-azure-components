@@ -1,5 +1,13 @@
 import * as pulumi from '@pulumi/pulumi';
-import { GroupRole, GroupRoleArgs, GroupRoleOutput, UserAssignedIdentity, UserAssignedIdentityArgs } from './azAd';
+import {
+  GroupRole,
+  GroupRoleArgs,
+  GroupRoleOutput,
+  RoleAssignmentArgs,
+  RoleAssignment,
+  UserAssignedIdentity,
+  UserAssignedIdentityArgs,
+} from './azAd';
 import { BaseComponent } from './base/BaseComponent';
 import { getComponentResourceType } from './base/helpers';
 import { RsGroup, RsGroupArgs } from './common';
@@ -8,6 +16,7 @@ import { KeyVault, KeyVaultArgs } from './vault';
 import * as types from './types';
 import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
 import { Vnet, VnetArgs } from './vnet';
+import { rsHelpers } from './helpers';
 
 type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
@@ -183,5 +192,14 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       },
       { dependsOn: this.rsGroup, parent: this },
     );
+  }
+
+  public grant(props: Omit<RoleAssignmentArgs, 'scope'>) {
+    new RoleAssignment(
+      `${this.name}-${props.roleName}`,
+      { ...props, scope: rsHelpers.getRsGroupIdFrom(this.rsGroup) },
+      { dependsOn: this, deletedWith: this, parent: this },
+    );
+    return this;
   }
 }

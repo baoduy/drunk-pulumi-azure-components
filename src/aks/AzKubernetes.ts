@@ -65,6 +65,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
   public readonly namespaces: Record<string, types.ResourceOutputs>;
+  public readonly privateDnsZone: types.ResourceOutputs | undefined;
 
   constructor(name: string, args: AzKubernetesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzKubernetes', name, args, opts);
@@ -75,6 +76,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     this.createMaintenance(cluster);
     this.assignPermission(cluster);
     const nss = this.createNameSpaces(cluster);
+    this.privateDnsZone = this.getPrivateDNSZone(cluster);
 
     this.id = cluster.id;
     this.resourceName = cluster.name;
@@ -92,6 +94,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       id: this.id,
       resourceName: this.resourceName,
       namespaces: this.namespaces,
+      privateDnsZone: this.privateDnsZone,
     };
   }
 
@@ -379,39 +382,63 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
   private assignPermission(aks: ccs.ManagedCluster) {
     const { rsGroup, attachToAcr } = this.args;
-    pulumi.all([aks.identity, aks.identityProfile, attachToAcr]).apply(([identity, identityProfile, acr]) => {
-      //User Assigned Identity
-      //console.log(Object.values(identityProfile!));
-      if (identityProfile?.kubeletidentity) {
-        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletidentity!.objectId! });
+    pulumi
+      .all([aks.identity, aks.identityProfile, aks.addonProfiles, attachToAcr])
+      .apply(([identity, identityProfile, addon, acr]) => {
+        //User Assigned Identity
+        //console.log(Object.values(identityProfile!));
+        if (identityProfile?.kubeletidentity) {
+          this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletidentity!.objectId! });
 
-        if (acr) {
+          if (acr) {
+            new RoleAssignment(
+              `${this.name}-aks-acr`,
+              {
+                principalId: identityProfile.kubeletidentity!.objectId!,
+                principalType: 'ServicePrincipal',
+                roleName: 'AcrPull',
+                scope: acr.id,
+              },
+              { dependsOn: aks, deletedWith: aks, parent: this },
+            );
+          }
+        }
+
+        //System Managed Identity
+        if (identity?.principalId) {
           new RoleAssignment(
-            `${this.name}-aks-acr`,
+            `${this.name}-aks-identity`,
             {
-              principalId: identityProfile.kubeletidentity!.objectId!,
+              principalId: identity.principalId!,
               principalType: 'ServicePrincipal',
-              roleName: 'AcrPull',
-              scope: acr.id,
+              roleName: 'Contributor',
+              scope: rsHelpers.getRsGroupIdFrom(rsGroup),
             },
             { dependsOn: aks, deletedWith: aks, parent: this },
           );
         }
-      }
 
-      //System Managed Identity
-      if (identity?.principalId) {
-        new RoleAssignment(
-          `${this.name}-aks-identity`,
-          {
-            principalId: identity.principalId!,
-            principalType: 'ServicePrincipal',
-            roleName: 'Contributor',
-            scope: rsHelpers.getRsGroupIdFrom(rsGroup),
-          },
-          { dependsOn: aks, deletedWith: aks, parent: this },
-        );
-      }
+        //addon
+        if (addon?.azureKeyvaultSecretsProvider?.identity) {
+          this.addIdentityToRole('readOnly', {
+            principalId: addon.azureKeyvaultSecretsProvider.identity!.objectId!,
+          });
+        }
+      });
+  }
+
+  private getPrivateDNSZone(aks: ccs.ManagedCluster): types.ResourceOutputs | undefined {
+    const { features } = this.args;
+    if (!features.enablePrivateCluster) return undefined;
+
+    const rsGroup = aks.nodeResourceGroup;
+    const zoneName = aks.privateFQDN.apply((fqdn) => {
+      if (!fqdn) return fqdn!;
+      const firstDot = fqdn.indexOf('.');
+      return firstDot >= 0 ? fqdn.substring(firstDot + 1) : fqdn;
     });
+
+    const id = pulumi.interpolate`/subscriptions/${azureEnv.subscriptionId}/resourceGroups/${rsGroup}/providers/Microsoft.Network/privateDnsZones/${zoneName}`;
+    return { id, resourceName: zoneName };
   }
 }

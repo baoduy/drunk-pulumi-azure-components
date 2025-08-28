@@ -10,20 +10,23 @@ import { convertToIpRange } from './helpers';
 export interface RedisArgs
   extends BaseArgs,
     types.WithResourceGroupInputs,
-    Pick<
-      redis.RedisArgs,
-      | 'sku'
-      | 'zones'
-      | 'disableAccessKeyAuthentication'
-      | 'redisVersion'
-      | 'replicasPerMaster'
-      | 'replicasPerPrimary'
-      | 'tenantSettings'
-      | 'redisConfiguration'
-      | 'identity'
-    > {
+    types.WithUserAssignedIdentity,
+    Partial<
+      Pick<
+        redis.RedisArgs,
+        | 'sku'
+        | 'zones'
+        | 'disableAccessKeyAuthentication'
+        | 'redisVersion'
+        | 'replicasPerMaster'
+        | 'replicasPerPrimary'
+        | 'tenantSettings'
+        | 'redisConfiguration'
+      >
+    >,
+    Partial<Pick<redis.PatchScheduleArgs, 'scheduleEntries'>> {
   network?: {
-    subnetId: pulumi.Input<string>;
+    subnetId?: pulumi.Input<string>;
     staticIP?: pulumi.Input<string>;
     privateLink?: PrivateEndpointType;
     ipRules?: pulumi.Input<pulumi.Input<string>[]>;
@@ -34,12 +37,14 @@ export interface RedisArgs
 export class Redis extends BaseResourceComponent<RedisArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
+  public privateLink: ReturnType<vnet.PrivateEndpoint['getOutputs']> | undefined;
 
   constructor(name: string, args: RedisArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Redis', name, args, opts);
 
     const server = this.createRedis();
     this.createNetwork(server);
+    this.createMaintenance(server);
     this.addSecretsToVault(server);
 
     if (args.lock) this.lockFromDeleting(server);
@@ -54,29 +59,55 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      privateLink: this.privateLink,
     };
   }
+
   private createRedis() {
-    const { rsGroup, network, lock, ...props } = this.args;
+    const { rsGroup, network, lock, defaultUAssignedId, ...props } = this.args;
 
     const server = new redis.Redis(
       this.name,
       {
         ...props,
         ...rsGroup,
-
+        name: undefined,
+        sku: props.sku ?? { name: 'Basic', family: 'C', capacity: 0 },
+        redisVersion: props.redisVersion ?? '6.0',
         minimumTlsVersion: '1.2',
         enableNonSslPort: false,
-        redisVersion: props.redisVersion ?? '6.0',
         subnetId: network?.subnetId,
         staticIP: network?.staticIP,
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
-        updateChannel: 'Stable',
+        updateChannel: redis.UpdateChannel.Stable,
+
+        identity: {
+          type: defaultUAssignedId
+            ? redis.ManagedServiceIdentityType.UserAssigned
+            : redis.ManagedServiceIdentityType.SystemAssigned,
+          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+        },
       },
-      { ...this.opts, protect: lock ?? this.opts?.protect, parent: this },
+      { ...this.opts, protect: lock ?? this.opts?.protect, parent: this, ignoreChanges: ['name'] },
     );
 
     return server;
+  }
+
+  private createMaintenance(rds: redis.Redis) {
+    const { rsGroup, scheduleEntries } = this.args;
+    if (!scheduleEntries) return undefined;
+
+    return new redis.PatchSchedule(
+      this.name,
+      {
+        ...rsGroup,
+        name: rds.name,
+        default: 'default',
+        scheduleEntries,
+      },
+      { dependsOn: rds, deletedWith: rds, parent: this },
+    );
   }
 
   private createNetwork(server: redis.Redis) {
@@ -102,7 +133,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     }
 
     if (network?.privateLink) {
-      new vnet.PrivateEndpoint(
+      this.privateLink = new vnet.PrivateEndpoint(
         this.name,
         {
           ...network.privateLink,
@@ -111,7 +142,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
           resourceInfo: server,
         },
         { dependsOn: server, parent: this },
-      );
+      ).getOutputs();
     }
   }
 

@@ -12,6 +12,8 @@ import { RouteTable, RouteTableArgs } from './RouteTable';
 import { getBasionSecurityRules } from './securityRules';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import { IpAddresses, IpAddressesArgs } from './IpAddresses';
+import * as privateDns from '@pulumi/azure-native/privatedns';
+import { rsHelpers } from '../helpers';
 
 export type SubnetArgs = Partial<
   Pick<
@@ -60,9 +62,7 @@ export interface VnetArgs extends CommonBaseArgs {
     managementSubnetPrefix?: pulumi.Input<string>;
     managementPublicIpAddress?: types.SubResourceInputs;
   };
-  vnetPeeringCreate?: Omit<NetworkPeeringArgs, 'firstVnet' | 'secondVnet'> & {
-    vnet: types.ResourceInputs;
-  };
+
   vnet: Omit<
     network.VirtualNetworkArgs,
     | 'addressSpace'
@@ -77,6 +77,11 @@ export interface VnetArgs extends CommonBaseArgs {
   > & {
     addressPrefixes?: pulumi.Input<string>[];
     subnets: Array<SubnetArgs>;
+    peeringCreate?: Omit<NetworkPeeringArgs, 'firstVnet' | 'secondVnet'> & {
+      vnet: types.ResourceInputs;
+    };
+    /** The Private DNS Zone that will be linked to this Vnet */
+    privateZonesLinks?: Array<types.ResourceInputs>;
   };
 }
 
@@ -123,8 +128,8 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     if (vpnGateway) this.vpnGateway = { id: vpnGateway.id, resourceName: vpnGateway.resourceName };
     if (firewall) this.firewall = firewall.firewall;
     this.vnet = { id: vnet.id, resourceName: vnet.name };
-
     this.subnets = dictReduce(subnets, (name, s) => ({ id: s.id, resourceName: s.name.apply((n) => n!) }));
+    this.createPrivateZonesLinks(vnet);
 
     this.registerOutputs();
   }
@@ -444,17 +449,41 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   // }
 
   private createPeering(vnet: network.VirtualNetwork) {
-    const { vnetPeeringCreate } = this.args;
-    if (!vnetPeeringCreate) return undefined;
+    const {
+      vnet: { peeringCreate },
+    } = this.args;
+    if (!peeringCreate) return undefined;
 
     return new NetworkPeering(
       `${this.name}-peering`,
       {
-        ...vnetPeeringCreate,
+        ...peeringCreate,
         firstVnet: { id: vnet.id, resourceName: vnet.name },
-        secondVnet: vnetPeeringCreate.vnet,
+        secondVnet: peeringCreate.vnet,
       },
       { dependsOn: vnet, parent: this },
+    );
+  }
+
+  private createPrivateZonesLinks(vnet: network.VirtualNetwork) {
+    const {
+      vnet: { privateZonesLinks },
+    } = this.args;
+    if (!privateZonesLinks) return undefined;
+    return pulumi.output(privateZonesLinks).apply((links) =>
+      links.map((pz) => {
+        const info = rsHelpers.getRsInfoFromId(pz.id);
+        return new privateDns.VirtualNetworkLink(
+          `${this.name}-${info.resourceName}`.substring(0, 55),
+          {
+            privateZoneName: info.resourceName,
+            resourceGroupName: info.rsGroup.resourceGroupName,
+            registrationEnabled: false,
+            virtualNetwork: { id: vnet.id },
+          },
+          { dependsOn: vnet, deletedWith: vnet, parent: this },
+        );
+      }),
     );
   }
 }

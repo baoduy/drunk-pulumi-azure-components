@@ -30,7 +30,7 @@ export type PrivateEndpointType = {
     subnetId: pulumi.Input<string>;
   };
   /** Link the private DNS zone to these Vnet also */
-  vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
+  vnetLinks?: Array<pulumi.Input<{ vnetId: string }>>;
 };
 
 export interface PrivateEndpointArgs extends types.WithResourceGroupInputs, PrivateEndpointType {
@@ -93,10 +93,11 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
     const privateIpAddresses = privateEndpoint.customDnsConfigs.apply((c) => c!.flatMap((i) => i!.ipAddresses!));
 
     const zone = pulumi.output(args.resourceInfo.id).apply((rsId) => {
-      const vnetLinks = [
-        ...args.vnetLinks,
-        pulumi.output(args.subnetInfo.subnetId).apply((id) => ({ vnetId: helpers.getVnetIdFromSubnetId(id) })),
-      ];
+      const mainVnetId = pulumi
+        .output(args.subnetInfo.subnetId)
+        .apply((id) => ({ vnetId: helpers.getVnetIdFromSubnetId(id) }));
+
+      const vnetLinks = args.vnetLinks ? [...args.vnetLinks, mainVnetId] : [mainVnetId];
 
       return new PrivateDnsZone(
         `${rsHelpers.getRsNameFromId(rsId)}.${linkInfo.privateDnsZoneName}`,

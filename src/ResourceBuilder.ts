@@ -7,6 +7,7 @@ import { Logs, LogsArgs } from './logs';
 import { KeyVault, KeyVaultArgs } from './vault';
 import * as types from './types';
 import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
+import { Vnet, VnetArgs } from './vnet';
 
 type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
@@ -21,6 +22,7 @@ export type ResourceBuilderOutputs = {
   defaultUAssignedId?: ReturnType<UserAssignedIdentity['getOutputs']>;
   logs?: ReturnType<Logs['getOutputs']>;
   diskEncryptionSet?: ReturnType<DiskEncryptionSet['getOutputs']>;
+  vnet?: ReturnType<Vnet['getOutputs']>;
 };
 
 export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps> {
@@ -32,6 +34,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps
   defaultUAssignedIdCreate?: Omit<UserAssignedIdentityArgs, types.CommonProps | 'memberof'> & {
     memberof?: types.GroupRoleTypes;
   };
+  vnetCreate?: Omit<VnetArgs, types.CommonProps>;
 }
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
@@ -41,6 +44,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   public readonly defaultUAssignedId?: UserAssignedIdentity;
   public readonly logs?: Logs;
   public readonly diskEncryptionSet?: DiskEncryptionSet;
+  public readonly vnet: Vnet | undefined;
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
@@ -66,6 +70,9 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     this.defaultUAssignedId = this.createUserIdentity();
     this.logs = this.createLogs();
     this.diskEncryptionSet = this.createDiskEncryptionSet();
+    this.vnet = this.createVnet();
+
+    this.registerOutputs(this.getOutputs());
   }
 
   public getOutputs(): ResourceBuilderOutputs {
@@ -76,6 +83,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       defaultUAssignedId: this.defaultUAssignedId?.getOutputs(),
       logs: this.logs?.getOutputs(),
       diskEncryptionSet: this.diskEncryptionSet?.getOutputs(),
+      vnet: this.vnet?.getOutputs(),
     };
   }
 
@@ -159,6 +167,21 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
         groupRoles: this.groupRoles,
       },
       { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+    );
+  }
+
+  private createVnet() {
+    const { vnetCreate } = this.args;
+    if (!vnetCreate) return undefined;
+    return new Vnet(
+      this.name,
+      {
+        ...vnetCreate,
+        rsGroup: this.rsGroup,
+        groupRoles: this.groupRoles,
+        vaultInfo: this.vaultInfo,
+      },
+      { dependsOn: this.rsGroup, parent: this },
     );
   }
 }

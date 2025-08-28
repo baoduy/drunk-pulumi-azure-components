@@ -478,6 +478,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
           {
             privateZoneName: info.resourceName,
             resourceGroupName: info.rsGroup.resourceGroupName,
+            location: 'global',
             registrationEnabled: false,
             virtualNetwork: { id: vnet.id },
           },

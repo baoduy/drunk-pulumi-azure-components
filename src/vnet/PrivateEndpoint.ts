@@ -44,10 +44,7 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
     privateIpAddresses: string[];
     id: string;
   }>;
-  public readonly privateDnsZone: pulumi.Output<{
-    name: string;
-    id: string;
-  }>;
+  public readonly privateDnsZone: types.ResourceOutputs;
 
   constructor(name: string, args: PrivateEndpointArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('PrivateEndpoint'), name, args, opts);
@@ -108,9 +105,10 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
         },
         {
           dependsOn: privateEndpoint,
+          deletedWith: privateEndpoint,
           parent: this,
         },
-      );
+      ).getOutputs();
     });
 
     this.privateEndpoint = pulumi.output({
@@ -118,7 +116,7 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
       privateIpAddresses,
     });
 
-    this.privateDnsZone = zone.id.apply((id) => ({ id, name }));
+    this.privateDnsZone = zone;
 
     this.registerOutputs(this.getOutputs());
   }

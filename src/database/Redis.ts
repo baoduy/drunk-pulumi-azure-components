@@ -114,20 +114,20 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
 
     if (network?.ipRules) {
       pulumi.output(network.ipRules).apply((ips) =>
-        convertToIpRange(ips).map(
-          (f, i) =>
-            new redis.FirewallRule(
-              `${this.name}-firewall-${i}`,
-              {
-                ...rsGroup,
-                //ruleName: `${this.name}-firewall-${i}`,
-                cacheName: server.name,
-                startIP: f.start,
-                endIP: f.end,
-              },
-              { dependsOn: server, parent: this },
-            ),
-        ),
+        convertToIpRange(ips).map((f, i) => {
+          const sanitizedName = this.name.replace(/[^a-zA-Z0-9_]/g, '_');
+          return new redis.FirewallRule(
+            `${sanitizedName}-firewall-${i}`,
+            {
+              ...rsGroup,
+              ruleName: `${sanitizedName}_firewall_${i}`,
+              cacheName: server.name,
+              startIP: f.start,
+              endIP: f.end,
+            },
+            { dependsOn: server, parent: this },
+          );
+        }),
       );
     }
 

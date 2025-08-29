@@ -26,6 +26,7 @@ export interface RedisArgs
     >,
     Partial<Pick<redis.PatchScheduleArgs, 'scheduleEntries'>> {
   network?: {
+    allowAllInbound?: boolean;
     subnetId?: pulumi.Input<string>;
     staticIP?: pulumi.Input<string>;
     privateLink?: PrivateEndpointType;
@@ -111,11 +112,23 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
 
   private createNetwork(server: redis.Redis) {
     const { rsGroup, network } = this.args;
+    const sanitizedName = this.name.replace(/[^a-zA-Z0-9_]/g, '_');
 
-    if (network?.ipRules) {
+    if (network?.allowAllInbound) {
+      new redis.FirewallRule(
+        `${sanitizedName}-firewall-allow-all`,
+        {
+          ...rsGroup,
+          ruleName: `${sanitizedName}_firewall_allow_all`,
+          cacheName: server.name,
+          startIP: '0.0.0.0',
+          endIP: '255.255.255.255',
+        },
+        { dependsOn: server, parent: this },
+      );
+    } else if (network?.ipRules) {
       pulumi.output(network.ipRules).apply((ips) =>
         convertToIpRange(ips).map((f, i) => {
-          const sanitizedName = this.name.replace(/[^a-zA-Z0-9_]/g, '_');
           return new redis.FirewallRule(
             `${sanitizedName}-firewall-${i}`,
             {

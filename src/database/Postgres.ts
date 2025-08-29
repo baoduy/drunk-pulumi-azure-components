@@ -144,7 +144,18 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
   private createNetwork(server: postgresql.Server) {
     const { rsGroup, network } = this.args;
 
-    if (network?.ipRules) {
+    if (network?.allowAllInbound) {
+      new postgresql.FirewallRule(
+        `${this.name}-firewall-allow-all`,
+        {
+          ...rsGroup,
+          serverName: server.name,
+          startIpAddress: '0.0.0.0',
+          endIpAddress: '255.255.255.255',
+        },
+        { dependsOn: server, parent: this },
+      );
+    } else if (network?.ipRules) {
       pulumi.output(network.ipRules).apply((ips) =>
         convertToIpRange(ips).map(
           (f, i) =>
@@ -152,7 +163,6 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
               `${this.name}-firewall-${i}`,
               {
                 ...rsGroup,
-                //firewallRuleName: `${this.name}-firewall-${i}`,
                 serverName: server.name,
                 startIpAddress: f.start,
                 endIpAddress: f.end,

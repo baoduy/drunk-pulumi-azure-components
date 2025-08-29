@@ -145,7 +145,18 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   private createNetwork(server: mysql.Server) {
     const { rsGroup, network } = this.args;
 
-    if (network?.ipRules) {
+    if (network?.allowAllInbound) {
+      new mysql.FirewallRule(
+        `${this.name}-firewall-allow-all`,
+        {
+          ...rsGroup,
+          serverName: server.name,
+          startIpAddress: '0.0.0.0',
+          endIpAddress: '255.255.255.255',
+        },
+        { dependsOn: server, parent: this },
+      );
+    } else if (network?.ipRules) {
       pulumi.output(network.ipRules).apply((ips) =>
         convertToIpRange(ips).map(
           (f, i) =>

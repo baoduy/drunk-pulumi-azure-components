@@ -57,7 +57,6 @@ export interface AzSqlArgs
     sku: AzSqlSkuType;
   };
   network?: Omit<types.NetworkArgs, 'bypass' | 'defaultAction' | 'vnetRules'> & {
-    acceptAllPublicConnection?: boolean;
     subnets?: pulumi.Input<Array<{ id: string }>>;
   };
   vulnerabilityAssessment?: {
@@ -186,12 +185,11 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     if (!network) return;
 
     //Allows Ip Addresses
-    if (network.acceptAllPublicConnection) {
+    if (network.allowAllInbound) {
       new sql.FirewallRule(
-        `${this.name}-allows-all-connection`,
+        `${this.name}-allows-all`,
         {
           ...rsGroup,
-          //firewallRuleName: 'allows-all-connection',
           serverName: server.name,
           startIpAddress: '0.0.0.0',
           endIpAddress: '255.255.255.255',

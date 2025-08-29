@@ -162,10 +162,10 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         {
           vaultInfo,
           secrets: {
-            [`${this.name}-host`]: { value: h, contentType: `Redis host` },
-            [`${this.name}-pass`]: { value: keys.primaryKey, contentType: `Redis pass` },
-            [`${this.name}-port`]: { value: '6380', contentType: `Redis port` },
-            [`${this.name}-conn`]: {
+            [`${this.name}-redis-host`]: { value: h, contentType: `Redis host` },
+            [`${this.name}-redis-pass`]: { value: keys.primaryKey, contentType: `Redis pass` },
+            [`${this.name}-redis-port`]: { value: '6380', contentType: `Redis port` },
+            [`${this.name}-redis-conn`]: {
               value: pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`,
               contentType: `Redis conn`,
             },

@@ -131,11 +131,11 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     );
 
     this.addSecrets({
-      [`${this.name}-host`]: pulumi.interpolate`${server.name}.postgres.database.azure.com`,
-      [`${this.name}-port`]: '5432',
-      [`${this.name}-login`]: this.args.administratorLogin!,
-      [`${this.name}-pass`]: password.value,
-      [`${this.name}-username`]: adminLogin,
+      [`${this.name}-postgres-host`]: pulumi.interpolate`${server.name}.postgres.database.azure.com`,
+      [`${this.name}-postgres-port`]: '5432',
+      [`${this.name}-postgres-login`]: this.args.administratorLogin!,
+      [`${this.name}-postgres-pass`]: password.value,
+      [`${this.name}-postgres-username`]: adminLogin,
     });
 
     return server;

@@ -132,11 +132,11 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     );
 
     this.addSecrets({
-      [`${this.name}-host`]: pulumi.interpolate`${server.name}.mysql.database.azure.com`,
-      [`${this.name}-port`]: '3306',
-      [`${this.name}-login`]: this.args.administratorLogin!,
-      [`${this.name}-pass`]: password.value,
-      [`${this.name}-username`]: adminLogin,
+      [`${this.name}-mysql-host`]: pulumi.interpolate`${server.name}.mysql.database.azure.com`,
+      [`${this.name}-mysql-port`]: '3306',
+      [`${this.name}-mysql-login`]: this.args.administratorLogin!,
+      [`${this.name}-mysql-pass`]: password.value,
+      [`${this.name}-mysql-username`]: adminLogin,
     });
 
     return server;

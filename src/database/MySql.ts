@@ -43,9 +43,10 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   constructor(name: string, args: MySqlArgs, opts?: pulumi.ComponentResourceOptions) {
     super('MySql', name, args, opts);
 
-    const server = this.createMySql();
+    const uAssignedId = this.getUAssignedId();
+    const server = this.createMySql(uAssignedId);
     this.createNetwork(server);
-    this.enableADAdmin(server);
+    this.enableADAdmin(server, uAssignedId);
     this.createDatabases(server);
 
     if (args.lock) this.lockFromDeleting(server);
@@ -63,13 +64,12 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     };
   }
 
-  private createMySql() {
-    const { rsGroup, enableEncryption, administratorLogin, defaultUAssignedId, lock } = this.args;
+  private createMySql(uid: types.UserAssignedIdentityInputs) {
+    const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
-    const uAssignedId = defaultUAssignedId ?? this.getUAssignedId();
 
     const server = new mysql.Server(
       this.name,
@@ -84,13 +84,13 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
 
         identity: {
           type: mysql.ManagedServiceIdentityType.UserAssigned,
-          userAssignedIdentities: [uAssignedId.id],
+          userAssignedIdentities: [uid.id],
         },
 
         dataEncryption: encryptionKey
           ? {
               type: mysql.DataEncryptionType.AzureKeyVault,
-              primaryUserAssignedIdentityId: uAssignedId.id,
+              primaryUserAssignedIdentityId: uid.id,
               primaryKeyURI: encryptionKey.id,
             }
           : { type: 'SystemManaged' },
@@ -178,20 +178,21 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     }
   }
 
-  private enableADAdmin(server: mysql.Server) {
-    const { rsGroup, groupRoles, enableAzureADAdmin, administratorLogin } = this.args;
+  private enableADAdmin(server: mysql.Server, uid: types.UserAssignedIdentityInputs) {
+    const { rsGroup, groupRoles, enableAzureADAdmin } = this.args;
     if (!enableAzureADAdmin || !groupRoles) return undefined;
 
     return new mysql.AzureADAdministrator(
       this.name,
       {
         ...rsGroup,
-        administratorName: groupRoles.contributor.displayName,
+        administratorName: 'activeDirectory',
         serverName: server.name,
-        login: server.administratorLogin.apply((login) => login as string),
+        login: groupRoles.admin.displayName,
         administratorType: 'ActiveDirectory',
-        sid: groupRoles.contributor.objectId,
+        sid: groupRoles.admin.objectId,
         tenantId: azureEnv.tenantId,
+        identityResourceId: uid.id,
       },
       { dependsOn: server, parent: this },
     );

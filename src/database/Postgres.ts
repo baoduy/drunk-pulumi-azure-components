@@ -14,15 +14,12 @@ export interface PostgresArgs
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
     types.WithNetworkArgs,
-    Pick<
-      postgresql.ServerArgs,
-      | 'version'
-      | 'storage'
-      | 'administratorLogin'
-      | 'maintenanceWindow'
-      | 'backup'
-      | 'highAvailability'
-      | 'availabilityZone'
+    Pick<postgresql.ServerArgs, 'administratorLogin'>,
+    Partial<
+      Pick<
+        postgresql.ServerArgs,
+        'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
+      >
     > {
   sku: {
     /** The name of postgres: Standard_B2ms,  */
@@ -33,6 +30,7 @@ export interface PostgresArgs
     tier: postgresql.SkuTier;
   };
   enableAzureADAdmin?: boolean;
+  enablePasswordAuth?: boolean;
   databases?: Array<{ name: string }>;
   lock?: boolean;
 }
@@ -62,7 +60,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     };
   }
   private createPostgres() {
-    const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
+    const { rsGroup, enableEncryption, administratorLogin, enableAzureADAdmin, enablePasswordAuth, lock } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
@@ -100,8 +98,8 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         },
 
         authConfig: {
-          activeDirectoryAuth: this.args.enableAzureADAdmin ? 'Enabled' : 'Disabled',
-          passwordAuth: 'Enabled',
+          activeDirectoryAuth: enableAzureADAdmin ? 'Enabled' : 'Disabled',
+          passwordAuth: enablePasswordAuth ? 'Enabled' : 'Disabled',
           tenantId: azureEnv.tenantId,
         },
 

@@ -2,7 +2,7 @@ import * as mysql from '@pulumi/azure-native/dbformysql';
 import * as pulumi from '@pulumi/pulumi';
 import { UserAssignedIdentity } from '../azAd';
 import { BaseArgs, BaseResourceComponent } from '../base';
-import { azureEnv } from '../helpers';
+import { azureEnv, stackInfo } from '../helpers';
 import * as types from '../types';
 import * as vnet from '../vnet';
 import { convertToIpRange } from './helpers';
@@ -14,15 +14,12 @@ export interface MySqlArgs
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
     types.WithNetworkArgs,
-    Pick<
-      mysql.ServerArgs,
-      | 'version'
-      | 'storage'
-      | 'administratorLogin'
-      | 'maintenanceWindow'
-      | 'backup'
-      | 'highAvailability'
-      | 'availabilityZone'
+    Pick<mysql.ServerArgs, 'administratorLogin'>,
+    Partial<
+      Pick<
+        mysql.ServerArgs,
+        'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
+      >
     > {
   sku: {
     /**
@@ -67,19 +64,19 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   }
 
   private createMySql() {
-    const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
+    const { rsGroup, enableEncryption, administratorLogin, defaultUAssignedId, lock } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
-    const uAssignedId = this.getUAssignedId();
+    const uAssignedId = defaultUAssignedId ?? this.getUAssignedId();
 
     const server = new mysql.Server(
       this.name,
       {
         ...this.args,
         ...rsGroup,
-
+        //serverName: this.name,
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
@@ -98,12 +95,15 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
             }
           : { type: 'SystemManaged' },
 
-        maintenanceWindow: this.args.maintenanceWindow ?? {
-          customWindow: 'Enabled',
-          dayOfWeek: 0, //0 is Sunday
-          startHour: 0,
-          startMinute: 0,
-        },
+        maintenanceWindow:
+          this.args.sku.tier !== 'Burstable'
+            ? this.args.maintenanceWindow ?? {
+                customWindow: 'Enabled',
+                dayOfWeek: 0, //0 is Sunday
+                startHour: 0,
+                startMinute: 0,
+              }
+            : undefined,
 
         backup: this.args.backup ?? {
           geoRedundantBackup: azureEnv.isPrd ? 'Enabled' : 'Disabled',
@@ -179,16 +179,15 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   }
 
   private enableADAdmin(server: mysql.Server) {
-    const { rsGroup, groupRoles, enableAzureADAdmin } = this.args;
+    const { rsGroup, groupRoles, enableAzureADAdmin, administratorLogin } = this.args;
     if (!enableAzureADAdmin || !groupRoles) return undefined;
 
     return new mysql.AzureADAdministrator(
       this.name,
       {
         ...rsGroup,
-        administratorName: `${this.name}-azure-ad`,
+        administratorName: groupRoles.contributor.displayName,
         serverName: server.name,
-
         login: server.administratorLogin.apply((login) => login as string),
         administratorType: 'ActiveDirectory',
         sid: groupRoles.contributor.objectId,

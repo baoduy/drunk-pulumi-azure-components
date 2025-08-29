@@ -101,14 +101,25 @@ export type WithEncryptionEnabler = {
   enableEncryption?: boolean;
 };
 
-export type GroupRolesArgs = {
-  admin: pulumi.Output<{ objectId: string }>;
-  contributor: pulumi.Output<{ objectId: string }>;
-  readOnly: pulumi.Output<{ objectId: string }>;
+export interface GroupRoleOutput {
+  objectId: string;
+  displayName: string;
+}
+
+export type GroupRoleOutputTypes = {
+  admin: pulumi.Output<GroupRoleOutput>;
+  contributor: pulumi.Output<GroupRoleOutput>;
+  readOnly: pulumi.Output<GroupRoleOutput>;
 };
 
+// export type GroupRolesArgs = {
+//   admin: pulumi.Output<GroupRoleOutput>;
+//   contributor: pulumi.Output<GroupRoleOutput>;
+//   readOnly: pulumi.Output<GroupRoleOutput>;
+// };
+
 export type WithGroupRolesArgs = {
-  groupRoles?: GroupRolesArgs;
+  groupRoles?: GroupRoleOutputTypes;
 };
 
 export type WorkspaceType = ResourceType & { customerId: string };

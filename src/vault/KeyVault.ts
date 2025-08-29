@@ -39,7 +39,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
           enableRbacAuthorization: true,
           enablePurgeProtection: true,
           enableSoftDelete: true,
-          softDeleteRetentionInDays: 7,
+          softDeleteRetentionInDays: 90,
           //Allows to be overwritten
           ...args.properties,
           tenantId: azureEnv.tenantId,

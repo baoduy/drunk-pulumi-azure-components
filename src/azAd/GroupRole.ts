@@ -12,15 +12,10 @@ export interface GroupRoleArgs
   preventDuplicateNames?: pulumi.Input<boolean>;
 }
 
-export interface GroupRoleOutput {
-  objectId: string;
-  displayName: string;
-}
-
 export class GroupRole extends BaseComponent<GroupRoleArgs> {
-  public readonly admin: pulumi.Output<GroupRoleOutput>;
-  public readonly contributor: pulumi.Output<GroupRoleOutput>;
-  public readonly readOnly: pulumi.Output<GroupRoleOutput>;
+  public readonly admin: pulumi.Output<types.GroupRoleOutput>;
+  public readonly contributor: pulumi.Output<types.GroupRoleOutput>;
+  public readonly readOnly: pulumi.Output<types.GroupRoleOutput>;
 
   constructor(name: string = stackInfo.stack, args: GroupRoleArgs = {}, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('GroupRole'), name, args, opts);

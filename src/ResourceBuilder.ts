@@ -2,7 +2,6 @@ import * as pulumi from '@pulumi/pulumi';
 import {
   GroupRole,
   GroupRoleArgs,
-  GroupRoleOutput,
   RoleAssignmentArgs,
   RoleAssignment,
   UserAssignedIdentity,
@@ -18,14 +17,8 @@ import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
 import { Vnet, VnetArgs } from './vnet';
 import { rsHelpers } from './helpers';
 
-type GroupRoleOutputTypes = {
-  admin: pulumi.Output<GroupRoleOutput>;
-  contributor: pulumi.Output<GroupRoleOutput>;
-  readOnly: pulumi.Output<GroupRoleOutput>;
-};
-
 export type ResourceBuilderOutputs = {
-  groupRoles?: GroupRoleOutputTypes;
+  groupRoles?: types.GroupRoleOutputTypes;
   rsGroup: ReturnType<RsGroup['getOutputs']>;
   vaultInfo?: ReturnType<KeyVault['getOutputs']>;
   defaultUAssignedId?: ReturnType<UserAssignedIdentity['getOutputs']>;
@@ -36,7 +29,7 @@ export type ResourceBuilderOutputs = {
 
 export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps> {
   groupRolesCreate?: { name: string } & GroupRoleArgs;
-  groupRoles?: GroupRoleOutputTypes | GroupRole;
+  groupRoles?: types.GroupRoleOutputTypes | GroupRole;
   vaultCreate?: Omit<KeyVaultArgs, types.CommonProps>;
   logsCreate?: Omit<LogsArgs, types.CommonProps>;
   diskEncryptionCreate?: Omit<DiskEncryptionSetArgs, types.CommonProps>;
@@ -49,7 +42,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   public readonly rsGroup: RsGroup;
   public readonly vaultInfo?: KeyVault;
-  public readonly groupRoles?: GroupRoleOutputTypes;
+  public readonly groupRoles?: types.GroupRoleOutputTypes;
   public readonly defaultUAssignedId?: UserAssignedIdentity;
   public readonly logs?: Logs;
   public readonly diskEncryptionSet?: DiskEncryptionSet;

@@ -71,7 +71,6 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
       {
         ...props,
         ...rsGroup,
-        name: undefined,
         sku: props.sku ?? { name: 'Basic', family: 'C', capacity: 0 },
         redisVersion: props.redisVersion ?? '6.0',
         minimumTlsVersion: '1.2',

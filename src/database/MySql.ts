@@ -44,10 +44,10 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     super('MySql', name, args, opts);
 
     const uAssignedId = this.getUAssignedId();
-    const server = this.createMySql(uAssignedId);
+    const { server, credentials } = this.createMySql(uAssignedId);
     this.createNetwork(server);
     this.enableADAdmin(server, uAssignedId);
-    this.createDatabases(server);
+    this.createDatabases(server, credentials);
 
     if (args.lock) this.lockFromDeleting(server);
 
@@ -131,15 +131,22 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       },
     );
 
+    const credentials: types.DbCredentialsType = {
+      host: pulumi.interpolate`${server.name}.mysql.database.azure.com`,
+      port: '3306',
+      username: adminLogin,
+      password: password.value,
+    };
+
     this.addSecrets({
-      [`${this.name}-mysql-host`]: pulumi.interpolate`${server.name}.mysql.database.azure.com`,
-      [`${this.name}-mysql-port`]: '3306',
-      [`${this.name}-mysql-login`]: this.args.administratorLogin!,
-      [`${this.name}-mysql-pass`]: password.value,
-      [`${this.name}-mysql-username`]: adminLogin,
+      [`${this.name}-mysql-host`]: credentials.host,
+      [`${this.name}-mysql-port`]: credentials.port,
+      [`${this.name}-mysql-login`]: credentials.username,
+      [`${this.name}-mysql-pass`]: credentials.password,
+      [`${this.name}-mysql-username`]: credentials.username,
     });
 
-    return server;
+    return { server, credentials };
   }
 
   private createNetwork(server: mysql.Server) {
@@ -209,7 +216,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     );
   }
 
-  private createDatabases(server: mysql.Server) {
+  private createDatabases(server: mysql.Server, cred: types.DbCredentialsType) {
     const { rsGroup, databases } = this.args;
     if (!databases) return undefined;
 
@@ -225,8 +232,8 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       );
 
       //add connection string to vault
-      //   const conn = pulumi.interpolate``;
-      //   this.addSecret(`${this.name}-${d.name}-conn`, conn);
+      const conn = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+      this.addSecret(`${this.name}-${d.name}-mysql-conn`, conn);
 
       return db;
     });

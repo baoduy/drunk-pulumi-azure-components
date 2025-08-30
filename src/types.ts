@@ -163,3 +163,10 @@ export type NetworkArgs = {
 export type WithNetworkArgs = {
   network?: NetworkArgs;
 };
+
+export type DbCredentialsType = {
+  host: pulumi.Output<string>;
+  port: string;
+  username: pulumi.Input<string>;
+  password: pulumi.Output<string>;
+};

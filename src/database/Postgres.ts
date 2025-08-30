@@ -42,9 +42,9 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
   constructor(name: string, args: PostgresArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Postgres', name, args, opts);
 
-    const server = this.createPostgres();
+    const { server, credentials } = this.createPostgres();
     this.createNetwork(server);
-    this.createDatabases(server);
+    this.createDatabases(server, credentials);
     if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
@@ -59,6 +59,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       resourceName: this.resourceName,
     };
   }
+
   private createPostgres() {
     const { rsGroup, enableEncryption, administratorLogin, enableAzureADAdmin, enablePasswordAuth, lock } = this.args;
 
@@ -130,15 +131,22 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       },
     );
 
+    const credentials: types.DbCredentialsType = {
+      host: pulumi.interpolate`${server.name}.postgres.database.azure.com`,
+      port: '5432',
+      username: adminLogin,
+      password: password.value,
+    };
+
     this.addSecrets({
-      [`${this.name}-postgres-host`]: pulumi.interpolate`${server.name}.postgres.database.azure.com`,
-      [`${this.name}-postgres-port`]: '5432',
+      [`${this.name}-postgres-host`]: credentials.host,
+      [`${this.name}-postgres-port`]: credentials.port,
       [`${this.name}-postgres-login`]: this.args.administratorLogin!,
-      [`${this.name}-postgres-pass`]: password.value,
-      [`${this.name}-postgres-username`]: adminLogin,
+      [`${this.name}-postgres-pass`]: credentials.password,
+      [`${this.name}-postgres-username`]: credentials.username,
     });
 
-    return server;
+    return { server, credentials };
   }
 
   private createNetwork(server: postgresql.Server) {
@@ -187,7 +195,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     }
   }
 
-  private createDatabases(server: postgresql.Server) {
+  private createDatabases(server: postgresql.Server, cred: types.DbCredentialsType) {
     const { rsGroup, databases } = this.args;
     if (!databases) return undefined;
 
@@ -203,8 +211,8 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       );
 
       //add connection string to vault
-      //   const conn = pulumi.interpolate``;
-      //   this.addSecret(`${this.name}-${d.name}-conn`, conn);
+      const conn = pulumi.interpolate`Host=${cred.host};Database=${d.name};User Id=${cred.username};Password=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+      this.addSecret(`${this.name}-${d.name}-postgres-conn`, conn);
 
       return db;
     });

@@ -17,7 +17,7 @@ export interface PrivateDnsZoneArgs extends WithResourceGroupInputs {
     ipv4Address: pulumi.Input<pulumi.Input<string>[]>;
   }>;
   /** Link the private DNS zone to these Vnet also */
-  vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
+  vnetLinks: Array<pulumi.Input<{ vnetId: pulumi.Input<string> }>>;
 }
 
 export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {

@@ -143,7 +143,6 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       [`${this.name}-mysql-port`]: credentials.port,
       [`${this.name}-mysql-login`]: credentials.username,
       [`${this.name}-mysql-pass`]: credentials.password,
-      [`${this.name}-mysql-username`]: credentials.username,
     });
 
     return { server, credentials };

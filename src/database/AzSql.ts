@@ -39,9 +39,11 @@ export interface AzSqlArgs
     types.WithResourceGroupInputs,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
-    Pick<
-      sql.ServerArgs,
-      'administratorLogin' | 'federatedClientId' | 'isIPv6Enabled' | 'restrictOutboundNetworkAccess' | 'version'
+    Partial<
+      Pick<
+        sql.ServerArgs,
+        'administratorLogin' | 'federatedClientId' | 'isIPv6Enabled' | 'restrictOutboundNetworkAccess' | 'version'
+      >
     > {
   administrators?: {
     azureAdOnlyAuthentication?: boolean;
@@ -49,9 +51,11 @@ export interface AzSqlArgs
     adminGroup: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
   };
 
-  elasticPool?: Pick<
-    sql.ElasticPoolArgs,
-    'autoPauseDelay' | 'availabilityZone' | 'highAvailabilityReplicaCount' | 'licenseType' | 'perDatabaseSettings'
+  elasticPoolCreate?: Partial<
+    Pick<
+      sql.ElasticPoolArgs,
+      'autoPauseDelay' | 'availabilityZone' | 'highAvailabilityReplicaCount' | 'licenseType' | 'perDatabaseSettings'
+    >
   > & {
     maxSizeGB?: number;
     sku: AzSqlSkuType;
@@ -126,7 +130,9 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
-    const encryptionKey = enableEncryption ? this.getEncryptionKey({ keySize: 3072 }) : undefined;
+    const encryptionKey = enableEncryption
+      ? this.getEncryptionKey({ name: `${this.name}-az-sql`, keySize: 3072 })
+      : undefined;
 
     const server = new sql.Server(
       this.name,
@@ -250,19 +256,19 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createElasticPool(server: sql.Server) {
-    const { rsGroup, elasticPool } = this.args;
-    if (!elasticPool) return undefined;
+    const { rsGroup, elasticPoolCreate } = this.args;
+    if (!elasticPoolCreate) return undefined;
 
     return new sql.ElasticPool(
       `${this.name}-elasticPool`,
       {
-        ...elasticPool,
+        ...elasticPoolCreate,
         ...rsGroup,
         //autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
         preferredEnclaveType: sql.AlwaysEncryptedEnclaveType.VBS,
 
         serverName: server.name,
-        maxSizeBytes: elasticPool.maxSizeGB ? elasticPool.maxSizeGB * 1024 * 1024 * 1024 : undefined,
+        maxSizeBytes: elasticPoolCreate.maxSizeGB ? elasticPoolCreate.maxSizeGB * 1024 * 1024 * 1024 : undefined,
       },
       { dependsOn: server, parent: this },
     );

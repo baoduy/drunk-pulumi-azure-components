@@ -127,7 +127,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         publisherEmail: publisherEmail ?? 'apimgmt-noreply@mail.windowsazure.com',
         notificationSenderEmail: notificationSenderEmail ?? 'apimgmt-noreply@mail.windowsazure.com',
         identity: { type: 'SystemAssigned' },
-        sku: sku ?? { name: 'Consumption', capacity: 1 },
+        sku: sku ?? { name: 'Consumption', capacity: 0 },
 
         apiVersionConstraint: apiVersionConstraint ?? {
           minApiVersion: '2019-12-01',
@@ -178,9 +178,6 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30': 'false',
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10': 'false',
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11': 'false',
           ...customProperties,
         },
       },

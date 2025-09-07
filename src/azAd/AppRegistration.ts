@@ -1,10 +1,12 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
-import { getComponentResourceType } from '../base/helpers';
-import { WithMemberOfArgs, WithVaultInfo } from '../types';
-import { VaultSecret } from '../vault';
+
 import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
+import { WithMemberOfArgs, WithVaultInfo } from '../types';
+
+import { BaseComponent } from '../base/BaseComponent';
+import { VaultSecret } from '../vault';
+import { getComponentResourceType } from '../base/helpers';
 
 export enum GroupMembershipClaimsTypes {
   None = 'None',
@@ -17,16 +19,18 @@ export enum GroupMembershipClaimsTypes {
 export interface AppRegistrationArgs
   extends WithVaultInfo,
     WithMemberOfArgs,
-    Pick<
-      azAd.ApplicationArgs,
-      | 'identifierUris'
-      | 'oauth2PostResponseRequired'
-      | 'optionalClaims'
-      | 'featureTags'
-      | 'api'
-      | 'appRoles'
-      | 'owners'
-      | 'requiredResourceAccesses'
+    Partial<
+      Pick<
+        azAd.ApplicationArgs,
+        | 'identifierUris'
+        | 'oauth2PostResponseRequired'
+        | 'optionalClaims'
+        | 'featureTags'
+        | 'api'
+        | 'appRoles'
+        | 'owners'
+        | 'requiredResourceAccesses'
+      >
     > {
   info?: Pick<
     azAd.ApplicationArgs,

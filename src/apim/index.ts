@@ -1,14 +1,16 @@
-import * as pulumi from '@pulumi/pulumi';
-import { stackInfo, azureEnv } from '../helpers';
 import * as apim from '@pulumi/azure-native/apimanagement';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import * as inputs from '@pulumi/azure-native/types/input';
 import * as certHelpers from '../helpers/certHelpers';
+import * as inputs from '@pulumi/azure-native/types/input';
+import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
-import { AppRegistration } from '../azAd';
-import { ApimSignUpSettingsResource } from '@drunk-pulumi/azure-providers';
-import { PrivateEndpoint } from '../vnet';
+
 import { ApimProduct, ApimProductArgs } from './ApimProduct';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { azureEnv, stackInfo } from '../helpers';
+
+import { ApimSignUpSettingsResource } from '@drunk-pulumi/azure-providers';
+import { AppRegistration } from '../azAd';
+import { PrivateEndpoint } from '../vnet';
 
 type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
 
@@ -30,9 +32,11 @@ export interface ApimArgs
       | 'virtualNetworkConfiguration'
       | 'publisherName'
       | 'publisherEmail'
+      | 'customProperties'
     > {
   publisherEmail?: pulumi.Input<string>;
   publisherName?: pulumi.Input<string>;
+  customProperties?: string[];
   hostnameConfigurations?: Array<{
     hostName: pulumi.Input<string>;
     negotiateClientCertificate: boolean;
@@ -49,9 +53,7 @@ export interface ApimArgs
     name: apim.SkuType;
   };
   disableSignIn?: boolean;
-  productCreate?: Array<
-    Omit<ApimProductArgs, 'rsGroup' | 'serviceName' | 'vaultInfo' | 'groupRoles'> & { name: string }
-  >;
+  products?: Array<Omit<ApimProductArgs, 'rsGroup' | 'serviceName' | 'vaultInfo' | 'groupRoles'> & { name: string }>;
 }
 
 export class Apim extends BaseResourceComponent<ApimArgs> {
@@ -111,6 +113,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
       apiVersionConstraint,
       additionalLocations,
       hostnameConfigurations = [],
+      customProperties = {},
       zones,
       network,
       ...others
@@ -175,19 +178,10 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30': 'false',
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10': 'false',
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_GCM_SHA256': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA256': 'false',
-          'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168': 'false',
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30': 'false',
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10': 'false',
           'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11': 'false',
+          ...customProperties,
         },
       },
       {
@@ -292,10 +286,10 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
   }
 
   private buildProducts(service: apim.ApiManagementService) {
-    const { productCreate, rsGroup, vaultInfo, groupRoles, logs } = this.args;
-    if (!productCreate?.length) return;
+    const { products, rsGroup, vaultInfo, groupRoles, logs } = this.args;
+    if (!products?.length) return;
 
-    return productCreate.map(
+    return products.map(
       (p) =>
         new ApimProduct(
           p.name,

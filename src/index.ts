@@ -1,4 +1,5 @@
 export * from './aks';
+export * from './apim';
 export * from './app';
 export * from './azAd';
 export * from './common';

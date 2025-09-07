@@ -142,6 +142,10 @@ export type LogsInputs = {
   appInsight?: AppInsightInputs;
 };
 
+export type WithLogs = {
+  logs?: LogsInputs;
+};
+
 export type LogsOutputs = {
   storage?: ResourceOutputs;
   workspace?: WorkspaceOutputs;
@@ -156,7 +160,7 @@ export type NetworkArgs = {
 
   //subnet?: { id: pulumi.Input<string> };
   ipRules?: pulumi.Input<pulumi.Input<string>[]>;
-  vnetRules?: pulumi.Input<pulumi.Input<{ subnetId: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]>;
+  vnetRules?: Array<{ subnetId: pulumi.Input<string>; ignoreMissingVnetServiceEndpoint?: boolean }>;
   privateLink?: PrivateEndpointType;
 };
 

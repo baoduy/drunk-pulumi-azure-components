@@ -1,6 +1,6 @@
 import { VaultKeyResource } from '@drunk-pulumi/azure-providers';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import { WithVaultInfo } from '../types';
 

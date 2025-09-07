@@ -1,8 +1,8 @@
 import * as keyvault from '@pulumi/azure-native/keyvault';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+import { BaseArgs, BaseResourceComponent } from '../base';
 import { azureEnv } from '../helpers';
-import { ResourceGroupInputs, WithNetworkArgs, WithResourceGroupInputs } from '../types';
+import { WithNetworkArgs, WithResourceGroupInputs } from '../types';
 import { PrivateEndpoint } from '../vnet';
 
 export interface KeyVaultArgs

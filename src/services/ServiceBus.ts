@@ -4,7 +4,7 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { azureEnv } from '../helpers';
 import * as types from '../types';
 import * as vault from '../vault';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+import { PrivateEndpoint } from '../vnet';
 
 const defaultQueueOptions: Partial<bus.QueueArgs> = {
   //duplicateDetectionHistoryTimeWindow: 'P10M',
@@ -50,9 +50,11 @@ export interface ServiceBusArgs
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
     types.WithNetworkArgs,
-    Pick<
-      bus.NamespaceArgs,
-      'sku' | 'zoneRedundant' | 'alternateName' | 'disableLocalAuth' | 'premiumMessagingPartitions'
+    Partial<
+      Pick<
+        bus.NamespaceArgs,
+        'sku' | 'zoneRedundant' | 'alternateName' | 'disableLocalAuth' | 'premiumMessagingPartitions'
+      >
     > {
   sku: {
     /**
@@ -106,7 +108,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
 
   private createBusNamespace() {
     const { rsGroup, defaultUAssignedId, vaultInfo, enableEncryption, network, ...props } = this.args;
-    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
+    const encryptionKey = enableEncryption && props.sku.name === 'Premium' ? this.getEncryptionKey() : undefined;
 
     const service = new bus.Namespace(
       this.name,
@@ -123,19 +125,18 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
           userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
         },
 
-        encryption:
-          encryptionKey && props.sku.name === 'Premium'
-            ? {
-                keySource: bus.KeySource.Microsoft_KeyVault,
-                keyVaultProperties: [
-                  {
-                    ...encryptionKey,
-                    identity: defaultUAssignedId ? { userAssignedIdentity: defaultUAssignedId.id } : undefined,
-                  },
-                ],
-                requireInfrastructureEncryption: true,
-              }
-            : undefined,
+        encryption: encryptionKey
+          ? {
+              keySource: bus.KeySource.Microsoft_KeyVault,
+              keyVaultProperties: [
+                {
+                  ...encryptionKey,
+                  identity: defaultUAssignedId ? { userAssignedIdentity: defaultUAssignedId.id } : undefined,
+                },
+              ],
+              requireInfrastructureEncryption: true,
+            }
+          : undefined,
 
         publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
       },

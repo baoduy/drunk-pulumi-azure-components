@@ -1,14 +1,23 @@
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import * as pulumi from '@pulumi/pulumi';
 import * as apim from '@pulumi/azure-native/apimanagement';
-import { ApimPolicyBuilder } from './ApimPolicyBuilder';
-import { ApimApiSet, ApimApiSetArgs } from './ApimApiSet';
+import * as pulumi from '@pulumi/pulumi';
 
-export interface ApimProductArgs extends CommonBaseArgs, Omit<apim.ProductArgs, 'resourceGroupName'> {
+import { ApimApiSet, ApimApiSetArgs } from './ApimApiSet';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+
+import { ApimPolicyBuilder } from './ApimPolicyBuilder';
+import * as types from '../types';
+
+export interface ApimProductArgs
+  extends CommonBaseArgs,
+    Omit<apim.ProductArgs, types.CommonProps | 'displayName' | 'subscriptionRequired'> {
+  displayName?: pulumi.Input<string>;
+  subscriptionRequired?: boolean;
   enableDiagnostic?: boolean;
-  policyBuilder?: ApimPolicyBuilder;
+  policyBuilder?: (policy: ApimPolicyBuilder) => ApimPolicyBuilder;
   apiSets?: Array<
-    Omit<ApimApiSetArgs, 'groupRoles' | 'rsGroup' | 'serviceName' | 'vaultInfo' | 'enableDiagnostic'> & { name: string }
+    Omit<ApimApiSetArgs, types.CommonProps | 'serviceName' | 'vaultInfo' | 'enableDiagnostic' | 'productId'> & {
+      name: string;
+    }
   >;
 }
 
@@ -36,7 +45,22 @@ export class ApimProduct extends BaseResourceComponent<ApimProductArgs> {
   }
 
   private buildProduct() {
-    const { rsGroup, productId, displayName, description, policyBuilder, serviceName, ...others } = this.args;
+    const {
+      rsGroup,
+      productId,
+      displayName,
+      description,
+      policyBuilder,
+      serviceName,
+      approvalRequired,
+      apiSets,
+      enableDiagnostic,
+      groupRoles,
+      vaultInfo,
+      subscriptionRequired = true,
+      subscriptionsLimit = 5,
+      ...others
+    } = this.args;
 
     const product = new apim.Product(
       this.name,
@@ -44,9 +68,12 @@ export class ApimProduct extends BaseResourceComponent<ApimProductArgs> {
         ...rsGroup,
         ...others,
         serviceName,
+        approvalRequired: subscriptionRequired ? approvalRequired : undefined,
+        subscriptionRequired: subscriptionRequired ?? true,
+        subscriptionsLimit: subscriptionRequired ? subscriptionsLimit : undefined,
         productId: productId ?? this.name,
-        displayName: productId ?? this.name,
-        description: productId ?? this.name,
+        displayName: displayName ?? this.name,
+        description: description ?? this.name,
       },
       { ...this.opts, parent: this },
     );
@@ -57,11 +84,10 @@ export class ApimProduct extends BaseResourceComponent<ApimProductArgs> {
         {
           ...rsGroup,
           serviceName,
-
           productId: productId ?? this.name,
           format: 'xml',
           policyId: 'policy',
-          value: policyBuilder.build(),
+          value: policyBuilder(new ApimPolicyBuilder()).build(),
         },
         { dependsOn: product, deletedWith: product, parent: this },
       );
@@ -71,7 +97,8 @@ export class ApimProduct extends BaseResourceComponent<ApimProductArgs> {
   }
 
   private buildSubscription(product: apim.Product) {
-    const { productId, serviceName, rsGroup } = this.args;
+    const { productId, serviceName, rsGroup, subscriptionRequired } = this.args;
+    if (!subscriptionRequired) return;
 
     const subName = `${this.name}-sub`;
     const primaryKey = `apim-${subName}-primary`;
@@ -103,14 +130,14 @@ export class ApimProduct extends BaseResourceComponent<ApimProductArgs> {
   }
 
   private buildApiSets(product: apim.Product) {
-    const { productId, rsGroup, serviceName, enableDiagnostic, apiSets } = this.args;
+    const { productId, rsGroup, serviceName, enableDiagnostic, subscriptionRequired, apiSets } = this.args;
     if (!apiSets) return;
 
     return apiSets.map(
       (s) =>
         new ApimApiSet(
           s.name,
-          { ...s, rsGroup, serviceName, productId: productId ?? this.name, enableDiagnostic },
+          { ...s, rsGroup, serviceName, productId: productId ?? this.name, enableDiagnostic, subscriptionRequired },
           { dependsOn: product, deletedWith: product, parent: this },
         ),
     );

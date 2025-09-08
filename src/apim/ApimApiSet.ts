@@ -2,12 +2,19 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as pulumi from '@pulumi/pulumi';
 import * as apim from '@pulumi/azure-native/apimanagement';
 import { ApimApi, ApimApiArgs } from './ApimApi';
+import * as types from '../types';
 
-export interface ApimApiSetArgs extends CommonBaseArgs, Omit<apim.ApiVersionSetArgs, 'resourceGroupName'> {
+export interface ApimApiSetArgs
+  extends CommonBaseArgs,
+    Omit<apim.ApiVersionSetArgs, types.CommonProps | 'displayName' | 'description' | 'versioningScheme'> {
+  displayName?: pulumi.Input<string>;
+  description?: pulumi.Input<string>;
   productId?: pulumi.Input<string>;
+  subscriptionRequired?: boolean;
+  versioningScheme?: apim.VersioningScheme;
   enableDiagnostic?: boolean;
   apis: Array<
-    Omit<ApimApiArgs, 'productId' | 'rsGroup' | 'serviceName' | 'vaultInfo' | 'enableDiagnostic'> & { name: string }
+    Omit<ApimApiArgs, types.CommonProps | 'productId' | 'serviceName' | 'enableDiagnostic'> & { name: string }
   >;
 }
 
@@ -19,6 +26,7 @@ export class ApimApiSet extends BaseResourceComponent<ApimApiSetArgs> {
     super('ApimApiSet', name, args, opts);
 
     const apiSet = this.buildApiSet();
+    this.buildApis(apiSet);
 
     this.id = apiSet.id;
     this.resourceName = apiSet.name;
@@ -42,9 +50,8 @@ export class ApimApiSet extends BaseResourceComponent<ApimApiSetArgs> {
         ...others,
         serviceName,
         versionSetId: versionSetId ?? this.name,
-        displayName: versionSetId ?? this.name,
-        description: versionSetId ?? this.name,
-
+        displayName: displayName ?? this.name,
+        description: description ?? this.name,
         versioningScheme: versioningScheme ?? apim.VersioningScheme.Segment,
       },
       { ...this.opts, parent: this },
@@ -52,8 +59,8 @@ export class ApimApiSet extends BaseResourceComponent<ApimApiSetArgs> {
   }
 
   private buildApis(set: apim.ApiVersionSet) {
-    const { apis, rsGroup, serviceName, productId } = this.args;
-    if (!apis) return;
+    const { apis, rsGroup, serviceName, productId, subscriptionRequired } = this.args;
+    if (!apis.length) return;
 
     return apis.map((a) => {
       return new ApimApi(
@@ -63,6 +70,7 @@ export class ApimApiSet extends BaseResourceComponent<ApimApiSetArgs> {
           rsGroup,
           serviceName,
           productId,
+          subscriptionRequired,
           apiVersionSetId: set.id,
           enableDiagnostic: this.args.enableDiagnostic,
         },

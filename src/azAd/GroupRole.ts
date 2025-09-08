@@ -1,6 +1,6 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
 import * as types from '../types';

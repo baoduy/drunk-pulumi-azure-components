@@ -3,31 +3,41 @@ import * as apim from '@pulumi/azure-native/apimanagement';
 import * as pulumi from '@pulumi/pulumi';
 import * as openApi from './openApiHelper';
 import { ApimPolicyBuilder } from './ApimPolicyBuilder';
-import { azureEnv } from '../helpers';
+import { azureEnv, stackInfo } from '../helpers';
+import * as types from '../types';
 
 export interface ApimApiArgs
   extends CommonBaseArgs,
     Omit<
       apim.ApiArgs,
-      | 'resourceGroupName'
+      | types.CommonProps
       | 'format'
       | 'value'
       | 'isCurrent'
       | 'apiVersionDescription'
       | 'apiRevisionDescription'
       | 'apiVersion'
+      | 'soapApiType'
+      | 'protocols'
     > {
   apiVersion: 'v1' | 'v2' | 'v3' | string;
   productId?: pulumi.Input<string>;
   enableDiagnostic?: boolean;
   openSpecUrl?: string;
+  soapApiType?: apim.SoapApiType;
+  protocols?: Array<apim.Protocol>;
   operations?: Array<
-    Omit<apim.ApiOperationArgs, 'policies' | 'apiId' | 'resourceGroupName' | 'serviceName'> & {
+    Omit<
+      apim.ApiOperationArgs,
+      'policies' | 'apiId' | 'resourceGroupName' | 'serviceName' | 'method' | 'displayName'
+    > & {
       name: string;
-      policyBuilder?: ApimPolicyBuilder;
+      displayName?: pulumi.Input<string>;
+      policyBuilder?: (policy: ApimPolicyBuilder) => ApimPolicyBuilder;
+      method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE';
     }
   >;
-  policyBuilder?: ApimPolicyBuilder;
+  policyBuilder?: (policy: ApimPolicyBuilder) => ApimPolicyBuilder;
 }
 
 export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
@@ -68,6 +78,7 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
       apiRevision,
       serviceUrl,
       openSpecUrl,
+      protocols,
       ...others
     } = this.args;
     if (!apiVersion) apiVersion = 'v1';
@@ -80,17 +91,19 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
         ...rsGroup,
         ...others,
         apiId: apiId ?? this.name,
-        displayName: apiId ?? this.name,
-        description: apiId ?? this.name,
+        displayName: displayName ?? this.name,
+        description: description ?? this.name,
         isCurrent: true,
-        protocols: [apim.Protocol.Https],
+        protocols: protocols ?? [apim.Protocol.Https],
 
         apiVersion,
         apiVersionDescription: pulumi.interpolate`The version ${apiVersion} of ${this.name}`,
 
         apiRevision,
         apiRevisionDescription: pulumi.interpolate`${apiRevName} ${new Date().toLocaleDateString()}`,
-        serviceUrl: pulumi.interpolate`${serviceUrl}/${apiVersion}`,
+        serviceUrl: serviceUrl
+          ? pulumi.interpolate`${serviceUrl}/${apiVersion}`
+          : `https://${stackInfo.organization}.com/${apiVersion}`,
 
         format: openSpecUrl ? apim.ContentFormat.Openapi_json : undefined,
         value: openSpecUrl ? pulumi.output(openApi.getImportConfig(openSpecUrl, apiVersion)) : undefined,
@@ -115,7 +128,7 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
         apiId: apiId ?? this.name,
         policyId: 'policy',
         format: 'xml',
-        value: policyBuilder.build(),
+        value: policyBuilder(new ApimPolicyBuilder()).build(),
       },
       { dependsOn: api, deletedWith: api, parent: this },
     );
@@ -165,7 +178,7 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
 
   private buildOperations(api: apim.Api) {
     const { operations, serviceName, rsGroup, apiId } = this.args;
-    if (!operations) return;
+    if (!operations?.length) return;
 
     return operations.map((o) => {
       const opsName = o.name.replace(/\//g, '');
@@ -220,7 +233,7 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
             apiId: apiId ?? this.name,
             policyId: 'policy',
             format: 'xml',
-            value: o.policyBuilder.build(),
+            value: o.policyBuilder(new ApimPolicyBuilder()).build(),
           },
           { dependsOn: apiOps },
         );

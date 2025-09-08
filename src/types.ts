@@ -174,3 +174,9 @@ export type DbCredentialsType = {
   username: pulumi.Input<string>;
   password: pulumi.Output<string>;
 };
+
+export type GrantIdentityRoles = {
+  roleNames: string[];
+  identity: pulumi.Input<{ principalId: pulumi.Input<string> } | undefined>;
+  resource: ResourceInputs;
+};

@@ -1,9 +1,11 @@
-import * as redis from '@pulumi/azure-native/redis';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import * as redis from '@pulumi/azure-native/redis';
 import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
+
+import { BaseArgs, BaseResourceComponent } from '../base';
+
 import { PrivateEndpointType } from '../vnet';
 import { convertToIpRange } from './helpers';
 
@@ -16,7 +18,6 @@ export interface RedisArgs
         redis.RedisArgs,
         | 'sku'
         | 'zones'
-        | 'disableAccessKeyAuthentication'
         | 'redisVersion'
         | 'replicasPerMaster'
         | 'replicasPerPrimary'
@@ -25,6 +26,7 @@ export interface RedisArgs
       >
     >,
     Partial<Pick<redis.PatchScheduleArgs, 'scheduleEntries'>> {
+  disableAccessKeyAuthentication?: boolean;
   network?: {
     allowAllInbound?: boolean;
     subnetId?: pulumi.Input<string>;
@@ -159,7 +161,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   }
 
   private addSecretsToVault(server: redis.Redis) {
-    const { rsGroup, vaultInfo } = this.args;
+    const { rsGroup, vaultInfo, disableAccessKeyAuthentication } = this.args;
     if (!vaultInfo) return;
 
     return server.hostName.apply(async (h) => {
@@ -179,7 +181,9 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
             [`${this.name}-redis-pass`]: { value: keys.primaryKey, contentType: `Redis pass` },
             [`${this.name}-redis-port`]: { value: '6380', contentType: `Redis port` },
             [`${this.name}-redis-conn`]: {
-              value: pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`,
+              value: disableAccessKeyAuthentication
+                ? pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`
+                : pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`,
               contentType: `Redis conn`,
             },
           },

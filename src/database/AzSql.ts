@@ -1,14 +1,16 @@
-import * as sql from '@pulumi/azure-native/sql';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
-import { RandomPassword } from '../common';
-import { azureEnv } from '../helpers';
-import { storageHelpers } from '../storage';
-import { getStorageAccessKeyOutputs } from '../storage/helpers';
+import * as sql from '@pulumi/azure-native/sql';
 import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
+
+import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+
+import { RandomPassword } from '../common';
+import { azureEnv } from '../helpers';
 import { convertToIpRange } from './helpers';
+import { getStorageAccessKeyOutputs } from '../storage/helpers';
+import { storageHelpers } from '../storage';
 
 export type AzSqlSkuType = {
   /**
@@ -158,7 +160,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
                 ? sql.AdministratorType.ActiveDirectory
                 : undefined,
               azureADOnlyAuthentication: administrators.adminGroup?.objectId
-                ? administrators.azureAdOnlyAuthentication ?? true
+                ? (administrators.azureAdOnlyAuthentication ?? true)
                 : false,
 
               principalType: sql.PrincipalType.Group,
@@ -324,7 +326,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         serverName: server.name,
         emailAccountAdmins: true,
         emailAddresses: vulnerabilityAssessment.alertEmails,
-        retentionDays: vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd ? 30 : 7,
+        retentionDays: (vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd) ? 30 : 7,
 
         storageAccountAccessKey: storageKey,
         storageEndpoint: stgEndpoints.blob,
@@ -349,7 +351,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         isStorageSecondaryKeyInUse: false,
         predicateExpression: "object_name = 'SensitiveData'",
         queueDelayMs: 4000,
-        retentionDays: vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd ? 30 : 7,
+        retentionDays: (vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd) ? 30 : 7,
         state: 'Enabled',
         isDevopsAuditEnabled: true,
 
@@ -411,7 +413,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
           : pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; MultipleActiveResultSets=False;Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`
         : pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; User Id=${server.administratorLogin}; Password=${password.value}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
 
-      this.addSecret(`${name}-conn`, connectionString);
+      this.addSecret(`${name}-sql-conn`, connectionString);
       return db;
     });
   }

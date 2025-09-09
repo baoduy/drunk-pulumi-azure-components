@@ -1,10 +1,12 @@
 import * as bus from '@pulumi/azure-native/servicebus';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv } from '../helpers';
 import * as types from '../types';
 import * as vault from '../vault';
+
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+
 import { PrivateEndpoint } from '../vnet';
+import { azureEnv } from '../helpers';
 
 const defaultQueueOptions: Partial<bus.QueueArgs> = {
   //duplicateDetectionHistoryTimeWindow: 'P10M',
@@ -146,7 +148,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
       },
     );
 
-    this.addSecret('hostname', pulumi.interpolate`${service.name}.servicebus.windows.net`);
+    this.addSecret('bus-hostname', pulumi.interpolate`${service.name}.servicebus.windows.net`);
 
     return service;
   }

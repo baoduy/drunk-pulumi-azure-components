@@ -1,9 +1,10 @@
-import * as mid from '@pulumi/azure-native/managedidentity';
 import * as azAd from '@pulumi/azuread';
+import * as mid from '@pulumi/azure-native/managedidentity';
 import * as pulumi from '@pulumi/pulumi';
-import { azureEnv, rsHelpers } from '../helpers';
+
 import { BaseArgs, BaseResourceComponent } from '../base';
 import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
+import { azureEnv, rsHelpers } from '../helpers';
 
 export interface UserAssignedIdentityArgs
   extends Omit<BaseArgs, 'groupRoles'>,
@@ -29,9 +30,9 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     this.createFederations(managedIdentity);
 
     this.addSecrets({
-      id: managedIdentity.id,
-      clientId: managedIdentity.clientId,
-      principalId: managedIdentity.principalId,
+      ['uid-id']: managedIdentity.id,
+      ['uid-clientId']: managedIdentity.clientId,
+      ['uid-principalId']: managedIdentity.principalId,
     });
 
     this.id = managedIdentity.id;

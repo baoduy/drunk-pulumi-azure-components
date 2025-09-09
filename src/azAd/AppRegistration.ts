@@ -1,12 +1,13 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { stackInfo } from '../helpers';
+
 import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
 import { WithMemberOfArgs, WithVaultInfo } from '../types';
 
 import { BaseComponent } from '../base/BaseComponent';
-import { VaultSecret } from '../vault';
+import { VaultSecrets } from '../vault';
 import { getComponentResourceType } from '../base/helpers';
+import { stackInfo } from '../helpers';
 
 export enum GroupMembershipClaimsTypes {
   None = 'None',
@@ -62,21 +63,25 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   public readonly clientSecret?: pulumi.Output<string>;
   public readonly servicePrincipalId?: pulumi.Output<string>;
   public readonly servicePrincipalPassword?: pulumi.Output<string>;
-  public readonly vaultSecrets: { [key: string]: ReturnType<VaultSecret['getOutputs']> } = {};
+  public readonly vaultSecrets: { [key: string]: ReturnType<VaultSecrets['getOutputs']> } = {};
 
   constructor(name: string, args: AppRegistrationArgs = { appType: 'native' }, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('AppRegistration'), name, args, opts);
 
     //Application
-    const app = this.createAppRegistration();
-    const secret = this.createClientSecret(app);
-    this.clientSecret = secret.clientSecret;
-
+    const { app, clientSecret } = this.createAppRegistration();
     const sp = this.createServicePrincipal(app);
     this.servicePrincipalId = sp.servicePrincipalId;
     this.servicePrincipalPassword = sp.servicePrincipalPassword;
 
     this.clientId = app.clientId;
+    this.addSecrets({
+      clientId: app.clientId,
+      clientSecret: clientSecret,
+      servicePrincipalId: sp.servicePrincipalId,
+      servicePrincipalPass: sp.servicePrincipalPassword,
+    });
+
     this.registerOutputs();
   }
 
@@ -90,6 +95,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
 
   private createAppRegistration() {
     const { info } = this.args;
+
     const app = new azAd.Application(
       `${stackInfo.stack}-${this.name}`,
       {
@@ -116,8 +122,16 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       { ...this.opts, parent: this },
     );
 
-    this.addSecret('client-id', app.clientId);
-    return app;
+    const clientSecret = new azAd.ApplicationPassword(
+      `${this.name}-client-secret`,
+      {
+        displayName: this.name,
+        applicationId: app.id,
+      },
+      { dependsOn: app, parent: this },
+    );
+
+    return { app, clientSecret: clientSecret.value };
   }
 
   private createServicePrincipal(app: azAd.Application) {
@@ -144,28 +158,10 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
 
     this.addRoleAssignments(sp);
     this.addMemberOf(sp);
-    this.addSecret('sp-pass', spPass.value);
 
     return {
       servicePrincipalId: sp.id,
       servicePrincipalPassword: spPass.value,
-    };
-  }
-
-  private createClientSecret(app: azAd.Application) {
-    const clientSecret = new azAd.ApplicationPassword(
-      `${this.name}-client-secret`,
-      {
-        displayName: this.name,
-        applicationId: app.id,
-      },
-      { dependsOn: app, parent: this },
-    );
-
-    this.addSecret('client-secret', clientSecret.value);
-
-    return {
-      clientSecret: clientSecret.value,
     };
   }
 
@@ -200,15 +196,35 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     );
   }
 
-  private addSecret(name: string, value: pulumi.Output<string>) {
+  private addSecrets({
+    clientId,
+    clientSecret,
+    servicePrincipalId,
+    servicePrincipalPass,
+  }: {
+    clientId: pulumi.Input<string>;
+    clientSecret: pulumi.Input<string>;
+    servicePrincipalId: pulumi.Input<string>;
+    servicePrincipalPass: pulumi.Input<string>;
+  }) {
     if (!this.args.vaultInfo) return;
-    const n = `${this.name}-${name}`;
-    const secret = new VaultSecret(
+    const n = `${this.name}-secrets`;
+    const secret = new VaultSecrets(
       n,
       {
         vaultInfo: this.args.vaultInfo,
-        value: value,
-        contentType: n,
+        secrets: {
+          [`${this.name}-app-client-id`]: { value: clientId, contentType: `AppRegistration:${this.name} ` },
+          [`${this.name}-app-client-secret`]: { value: clientSecret, contentType: `AppRegistration:${this.name} ` },
+          [`${this.name}-service-principal-id`]: {
+            value: servicePrincipalId,
+            contentType: `AppRegistration:${this.name} `,
+          },
+          [`${this.name}-service-principal-pass`]: {
+            value: servicePrincipalPass,
+            contentType: `AppRegistration:${this.name} `,
+          },
+        },
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );

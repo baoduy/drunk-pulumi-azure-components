@@ -1,6 +1,6 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-
+import { stackInfo } from '../helpers';
 import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
 import { WithMemberOfArgs, WithVaultInfo } from '../types';
 
@@ -89,16 +89,14 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   }
 
   private createAppRegistration() {
-    const ops = this.args.info ?? {
-      displayName: this.name,
-      description: this.name,
-    };
-
+    const { info } = this.args;
     const app = new azAd.Application(
-      this.name,
+      `${stackInfo.stack}-${this.name}`,
       {
         ...this.args,
-        ...ops,
+        ...info,
+        displayName: info?.displayName ?? `${stackInfo.stack}-${this.name}`,
+        description: info?.description ?? `${stackInfo.stack}-${this.name}`,
         preventDuplicateNames: true,
         signInAudience: 'AzureADMyOrg',
 

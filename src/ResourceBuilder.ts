@@ -1,6 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as types from './types';
-
 import {
   AppRegistration,
   AppRegistrationArgs,

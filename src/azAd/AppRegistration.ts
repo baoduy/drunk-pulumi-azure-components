@@ -130,7 +130,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         clientId: app.clientId,
         owners: this.args.owners,
       },
-      { dependsOn: app, parent: this },
+      { dependsOn: app, deletedWith: app, parent: this },
     );
 
     var spPass = new azAd.ServicePrincipalPassword(
@@ -139,7 +139,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         displayName: this.name,
         servicePrincipalId: pulumi.interpolate`/servicePrincipals/${sp.objectId}`,
       },
-      { dependsOn: sp, parent: this },
+      { dependsOn: sp, deletedWith: app, parent: this },
     );
 
     this.addRoleAssignments(sp);

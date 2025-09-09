@@ -192,14 +192,15 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    */
   private postCreated() {
     const { vaultInfo } = this.args;
-    if (Object.keys(this._secrets).length <= 0 || !vaultInfo) return;
-    if (this._vaultSecretsCreated) return;
+    if (this._vaultSecretsCreated || Object.keys(this._secrets).length <= 0 || !vaultInfo) return;
+
+    console.log(`\nAdding secrets for ${this.type}:${this.name}`);
 
     const se: { [key: string]: SecretItemArgs } = {};
     for (const key in this._secrets) {
       se[key] = {
         value: this._secrets[key],
-        contentType: `${this.type} ${key}`,
+        contentType: `${this.type} ${this.name}`,
       };
     }
 

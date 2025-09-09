@@ -94,6 +94,17 @@ export type WithUserAssignedIdentity = {
   defaultUAssignedId?: UserAssignedIdentityInputs;
 };
 
+export type AppIdentityType = {
+  clientId: string;
+  servicePrincipalId: string;
+};
+
+export type AppIdentityInputs = AsInput<AppIdentityType>;
+export type AppIdentityOutputs = AsOutput<AppIdentityType>;
+export type WithAppIdentity = {
+  defaultAppIdentity?: AppIdentityInputs;
+};
+
 export type WithEncryptionEnabler = {
   /** this only work when vaultInfo is provided.
    * for MySql and Postgres the feature 'CMK Encryption' need to be enabled on the subscription.

@@ -1,8 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
-import { getComponentResourceType } from '../base/helpers';
-import { WithVaultInfo } from '../types';
+
 import { SecretItemArgs, VaultSecret } from './VaultSecret';
+
+import { BaseComponent } from '../base/BaseComponent';
+import { WithVaultInfo } from '../types';
+import { getComponentResourceType } from '../base/helpers';
 
 export type VaultSecretResult = {
   id: pulumi.Output<string>;
@@ -39,12 +41,10 @@ export class VaultSecrets extends BaseComponent<VaultSecretsArgs> {
       };
     });
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {
-    return {
-      results: this.results,
-    };
+    return this.results;
   }
 }

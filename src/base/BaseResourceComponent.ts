@@ -1,15 +1,17 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import {RandomPassword, RandomPasswordArgs} from '../common/RandomPassword';
-import {RandomString, RandomStringArgs} from '../common/RandomString';
-import {EncryptionKey} from '../vault/EncryptionKey';
-import {SecretItemArgs} from '../vault/VaultSecret';
-import {VaultSecretResult, VaultSecrets} from '../vault/VaultSecrets';
-import {RoleAssignment} from '../azAd/RoleAssignment';
-import {BaseComponent} from './BaseComponent';
-import {ResourceLocker} from '../common/ResourceLocker';
 import * as types from '../types';
-import {getComponentResourceType} from './helpers';
+
+import { RandomPassword, RandomPasswordArgs } from '../common/RandomPassword';
+import { RandomString, RandomStringArgs } from '../common/RandomString';
+import { VaultSecretResult, VaultSecrets } from '../vault/VaultSecrets';
+
+import { BaseComponent } from './BaseComponent';
+import { EncryptionKey } from '../vault/EncryptionKey';
+import { ResourceLocker } from '../common/ResourceLocker';
+import { RoleAssignment } from '../azAd/RoleAssignment';
+import { SecretItemArgs } from '../vault/VaultSecret';
+import { getComponentResourceType } from './helpers';
 
 /**
  * Base interface for resource component arguments that combines vault information
@@ -134,9 +136,12 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    */
   protected registerOutputs(): void {
     this.postCreated();
-    super.registerOutputs({ ...this.getOutputs(), vaultSecrets: this.vaultSecrets });
+    super.registerOutputs();
   }
 
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return { vaultSecrets: this.vaultSecrets };
+  }
   /**
    * Creates a new encryption key in the Azure Key Vault
    * @returns A new EncryptionKey instance if vaultInfo is provided, undefined otherwise

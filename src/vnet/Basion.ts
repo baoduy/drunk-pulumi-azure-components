@@ -1,9 +1,10 @@
 import * as nw from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
-import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
+
+import { BaseComponent } from '../base/BaseComponent';
 import { IpAddresses } from './IpAddresses';
+import { getComponentResourceType } from '../base/helpers';
 
 export interface BasionArgs
   extends types.WithResourceGroupInputs,
@@ -69,7 +70,7 @@ export class Basion extends BaseComponent<BasionArgs> {
     this.id = bs.id;
     this.resourceName = bs.name;
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

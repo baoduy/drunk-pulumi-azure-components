@@ -46,7 +46,7 @@ export class RouteTable extends BaseComponent<RouteTableArgs> {
       this.addRoute(r.name, { ...r, ...rsGroup });
     });
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

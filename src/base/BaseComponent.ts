@@ -1,4 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
+
 import { getComponentResourceType } from './helpers';
 
 /**
@@ -36,8 +37,8 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
    * This method should be overridden by derived classes to ensure proper output registration.
    * @param outputs - The outputs to register for this component
    */
-  protected registerOutputs(outputs: pulumi.Inputs | pulumi.Output<pulumi.Inputs>): void {
-    super.registerOutputs(outputs);
+  protected registerOutputs(): void {
+    super.registerOutputs(this.getOutputs());
   }
 
   /**

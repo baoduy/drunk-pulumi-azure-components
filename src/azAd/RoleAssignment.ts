@@ -1,5 +1,6 @@
 import * as auth from '@pulumi/azure-native/authorization';
 import * as pulumi from '@pulumi/pulumi';
+
 import { BaseComponent } from '../base';
 import { getRoleDefinitionByName } from './helpers/rolesBuiltIn';
 
@@ -28,7 +29,7 @@ export class RoleAssignment extends BaseComponent<RoleAssignmentArgs> {
 
     this.id = assignment.id;
     this.resourceName = assignment.name;
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

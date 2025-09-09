@@ -68,7 +68,7 @@ export class VpnGateway extends BaseComponent<VpnGatewayArgs> {
     this.id = vpn.id;
     this.resourceName = vpn.name;
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

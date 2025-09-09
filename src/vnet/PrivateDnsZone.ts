@@ -48,7 +48,7 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
 
     this.createARecord();
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

@@ -1,9 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as random from '@pulumi/random';
-import { BaseComponent } from '../base/BaseComponent';
-import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
+
+import { BaseComponent } from '../base/BaseComponent';
 import { VaultSecret } from '../vault/VaultSecret';
+import { getComponentResourceType } from '../base/helpers';
 
 export interface RandomStringArgs extends types.WithVaultInfo {
   type: 'string' | 'uuId';
@@ -58,7 +59,7 @@ export class RandomString extends BaseComponent<RandomStringArgs> {
     }
 
     this.value = randomString.result;
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

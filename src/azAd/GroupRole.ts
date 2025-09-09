@@ -54,7 +54,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
 
     this.configHierarchyRoles(roleInstances);
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

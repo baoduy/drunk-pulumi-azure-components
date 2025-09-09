@@ -1,5 +1,6 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
+
 import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
@@ -37,7 +38,7 @@ export class AzRole extends BaseComponent<AzRoleArgs> {
     this.objectId = role.objectId;
     this.displayName = role.displayName;
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

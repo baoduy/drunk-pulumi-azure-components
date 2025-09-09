@@ -1,20 +1,24 @@
 import * as pulumi from '@pulumi/pulumi';
+import * as types from './types';
+
 import {
+  AppRegistration,
+  AppRegistrationArgs,
   GroupRole,
   GroupRoleArgs,
-  RoleAssignmentArgs,
   RoleAssignment,
+  RoleAssignmentArgs,
   UserAssignedIdentity,
   UserAssignedIdentityArgs,
 } from './azAd';
+import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
+import { KeyVault, KeyVaultArgs } from './vault';
+import { Logs, LogsArgs } from './logs';
+import { RsGroup, RsGroupArgs } from './common';
+import { Vnet, VnetArgs } from './vnet';
+
 import { BaseComponent } from './base/BaseComponent';
 import { getComponentResourceType } from './base/helpers';
-import { RsGroup, RsGroupArgs } from './common';
-import { Logs, LogsArgs } from './logs';
-import { KeyVault, KeyVaultArgs } from './vault';
-import * as types from './types';
-import { DiskEncryptionSet, DiskEncryptionSetArgs } from './vm';
-import { Vnet, VnetArgs } from './vnet';
 import { rsHelpers } from './helpers';
 
 export type ResourceBuilderOutputs = {
@@ -22,6 +26,7 @@ export type ResourceBuilderOutputs = {
   rsGroup: ReturnType<RsGroup['getOutputs']>;
   vaultInfo?: ReturnType<KeyVault['getOutputs']>;
   defaultUAssignedId?: ReturnType<UserAssignedIdentity['getOutputs']>;
+  defaultAppIdentity?: ReturnType<AppRegistration['getOutputs']>;
   logs?: ReturnType<Logs['getOutputs']>;
   diskEncryptionSet?: ReturnType<DiskEncryptionSet['getOutputs']>;
   vnet?: ReturnType<Vnet['getOutputs']>;
@@ -36,6 +41,9 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps
   defaultUAssignedIdCreate?: Omit<UserAssignedIdentityArgs, types.CommonProps | 'memberof'> & {
     memberof?: types.GroupRoleTypes;
   };
+  defaultAppIdentityCreate?: Omit<AppRegistrationArgs, types.CommonProps | 'memberof'> & {
+    memberof?: types.GroupRoleTypes;
+  };
   vnetCreate?: Omit<VnetArgs, types.CommonProps>;
 }
 
@@ -44,9 +52,10 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   public readonly vaultInfo?: KeyVault;
   public readonly groupRoles?: types.GroupRoleOutputTypes;
   public readonly defaultUAssignedId?: UserAssignedIdentity;
+  public readonly defaultAppIdentity?: AppRegistration;
   public readonly logs?: Logs;
-  public readonly diskEncryptionSet?: DiskEncryptionSet;
-  public readonly vnet: Vnet | undefined;
+  private readonly diskEncryptionSet?: DiskEncryptionSet;
+  private readonly vnet: Vnet | undefined;
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
@@ -70,11 +79,12 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
 
     this.vaultInfo = this.createVault();
     this.defaultUAssignedId = this.createUserIdentity();
+    this.defaultAppIdentity = this.createAppIdentity();
     this.logs = this.createLogs();
     this.diskEncryptionSet = this.createDiskEncryptionSet();
     this.vnet = this.createVnet();
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs(): ResourceBuilderOutputs {
@@ -83,6 +93,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       rsGroup: this.rsGroup.getOutputs(),
       vaultInfo: this.vaultInfo?.getOutputs(),
       defaultUAssignedId: this.defaultUAssignedId?.getOutputs(),
+      defaultAppIdentity: this.defaultAppIdentity?.getOutputs(),
       logs: this.logs?.getOutputs(),
       diskEncryptionSet: this.diskEncryptionSet?.getOutputs(),
       vnet: this.vnet?.getOutputs(),
@@ -128,6 +139,24 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
         memberof: this.groupRoles ? [this.groupRoles[defaultUAssignedIdCreate.memberof ?? 'readOnly']] : undefined,
 
         rsGroup: this.rsGroup,
+        vaultInfo: this.vaultInfo,
+      },
+      {
+        dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup,
+        parent: this,
+      },
+    );
+  }
+
+  private createAppIdentity() {
+    const { defaultAppIdentityCreate } = this.args;
+    if (!defaultAppIdentityCreate) return undefined;
+
+    return new AppRegistration(
+      this.name,
+      {
+        ...defaultAppIdentityCreate,
+        memberof: this.groupRoles ? [this.groupRoles[defaultAppIdentityCreate.memberof ?? 'readOnly']] : undefined,
         vaultInfo: this.vaultInfo,
       },
       {

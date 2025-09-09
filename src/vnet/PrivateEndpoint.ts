@@ -1,11 +1,12 @@
+import * as helpers from './helpers';
 import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
+import * as types from '../types';
+
 import { BaseComponent } from '../base/BaseComponent';
+import { PrivateDnsZone } from './PrivateDnsZone';
 import { getComponentResourceType } from '../base/helpers';
 import { rsHelpers } from '../helpers';
-import * as types from '../types';
-import * as helpers from './helpers';
-import { PrivateDnsZone } from './PrivateDnsZone';
 
 export type PrivateEndpointServices =
   | 'azApi'
@@ -118,7 +119,7 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
 
     this.privateDnsZone = zone;
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

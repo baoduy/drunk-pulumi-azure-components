@@ -35,7 +35,7 @@ export class EncryptionKey extends BaseComponent<EncryptionKeyArgs> {
     this.vaultUrl = key.vaultUrl;
     this.version = key.version;
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

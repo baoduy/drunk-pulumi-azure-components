@@ -62,8 +62,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   public readonly clientSecret?: pulumi.Output<string>;
   public readonly servicePrincipalId?: pulumi.Output<string>;
   public readonly servicePrincipalPassword?: pulumi.Output<string>;
-
-  //private readonly _app: azAd.Application;
+  public readonly vaultSecrets: { [key: string]: ReturnType<VaultSecret['getOutputs']> } = {};
 
   constructor(name: string, args: AppRegistrationArgs = { appType: 'native' }, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('AppRegistration'), name, args, opts);
@@ -78,15 +77,14 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     this.servicePrincipalPassword = sp.servicePrincipalPassword;
 
     this.clientId = app.clientId;
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {
     return {
       clientId: this.clientId,
-      clientSecret: this.clientSecret,
       servicePrincipalId: this.servicePrincipalId,
-      servicePrincipalPassword: this.servicePrincipalPassword,
+      vaultSecrets: this.vaultSecrets,
     };
   }
 
@@ -206,14 +204,17 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
 
   private addSecret(name: string, value: pulumi.Output<string>) {
     if (!this.args.vaultInfo) return;
-    new VaultSecret(
-      `${this.name}-${name}`,
+    const n = `${this.name}-${name}`;
+    const secret = new VaultSecret(
+      n,
       {
         vaultInfo: this.args.vaultInfo,
         value: value,
-        contentType: `${this.name} ${name}`,
+        contentType: n,
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
+    this.vaultSecrets[n] = secret.getOutputs();
+    return secret;
   }
 }

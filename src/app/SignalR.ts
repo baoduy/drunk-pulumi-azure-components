@@ -2,13 +2,12 @@ import * as ss from '@pulumi/azure-native/signalrservice';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
-import * as vault from '../vault';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+import { PrivateEndpoint } from '../vnet';
 
 export interface SignalRArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
-    Pick<ss.SignalRArgs, 'kind' | 'cors' | 'features' | 'tls' | 'identity'> {
+    Partial<Pick<ss.SignalRArgs, 'kind' | 'cors' | 'features' | 'tls' | 'identity'>> {
   sku: {
     /**
      * Optional, integer. The unit count of the resource.
@@ -60,27 +59,27 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
         networkACLs: isFreeTier
           ? undefined
           : network?.privateLink
-          ? {
-              defaultAction: ss.ACLAction.Allow,
-              publicNetwork: {
-                allow: [ss.SignalRRequestType.ClientConnection],
-                deny: [ss.SignalRRequestType.ServerConnection, ss.SignalRRequestType.RESTAPI],
-              },
-              privateEndpoints: [
-                {
-                  name: '',
+            ? {
+                defaultAction: ss.ACLAction.Allow,
+                publicNetwork: {
+                  allow: [ss.SignalRRequestType.ClientConnection],
+                  deny: [ss.SignalRRequestType.ServerConnection, ss.SignalRRequestType.RESTAPI],
+                },
+                privateEndpoints: [
+                  {
+                    name: '',
+                    allow: [ss.SignalRRequestType.ClientConnection, ss.SignalRRequestType.ServerConnection],
+                    deny: [ss.SignalRRequestType.RESTAPI],
+                  },
+                ],
+              }
+            : {
+                defaultAction: ss.ACLAction.Allow,
+                publicNetwork: {
                   allow: [ss.SignalRRequestType.ClientConnection, ss.SignalRRequestType.ServerConnection],
                   deny: [ss.SignalRRequestType.RESTAPI],
                 },
-              ],
-            }
-          : {
-              defaultAction: ss.ACLAction.Allow,
-              publicNetwork: {
-                allow: [ss.SignalRRequestType.ClientConnection, ss.SignalRRequestType.ServerConnection],
-                deny: [ss.SignalRRequestType.RESTAPI],
               },
-            },
       },
       { ...opts, parent: this },
     );
@@ -124,24 +123,10 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
         resourceGroupName: rgName,
       });
 
-      new vault.VaultSecrets(
-        this.name,
-        {
-          vaultInfo,
-          secrets: {
-            [`${this.name}-primary-conn`]: {
-              value: keys.primaryConnectionString!,
-              contentType: `SignalR Primary ConnectionString`,
-            },
-
-            [`${this.name}-secondary-conn`]: {
-              value: keys.secondaryConnectionString!,
-              contentType: `SignalR Secondary ConnectionString`,
-            },
-          },
-        },
-        { dependsOn: service, parent: this },
-      );
+      this.addSecrets({
+        [`${this.name}-primary-conn`]: keys.primaryConnectionString!,
+        [`${this.name}-secondary-conn`]: keys.secondaryConnectionString!,
+      });
     });
   }
 }

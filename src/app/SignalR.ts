@@ -3,6 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 import { PrivateEndpoint } from '../vnet';
+import { azureEnv } from '../helpers';
 
 export interface SignalRArgs
   extends CommonBaseArgs,
@@ -112,7 +113,7 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
   }
 
   private addSecretsToVault(service: ss.SignalR) {
-    const { rsGroup, disableLocalAuth, vaultInfo } = this.args;
+    const { rsGroup, disableLocalAuth, defaultUAssignedId, vaultInfo } = this.args;
     if (disableLocalAuth || !vaultInfo) return;
 
     pulumi.output([service.name, rsGroup.resourceGroupName]).apply(async ([svName, rgName]) => {
@@ -123,10 +124,23 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
         resourceGroupName: rgName,
       });
 
-      this.addSecrets({
+      const secrets: Record<string, pulumi.Input<string>> = {
         [`${this.name}-primary-conn`]: keys.primaryConnectionString!,
         [`${this.name}-secondary-conn`]: keys.secondaryConnectionString!,
-      });
+        [`${this.name}-default-system-id`]: pulumi.interpolate`Endpoint=https://${service.name}.service.signalr.net;AuthType=azure.msi;Version=1.0;`,
+      };
+
+      if (defaultUAssignedId) {
+        secrets[`${this.name}-default-user-assigned-id`] =
+          pulumi.interpolate`Endpoint=https://${service.name}.service.signalr.net;AuthType=azure.msi;ClientId=${defaultUAssignedId.clientId};Version=1.0;`;
+      }
+
+      // if (defaultAppIdentity) {
+      //   secrets[`${this.name}-default-app-id`] =
+      //     pulumi.interpolate`Endpoint=https://${service.name}.service.signalr.net;AuthType=azure.app;ClientId=${defaultAppIdentity.clientId};ClientSecret=789;TenantId=${azureEnv.tenantId};Version=1.0;`;
+      // }
+
+      this.addSecrets(secrets);
     });
   }
 }

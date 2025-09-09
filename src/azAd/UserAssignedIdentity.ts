@@ -1,7 +1,7 @@
 import * as mid from '@pulumi/azure-native/managedidentity';
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { azureEnv, rsHelpers, stackInfo } from '../helpers';
+import { azureEnv, rsHelpers } from '../helpers';
 import { BaseArgs, BaseResourceComponent } from '../base';
 import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
 
@@ -24,11 +24,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     super('UserAssignedIdentity', name, args, opts);
     const { rsGroup } = args;
 
-    const managedIdentity = new mid.UserAssignedIdentity(
-      `${stackInfo.stack}-${name}`,
-      { ...rsGroup },
-      { ...opts, parent: this },
-    );
+    const managedIdentity = new mid.UserAssignedIdentity(name, { ...rsGroup }, { ...opts, parent: this });
 
     this.createFederations(managedIdentity);
 

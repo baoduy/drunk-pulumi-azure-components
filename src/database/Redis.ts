@@ -27,6 +27,11 @@ export interface RedisArgs
     >,
     Partial<Pick<redis.PatchScheduleArgs, 'scheduleEntries'>> {
   disableAccessKeyAuthentication?: boolean;
+  additionalUserAssignedIds?: Array<{
+    name: string;
+    accessPolicy: 'Data Owner' | 'Data Contributor' | 'Data Reader';
+    clientId: pulumi.Input<string>;
+  }>;
   network?: {
     allowAllInbound?: boolean;
     subnetId?: pulumi.Input<string>;
@@ -48,6 +53,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     const server = this.createRedis();
     this.createNetwork(server);
     this.createMaintenance(server);
+    this.AccessPolicyAssignments(server);
     this.addSecretsToVault(server);
 
     if (args.lock) this.lockFromDeleting(server);
@@ -69,7 +75,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   private createRedis() {
     const { rsGroup, network, lock, defaultUAssignedId, ...props } = this.args;
 
-    const server = new redis.Redis(
+    return new redis.Redis(
       this.name,
       {
         ...props,
@@ -92,8 +98,38 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
       },
       { ...this.opts, protect: lock ?? this.opts?.protect, parent: this, ignoreChanges: ['name'] },
     );
+  }
 
-    return server;
+  private AccessPolicyAssignments(server: redis.Redis) {
+    const { rsGroup, defaultUAssignedId, additionalUserAssignedIds } = this.args;
+    if (defaultUAssignedId)
+      new redis.AccessPolicyAssignment(
+        `${this.name}-default-uid-policy`,
+        {
+          ...rsGroup,
+          accessPolicyName: 'Data Contributor',
+          cacheName: server.name,
+          objectId: defaultUAssignedId.clientId,
+          objectIdAlias: defaultUAssignedId.clientId,
+        },
+        { dependsOn: server, deletedWith: server, parent: this },
+      );
+
+    if (additionalUserAssignedIds) {
+      additionalUserAssignedIds.map((u) => {
+        return new redis.AccessPolicyAssignment(
+          `${this.name}-${u.name}-${u.accessPolicy}`,
+          {
+            ...rsGroup,
+            accessPolicyName: u.accessPolicy,
+            cacheName: server.name,
+            objectId: u.clientId,
+            objectIdAlias: u.clientId,
+          },
+          { dependsOn: server, deletedWith: server, parent: this },
+        );
+      });
+    }
   }
 
   private createMaintenance(rds: redis.Redis) {
@@ -167,7 +203,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     return server.hostName.apply(async (h) => {
       if (!h) return;
 
-      const keys = await redis.listRedisKeysOutput({
+      const keys = redis.listRedisKeysOutput({
         name: server.name,
         resourceGroupName: rsGroup.resourceGroupName,
       });

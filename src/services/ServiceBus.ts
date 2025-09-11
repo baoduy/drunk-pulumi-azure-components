@@ -144,6 +144,8 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
       },
     );
 
+    //Add Root Manage Shared Access Key to Key Vault
+    this.addConnectionsToVault(service);
     this.addSecret('bus-hostname', pulumi.interpolate`${service.name}.servicebus.windows.net`);
     if (disableLocalAuth) {
       this.addSecret('bus-default-conn', pulumi.interpolate`sb://${service.name}.servicebus.windows.net`);
@@ -217,7 +219,6 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
       { dependsOn: service, parent: this },
     );
 
-    this.addConnectionsToVault(service);
     this.addConnectionsToVault(service, listenRule);
     this.addConnectionsToVault(service, sendRule);
   }

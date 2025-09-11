@@ -52,12 +52,8 @@ export interface ServiceBusArgs
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
     types.WithNetworkArgs,
-    Partial<
-      Pick<
-        bus.NamespaceArgs,
-        'sku' | 'zoneRedundant' | 'alternateName' | 'disableLocalAuth' | 'premiumMessagingPartitions'
-      >
-    > {
+    Partial<Pick<bus.NamespaceArgs, 'sku' | 'zoneRedundant' | 'alternateName' | 'premiumMessagingPartitions'>> {
+  disableLocalAuth?: boolean;
   sku: {
     /**
      * Messaging units for your service bus premium namespace. Valid capacities are {1, 2, 4, 8, 16} multiples of your properties.premiumMessagingPartitions setting. For example, If properties.premiumMessagingPartitions is 1 then possible capacity values are 1, 2, 4, 8, and 16. If properties.premiumMessagingPartitions is 4 then possible capacity values are 4, 8, 16, 32 and 64
@@ -109,7 +105,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
   }
 
   private createBusNamespace() {
-    const { rsGroup, defaultUAssignedId, vaultInfo, enableEncryption, network, ...props } = this.args;
+    const { rsGroup, defaultUAssignedId, vaultInfo, enableEncryption, network, disableLocalAuth, ...props } = this.args;
     const encryptionKey = enableEncryption && props.sku.name === 'Premium' ? this.getEncryptionKey() : undefined;
 
     const service = new bus.Namespace(
@@ -118,7 +114,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
         ...props,
         ...rsGroup,
         minimumTlsVersion: '1.2',
-
+        disableLocalAuth,
         identity: {
           type: defaultUAssignedId
             ? bus.ManagedServiceIdentityType.SystemAssigned_UserAssigned
@@ -149,6 +145,9 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
     );
 
     this.addSecret('bus-hostname', pulumi.interpolate`${service.name}.servicebus.windows.net`);
+    if (disableLocalAuth) {
+      this.addSecret('bus-default-conn', pulumi.interpolate`sb://${service.name}.servicebus.windows.net`);
+    }
 
     return service;
   }
@@ -197,16 +196,6 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
   private createConnectionStrings(service: bus.Namespace) {
     const { disableLocalAuth, rsGroup } = this.args;
     if (disableLocalAuth) return;
-
-    // const manageRule = new bus.NamespaceAuthorizationRule(
-    //   `${this.name}-manage`,
-    //   {
-    //     ...rsGroup,
-    //     namespaceName: service.name,
-    //     rights: ['Listen', 'Send', 'Manage'],
-    //   },
-    //   { dependsOn: service, parent: this },
-    // );
 
     const listenRule = new bus.NamespaceAuthorizationRule(
       `${this.name}-listen`,

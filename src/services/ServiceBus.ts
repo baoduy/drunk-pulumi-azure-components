@@ -216,7 +216,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
         ...rsGroup,
         namespaceName: service.name,
         authorizationRuleName: `${this.name}-send`,
-        rights: ['Send'],
+        rights: ['Listen', 'Send'],
       },
       { dependsOn: service, parent: this },
     );

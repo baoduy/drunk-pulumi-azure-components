@@ -1,4 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
+
 import { PrivateEndpointType } from './vnet';
 
 export type DnsRecordTypes = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'PTR' | 'SOA' | 'SRV' | 'TXT' | 'CAA';
@@ -28,6 +29,11 @@ type AsOutput<T> = {
       ? pulumi.Output<NonNullable<T[K]>>
       : AsOutput<NonNullable<T[K]>>
     : pulumi.Output<NonNullable<T[K]>>;
+};
+
+export type WithName = {
+  /** The options customize the resource name. If not provided the default name from parent will be used. */
+  name?: string;
 };
 
 export type ResourceGroupType = {

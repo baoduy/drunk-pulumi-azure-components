@@ -1,5 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as types from './types';
+
 import {
   AppRegistration,
   AppRegistrationArgs,
@@ -31,19 +32,67 @@ export type ResourceBuilderOutputs = {
   vnet?: ReturnType<Vnet['getOutputs']>;
 };
 
+/**
+ * Arguments for composing a standard Azure resource group environment with optional common foundation resources.
+ *
+ * You always pass the base `RsGroupArgs` (minus common meta props removed via `Omit`).
+ * Each optional `*Create` property triggers creation of that resource. If both an existing instance reference
+ * (e.g. `groupRoles`) and a corresponding `*Create` block are provided, the existing instance takes precedence
+ * and the `*Create` block is ignored.
+ */
 export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps> {
-  groupRolesCreate?: { name: string } & GroupRoleArgs;
+  /**
+   * Pre-created group role outputs or the `GroupRole` component itself to reuse instead of creating new ones.
+   * When supplied, `groupRolesCreate` is ignored.
+   */
   groupRoles?: types.GroupRoleOutputTypes | GroupRole;
-  vaultCreate?: Omit<KeyVaultArgs, types.CommonProps>;
-  logsCreate?: Omit<LogsArgs, types.CommonProps>;
-  diskEncryptionCreate?: Omit<DiskEncryptionSetArgs, types.CommonProps>;
-  defaultUAssignedIdCreate?: Omit<UserAssignedIdentityArgs, types.CommonProps | 'memberof'> & {
-    memberof?: types.GroupRoleTypes;
-  };
-  defaultAppIdentityCreate?: Omit<AppRegistrationArgs, types.CommonProps | 'memberof'> & {
-    memberof?: types.GroupRoleTypes;
-  };
-  vnetCreate?: Omit<VnetArgs, types.CommonProps>;
+
+  /**
+   * Definition to create a new set of Azure AD groups / roles (reader, contributor, etc.).
+   * Provide when you want the builder to provision standard role groups automatically.
+   */
+  groupRolesCreate?: types.WithName & GroupRoleArgs;
+
+  /**
+   * Configuration to create a Key Vault in the resource group. Adds linkage with created identities and group roles.
+   */
+  vaultCreate?: types.WithName & Omit<KeyVaultArgs, types.CommonProps>;
+
+  /**
+   * Configuration to create a Log Analytics workspace (and related diagnostics) bound to the resource group.
+   */
+  logsCreate?: types.WithName & Omit<LogsArgs, types.CommonProps>;
+
+  /**
+   * Configuration for provisioning a Disk Encryption Set (defaults encryptionType if omitted).
+   * Depends on Key Vault (if also created) and optionally the default user-assigned identity.
+   */
+  diskEncryptionCreate?: types.WithName & Omit<DiskEncryptionSetArgs, types.CommonProps>;
+
+  /**
+   * Create a default User Assigned Managed Identity. `memberof` selects which generated group role (defaults to 'readOnly').
+   * If `groupRoles` / `groupRolesCreate` not provided, the identity will not have group memberships applied.
+   */
+  defaultUAssignedIdCreate?: types.WithName &
+    Omit<UserAssignedIdentityArgs, types.CommonProps | 'memberof'> & {
+      /** Which group role key to map the identity into (e.g. 'readOnly', 'contributor'). */
+      memberof?: types.GroupRoleTypes;
+    };
+
+  /**
+   * Create a default App Registration + Service Principal. `memberof` optionally assigns it a role group (defaults 'readOnly').
+   * Vault info (if created) is passed for secret references.
+   */
+  defaultAppIdentityCreate?: types.WithName &
+    Omit<AppRegistrationArgs, types.CommonProps | 'memberof'> & {
+      /** Which group role key to map the app into. */
+      memberof?: types.GroupRoleTypes;
+    };
+
+  /**
+   * Configuration to create a Virtual Network with sub-resources (subnets, NSGs, etc. per `VnetArgs`).
+   */
+  vnetCreate?: types.WithName & Omit<VnetArgs, types.CommonProps>;
 }
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
@@ -106,7 +155,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     }
 
     if (groupRolesCreate) {
-      return new GroupRole(groupRolesCreate.name, groupRolesCreate, {
+      return new GroupRole(groupRolesCreate.name ?? this.name, groupRolesCreate, {
         dependsOn: this.opts?.dependsOn,
         parent: this,
       }).getOutputs();
@@ -118,7 +167,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     if (!vaultCreate) return undefined;
 
     return new KeyVault(
-      this.name,
+      vaultCreate.name ?? this.name,
       { ...vaultCreate, rsGroup: this.rsGroup, groupRoles: this.groupRoles },
       {
         dependsOn: this.rsGroup,
@@ -132,7 +181,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     if (!defaultUAssignedIdCreate) return undefined;
 
     return new UserAssignedIdentity(
-      this.name,
+      defaultUAssignedIdCreate.name ?? this.name,
       {
         ...defaultUAssignedIdCreate,
         memberof: this.groupRoles ? [this.groupRoles[defaultUAssignedIdCreate.memberof ?? 'readOnly']] : undefined,
@@ -152,7 +201,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     if (!defaultAppIdentityCreate) return undefined;
 
     return new AppRegistration(
-      this.name,
+      defaultAppIdentityCreate.name ?? this.name,
       {
         ...defaultAppIdentityCreate,
         memberof: this.groupRoles ? [this.groupRoles[defaultAppIdentityCreate.memberof ?? 'readOnly']] : undefined,
@@ -170,7 +219,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     if (!logsCreate) return undefined;
 
     return new Logs(
-      this.name,
+      logsCreate.name ?? this.name,
       {
         ...logsCreate,
         rsGroup: this.rsGroup,
@@ -186,7 +235,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     if (!diskEncryptionCreate) return undefined;
 
     return new DiskEncryptionSet(
-      this.name,
+      diskEncryptionCreate.name ?? this.name,
       {
         ...diskEncryptionCreate,
         encryptionType: diskEncryptionCreate.encryptionType ?? 'EncryptionAtRestWithPlatformAndCustomerKeys',
@@ -204,7 +253,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     const { vnetCreate } = this.args;
     if (!vnetCreate) return undefined;
     return new Vnet(
-      this.name,
+      vnetCreate.name ?? this.name,
       {
         ...vnetCreate,
         rsGroup: this.rsGroup,

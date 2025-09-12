@@ -53,6 +53,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps
    */
   groupRolesCreate?: types.WithName & GroupRoleArgs;
 
+  vaultInfo?: types.ResourceInputs;
   /**
    * Configuration to create a Key Vault in the resource group. Adds linkage with created identities and group roles.
    */
@@ -97,7 +98,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps
 
 export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   public readonly rsGroup: RsGroup;
-  public readonly vaultInfo?: KeyVault;
+  public readonly vaultInfo?: types.ResourceOutputs;
   public readonly groupRoles?: types.GroupRoleOutputTypes;
   public readonly defaultUAssignedId?: UserAssignedIdentity;
   public readonly defaultAppIdentity?: AppRegistration;
@@ -139,7 +140,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     return {
       groupRoles: this.groupRoles,
       rsGroup: this.rsGroup.getOutputs(),
-      vaultInfo: this.vaultInfo?.getOutputs(),
+      vaultInfo: this.vaultInfo,
       defaultUAssignedId: this.defaultUAssignedId?.getOutputs(),
       defaultAppIdentity: this.defaultAppIdentity?.getOutputs(),
       logs: this.logs?.getOutputs(),
@@ -162,8 +163,9 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     }
   }
 
-  private createVault() {
-    const { vaultCreate } = this.args;
+  private createVault(): types.ResourceOutputs | undefined {
+    const { vaultInfo, vaultCreate } = this.args;
+    if (vaultInfo) return { resourceName: pulumi.output(vaultInfo.resourceName), id: pulumi.output(vaultInfo.id) };
     if (!vaultCreate) return undefined;
 
     return new KeyVault(
@@ -173,7 +175,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
         dependsOn: this.rsGroup,
         parent: this,
       },
-    );
+    ).getOutputs();
   }
 
   private createUserIdentity() {
@@ -184,13 +186,12 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       defaultUAssignedIdCreate.name ?? this.name,
       {
         ...defaultUAssignedIdCreate,
-        memberof: this.groupRoles ? [this.groupRoles[defaultUAssignedIdCreate.memberof ?? 'readOnly']] : undefined,
-
         rsGroup: this.rsGroup,
         vaultInfo: this.vaultInfo,
+        memberof: this.groupRoles ? [this.groupRoles[defaultUAssignedIdCreate.memberof ?? 'readOnly']] : undefined,
       },
       {
-        dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup,
+        dependsOn: this.rsGroup,
         parent: this,
       },
     );
@@ -208,7 +209,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
         vaultInfo: this.vaultInfo,
       },
       {
-        dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup,
+        dependsOn: this.rsGroup,
         parent: this,
       },
     );
@@ -226,7 +227,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
         vaultInfo: this.vaultInfo,
         groupRoles: this.groupRoles,
       },
-      { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+      { dependsOn: this.rsGroup, parent: this },
     );
   }
 
@@ -245,7 +246,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
         vaultInfo: this.vaultInfo,
         groupRoles: this.groupRoles,
       },
-      { dependsOn: this.vaultInfo ? [this.rsGroup, this.vaultInfo] : this.rsGroup, parent: this },
+      { dependsOn: this.rsGroup, parent: this },
     );
   }
 

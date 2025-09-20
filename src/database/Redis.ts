@@ -218,9 +218,15 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
             [`${this.name}-redis-port`]: { value: '6380', contentType: `Redis port` },
             [`${this.name}-redis-conn`]: {
               value: disableAccessKeyAuthentication
+                ? pulumi.interpolate`rediss://${h}:6380`
+                : pulumi.interpolate`rediss://:${keys.primaryKey}@${h}:6380`,
+              contentType: `Redis Connection String For General Use`,
+            },
+            [`${this.name}-redis-net-conn`]: {
+              value: disableAccessKeyAuthentication
                 ? pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`
                 : pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`,
-              contentType: `Redis conn`,
+              contentType: `Redis Connection String For .NET Apps`,
             },
           },
         },

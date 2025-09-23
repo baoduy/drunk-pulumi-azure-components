@@ -1,13 +1,16 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
+import * as types from '../types';
+
 import { RandomPassword, RandomPasswordArgs } from '../common/RandomPassword';
 import { RandomString, RandomStringArgs } from '../common/RandomString';
-import { ResourceLocker } from '../common/ResourceLocker';
-import * as types from '../types';
-import { EncryptionKey } from '../vault/EncryptionKey';
-import { SecretItemArgs } from '../vault/VaultSecret';
 import { VaultSecretResult, VaultSecrets } from '../vault/VaultSecrets';
+
 import { BaseComponent } from './BaseComponent';
+import { EncryptionKey } from '../vault/EncryptionKey';
+import { ResourceLocker } from '../common/ResourceLocker';
+import { RoleAssignment } from '../azAd/RoleAssignment';
+import { SecretItemArgs } from '../vault/VaultSecret';
 import { getComponentResourceType } from './helpers';
 
 /**
@@ -44,9 +47,9 @@ export interface CommonBaseArgs extends BaseArgs, types.WithResourceGroupInputs 
  * @template TArgs - Type parameter extending BaseArgs to define required component arguments
  */
 export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends BaseComponent<TArgs> {
+  public vaultSecrets?: { [key: string]: VaultSecretResult };
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
-  public vaultSecrets?: { [key: string]: VaultSecretResult };
 
   /**
    * Creates a new instance of BaseResourceComponent
@@ -65,33 +68,48 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
   }
 
   /**
-   * Internal method to handle post-creation secret management
-   * Creates vault secrets if any secrets were added during component creation
+   * Adds a managed identity to a specified Azure AD group role
+   * @param type - The type of group role to add the identity to (from GroupRoleTypes enum)
+   * @param identity - A Pulumi output containing the managed identity with its principal ID
+   * @returns A new GroupMember resource if successful, undefined if groupRoles not configured or identity invalid
    */
-  private postCreated() {
-    const { vaultInfo } = this.args;
-    if (Object.keys(this._secrets).length <= 0 || !vaultInfo) return;
-    if (this._vaultSecretsCreated) return;
+  public addIdentityToRole(
+    type: types.GroupRoleTypes,
+    identity: pulumi.Input<{ principalId: pulumi.Input<string> } | undefined>,
+  ) {
+    const { groupRoles } = this.args;
+    if (!groupRoles) return;
 
-    const se: { [key: string]: SecretItemArgs } = {};
-    for (const key in this._secrets) {
-      se[key] = {
-        value: this._secrets[key],
-        contentType: `${this.type} ${key}`,
-      };
-    }
+    return pulumi.output(identity).apply((i) => {
+      if (!i?.principalId) return;
+      return new azAd.GroupMember(`${this.name}-${type}-${i.principalId}`, {
+        groupObjectId: groupRoles[type].objectId,
+        memberObjectId: i.principalId,
+      });
+    });
+  }
 
-    this._vaultSecretsCreated = true;
-    const rs = new VaultSecrets(
-      this.name,
-      {
-        vaultInfo,
-        secrets: se,
-      },
-      { dependsOn: this.opts?.dependsOn, parent: this },
-    );
-
-    this.vaultSecrets = rs.results;
+  protected grantPermissionsToIdentity({ identity, resource, roleNames }: types.GrantIdentityRoles) {
+    return pulumi.output(identity).apply((id) => {
+      if (!id?.principalId) return;
+      return pulumi.output(resource).apply((re) =>
+        roleNames.map((r) =>
+          pulumi.interpolate`${this.name}-${re!.resourceName}-${r}`.apply(
+            (n) =>
+              new RoleAssignment(
+                n,
+                {
+                  principalId: id!.principalId,
+                  principalType: 'ServicePrincipal',
+                  roleName: r,
+                  scope: re.id,
+                },
+                { parent: this, deletedWith: this },
+              ),
+          ),
+        ),
+      );
+    });
   }
 
   /**
@@ -118,20 +136,25 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    */
   protected registerOutputs(): void {
     this.postCreated();
-    super.registerOutputs({ ...this.getOutputs(), vaultSecrets: this.vaultSecrets });
+    super.registerOutputs();
   }
 
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return { vaultSecrets: this.vaultSecrets };
+  }
   /**
    * Creates a new encryption key in the Azure Key Vault
    * @returns A new EncryptionKey instance if vaultInfo is provided, undefined otherwise
    */
   protected getEncryptionKey({ name, keySize }: { name?: string; keySize?: 2048 | 3072 | 4096 } = { keySize: 4096 }) {
-    if (!this.args.vaultInfo) {
-      throw new Error(`VaultInfo is required for encryption key creation in component ${this.name}`);
+    const vault = this.args.vaultInfo;
+    if (!vault) {
+      throw new Error(`The VaultInfo is required for encryption key creation in component "${this.type}:${this.name}"`);
     }
+
     return new EncryptionKey(
       name ? `${this.name}-${name}` : this.name,
-      { vaultInfo: this.args.vaultInfo, keySize },
+      { vaultInfo: vault, keySize },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
@@ -140,12 +163,16 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    * Generates a new random password with predefined settings
    * @returns A new RandomPassword instance with 20 characters length, yearly rotation policy, and no special characters
    */
-  protected createPassword(props: RandomPasswordArgs = { length: 20, policy: 'yearly', options: { special: false } }) {
-    return new RandomPassword(this.name, props, { parent: this });
+  protected createPassword(
+    props: RandomPasswordArgs & { name?: string } = { length: 20, policy: 'yearly', options: { special: false } },
+  ) {
+    return new RandomPassword(props.name ?? this.name, props, { parent: this });
   }
 
-  protected createRandomString(props: RandomStringArgs = { type: 'string', length: 10, options: { special: false } }) {
-    return new RandomString(this.name, props, { parent: this });
+  protected createRandomString(
+    props: RandomStringArgs & { name?: string } = { type: 'string', length: 10, options: { special: false } },
+  ) {
+    return new RandomString(props.name ?? this.name, props, { parent: this });
   }
 
   protected lockFromDeleting(resource: pulumi.CustomResource) {
@@ -160,24 +187,33 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
   }
 
   /**
-   * Adds a managed identity to a specified Azure AD group role
-   * @param type - The type of group role to add the identity to (from GroupRoleTypes enum)
-   * @param identity - A Pulumi output containing the managed identity with its principal ID
-   * @returns A new GroupMember resource if successful, undefined if groupRoles not configured or identity invalid
+   * Internal method to handle post-creation secret management
+   * Creates vault secrets if any secrets were added during component creation
    */
-  public addIdentityToRole(
-    type: types.GroupRoleTypes,
-    identity: pulumi.Input<{ principalId: pulumi.Input<string> } | undefined>,
-  ) {
-    const { groupRoles } = this.args;
-    if (!groupRoles) return;
+  private postCreated() {
+    const { vaultInfo } = this.args;
+    if (this._vaultSecretsCreated || Object.keys(this._secrets).length <= 0 || !vaultInfo) return;
 
-    return pulumi.output(identity).apply((i) => {
-      if (!i?.principalId) return;
-      return new azAd.GroupMember(`${this.name}-${type}-${i.principalId}`, {
-        groupObjectId: groupRoles[type].objectId,
-        memberObjectId: i.principalId,
-      });
-    });
+    console.log(`\nAdding secrets for ${this.type}:${this.name}`);
+
+    const se: { [key: string]: SecretItemArgs } = {};
+    for (const key in this._secrets) {
+      se[key] = {
+        value: this._secrets[key],
+        contentType: `${this.type} ${this.name}`,
+      };
+    }
+
+    this._vaultSecretsCreated = true;
+    const rs = new VaultSecrets(
+      this.name,
+      {
+        vaultInfo,
+        secrets: se,
+      },
+      { dependsOn: this.opts?.dependsOn, parent: this },
+    );
+
+    this.vaultSecrets = rs.results;
   }
 }

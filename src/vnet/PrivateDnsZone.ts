@@ -17,7 +17,7 @@ export interface PrivateDnsZoneArgs extends WithResourceGroupInputs {
     ipv4Address: pulumi.Input<pulumi.Input<string>[]>;
   }>;
   /** Link the private DNS zone to these Vnet also */
-  vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
+  vnetLinks: Array<pulumi.Input<{ vnetId: pulumi.Input<string> }>>;
 }
 
 export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
@@ -48,7 +48,7 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
 
     this.createARecord();
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {
@@ -99,14 +99,14 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
       vids.map((v) => {
         const vnetName = rsHelpers.getRsNameFromId(v.vnetId);
         return new privateDns.VirtualNetworkLink(
-          `${this._rsName}-${vnetName}`,
+          `${this._rsName}-${vnetName}`.substring(0, 55),
           {
             ...group,
             privateZoneName: zone.name,
             registrationEnabled: false,
             virtualNetwork: { id: v.vnetId },
           },
-          { dependsOn: zone, parent: this },
+          { dependsOn: zone, deletedWith: zone, parent: this },
         );
       }),
     );

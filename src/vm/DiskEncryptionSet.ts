@@ -2,6 +2,7 @@ import * as compute from '@pulumi/azure-native/compute';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
+import { rsHelpers } from '../helpers';
 
 export interface DiskEncryptionSetArgs
   extends CommonBaseArgs,
@@ -24,7 +25,8 @@ export class DiskEncryptionSet extends BaseResourceComponent<DiskEncryptionSetAr
       name,
       {
         ...rsGroup,
-        rotationToLatestKeyVersionEnabled: true,
+        rotationToLatestKeyVersionEnabled:
+          encryptionType !== compute.DiskEncryptionSetType.ConfidentialVmEncryptedWithCustomerKey,
         encryptionType: encryptionType ?? compute.DiskEncryptionSetType.EncryptionAtRestWithPlatformAndCustomerKeys,
         identity: {
           type: defaultUAssignedId

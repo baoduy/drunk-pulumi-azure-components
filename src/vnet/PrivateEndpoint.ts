@@ -1,11 +1,12 @@
+import * as helpers from './helpers';
 import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
+import * as types from '../types';
+
 import { BaseComponent } from '../base/BaseComponent';
+import { PrivateDnsZone } from './PrivateDnsZone';
 import { getComponentResourceType } from '../base/helpers';
 import { rsHelpers } from '../helpers';
-import * as types from '../types';
-import * as helpers from './helpers';
-import { PrivateDnsZone } from './PrivateDnsZone';
 
 export type PrivateEndpointServices =
   | 'azApi'
@@ -30,7 +31,7 @@ export type PrivateEndpointType = {
     subnetId: pulumi.Input<string>;
   };
   /** Link the private DNS zone to these Vnet also */
-  vnetLinks: Array<pulumi.Input<{ vnetId: string }>>;
+  vnetLinks?: Array<pulumi.Input<{ vnetId: string }>>;
 };
 
 export interface PrivateEndpointArgs extends types.WithResourceGroupInputs, PrivateEndpointType {
@@ -44,10 +45,7 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
     privateIpAddresses: string[];
     id: string;
   }>;
-  public readonly privateDnsZone: pulumi.Output<{
-    name: string;
-    id: string;
-  }>;
+  public readonly privateDnsZone: types.ResourceOutputs;
 
   constructor(name: string, args: PrivateEndpointArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('PrivateEndpoint'), name, args, opts);
@@ -93,10 +91,11 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
     const privateIpAddresses = privateEndpoint.customDnsConfigs.apply((c) => c!.flatMap((i) => i!.ipAddresses!));
 
     const zone = pulumi.output(args.resourceInfo.id).apply((rsId) => {
-      const vnetLinks = [
-        ...args.vnetLinks,
-        pulumi.output(args.subnetInfo.subnetId).apply((id) => ({ vnetId: helpers.getVnetIdFromSubnetId(id) })),
-      ];
+      const mainVnetId = pulumi
+        .output(args.subnetInfo.subnetId)
+        .apply((id) => ({ vnetId: helpers.getVnetIdFromSubnetId(id) }));
+
+      const vnetLinks = args.vnetLinks ? [...args.vnetLinks, mainVnetId] : [mainVnetId];
 
       return new PrivateDnsZone(
         `${rsHelpers.getRsNameFromId(rsId)}.${linkInfo.privateDnsZoneName}`,
@@ -107,9 +106,10 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
         },
         {
           dependsOn: privateEndpoint,
+          deletedWith: privateEndpoint,
           parent: this,
         },
-      );
+      ).getOutputs();
     });
 
     this.privateEndpoint = pulumi.output({
@@ -117,9 +117,9 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
       privateIpAddresses,
     });
 
-    this.privateDnsZone = zone.id.apply((id) => ({ id, name }));
+    this.privateDnsZone = zone;
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

@@ -1,15 +1,16 @@
-import * as registry from '@pulumi/azure-native/containerregistry';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as registry from '@pulumi/azure-native/containerregistry';
 import * as types from '../types';
+
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+
 import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
 
 export interface ContainerRegistryArgs
   extends CommonBaseArgs,
     types.WithEncryptionEnabler,
-    types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
-    Pick<registry.RegistryArgs, 'dataEndpointEnabled' | 'zoneRedundancy'> {
+    Partial<Pick<registry.RegistryArgs, 'dataEndpointEnabled' | 'zoneRedundancy'>> {
   sku: registry.SkuName;
   retentionDaysPolicy?: number;
   network?: Omit<types.NetworkArgs, 'vnetRules'>;
@@ -22,12 +23,29 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
   constructor(name: string, args: ContainerRegistryArgs, opts?: pulumi.ComponentResourceOptions) {
     super('ContainerRegistry', name, args, opts);
 
-    const { rsGroup, enableEncryption, groupRoles, defaultUAssignedId, retentionDaysPolicy, sku, network, ...props } =
-      args;
-    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
+    const acr = this.createAcr();
+    this.createPrivateLink(acr);
 
-    const acr = new registry.Registry(
-      name,
+    this.id = acr.id;
+    this.resourceName = acr.name;
+
+    this.registerOutputs();
+  }
+
+  public getOutputs() {
+    return {
+      id: this.id,
+      resourceName: this.resourceName,
+    };
+  }
+
+  private createAcr() {
+    const { rsGroup, enableEncryption, defaultUAssignedId, retentionDaysPolicy, sku, network, ...props } = this.args;
+    const encryptionKey = sku === 'Premium' && enableEncryption ? this.getEncryptionKey() : undefined;
+    const alphanumericString = (this.name.match(/[a-zA-Z0-9]+/g) || []).join('');
+
+    return new registry.Registry(
+      alphanumericString,
       {
         ...props,
         ...rsGroup,
@@ -36,19 +54,18 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
         adminUserEnabled: false,
         anonymousPullEnabled: false,
 
-        //This is for encryption
         identity: {
           type: defaultUAssignedId
             ? registry.ResourceIdentityType.SystemAssigned_UserAssigned
             : registry.ResourceIdentityType.SystemAssigned,
 
           userAssignedIdentities: defaultUAssignedId
-            ? pulumi.output(defaultUAssignedId.id).apply((id) => ({ [id]: defaultUAssignedId }))
+            ? pulumi.output(defaultUAssignedId).apply((id) => ({ [id.id]: {} }))
             : undefined,
         },
 
         encryption:
-          sku === 'Premium' && encryptionKey && defaultUAssignedId
+          encryptionKey && defaultUAssignedId
             ? {
                 keyVaultProperties: {
                   identity: defaultUAssignedId.clientId,
@@ -92,22 +109,8 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
               }
             : undefined,
       },
-      { ...opts, parent: this },
+      { ...this.opts, parent: this },
     );
-
-    this.createPrivateLink(acr);
-
-    this.id = acr.id;
-    this.resourceName = acr.name;
-
-    this.registerOutputs();
-  }
-
-  public getOutputs() {
-    return {
-      id: this.id,
-      resourceName: this.resourceName,
-    };
   }
 
   private createPrivateLink(acr: registry.Registry) {

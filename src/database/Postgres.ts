@@ -14,15 +14,12 @@ export interface PostgresArgs
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
     types.WithNetworkArgs,
-    Pick<
-      postgresql.ServerArgs,
-      | 'version'
-      | 'storage'
-      | 'administratorLogin'
-      | 'maintenanceWindow'
-      | 'backup'
-      | 'highAvailability'
-      | 'availabilityZone'
+    Pick<postgresql.ServerArgs, 'administratorLogin'>,
+    Partial<
+      Pick<
+        postgresql.ServerArgs,
+        'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
+      >
     > {
   sku: {
     /** The name of postgres: Standard_B2ms,  */
@@ -33,6 +30,7 @@ export interface PostgresArgs
     tier: postgresql.SkuTier;
   };
   enableAzureADAdmin?: boolean;
+  enablePasswordAuth?: boolean;
   databases?: Array<{ name: string }>;
   lock?: boolean;
 }
@@ -44,9 +42,9 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
   constructor(name: string, args: PostgresArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Postgres', name, args, opts);
 
-    const server = this.createPostgres();
+    const { server, credentials } = this.createPostgres();
     this.createNetwork(server);
-    this.createDatabases(server);
+    this.createDatabases(server, credentials);
     if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
@@ -61,8 +59,9 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       resourceName: this.resourceName,
     };
   }
+
   private createPostgres() {
-    const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
+    const { rsGroup, enableEncryption, administratorLogin, enableAzureADAdmin, enablePasswordAuth, lock } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
@@ -100,8 +99,8 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         },
 
         authConfig: {
-          activeDirectoryAuth: this.args.enableAzureADAdmin ? 'Enabled' : 'Disabled',
-          passwordAuth: 'Enabled',
+          activeDirectoryAuth: enableAzureADAdmin ? 'Enabled' : 'Disabled',
+          passwordAuth: enablePasswordAuth ? 'Enabled' : 'Disabled',
           tenantId: azureEnv.tenantId,
         },
 
@@ -132,21 +131,38 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       },
     );
 
+    const credentials: types.DbCredentialsType = {
+      host: pulumi.interpolate`${server.name}.postgres.database.azure.com`,
+      port: '5432',
+      username: adminLogin,
+      password: password.value,
+    };
+
     this.addSecrets({
-      [`${this.name}-host`]: pulumi.interpolate`${server.name}.postgres.database.azure.com`,
-      [`${this.name}-port`]: '5432',
-      [`${this.name}-login`]: this.args.administratorLogin!,
-      [`${this.name}-pass`]: password.value,
-      [`${this.name}-username`]: adminLogin,
+      [`${this.name}-postgres-host`]: credentials.host,
+      [`${this.name}-postgres-port`]: credentials.port,
+      [`${this.name}-postgres-login`]: this.args.administratorLogin!,
+      [`${this.name}-postgres-pass`]: credentials.password,
     });
 
-    return server;
+    return { server, credentials };
   }
 
   private createNetwork(server: postgresql.Server) {
     const { rsGroup, network } = this.args;
 
-    if (network?.ipRules) {
+    if (network?.allowAllInbound) {
+      new postgresql.FirewallRule(
+        `${this.name}-firewall-allow-all`,
+        {
+          ...rsGroup,
+          serverName: server.name,
+          startIpAddress: '0.0.0.0',
+          endIpAddress: '255.255.255.255',
+        },
+        { dependsOn: server, parent: this },
+      );
+    } else if (network?.ipRules) {
       pulumi.output(network.ipRules).apply((ips) =>
         convertToIpRange(ips).map(
           (f, i) =>
@@ -154,7 +170,6 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
               `${this.name}-firewall-${i}`,
               {
                 ...rsGroup,
-                //firewallRuleName: `${this.name}-firewall-${i}`,
                 serverName: server.name,
                 startIpAddress: f.start,
                 endIpAddress: f.end,
@@ -179,7 +194,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     }
   }
 
-  private createDatabases(server: postgresql.Server) {
+  private createDatabases(server: postgresql.Server, cred: types.DbCredentialsType) {
     const { rsGroup, databases } = this.args;
     if (!databases) return undefined;
 
@@ -195,8 +210,8 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       );
 
       //add connection string to vault
-      //   const conn = pulumi.interpolate``;
-      //   this.addSecret(`${this.name}-${d.name}-conn`, conn);
+      const conn = pulumi.interpolate`Host=${cred.host};Database=${d.name};User Id=${cred.username};Password=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+      this.addSecret(`${this.name}-${d.name}-postgres-conn`, conn);
 
       return db;
     });

@@ -55,7 +55,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
               roleName: role,
               scope: this.id,
             },
-            { parent: this },
+            { parent: this, deletedWith: this },
           ),
       );
     };

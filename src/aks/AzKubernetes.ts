@@ -6,29 +6,29 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { SshGenerator } from '../common';
 import { azureEnv, rsHelpers } from '../helpers';
 import * as types from '../types';
-import { VaultSecret } from '../vault';
 import { DiskEncryptionSet } from '../vm/DiskEncryptionSet';
-import * as aksHelpers from './helpers';
 
 export interface AzKubernetesArgs
   extends CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
-    Pick<
-      ccs.ManagedClusterArgs,
-      | 'dnsPrefix'
-      | 'supportPlan'
-      | 'autoScalerProfile'
-      | 'autoUpgradeProfile'
-      | 'disableLocalAccounts'
-      | 'storageProfile'
+    types.WithDiskEncryptSet,
+    Partial<
+      Pick<
+        ccs.ManagedClusterArgs,
+        'dnsPrefix' | 'supportPlan' | 'autoScalerProfile' | 'autoUpgradeProfile' | 'storageProfile'
+      >
     > {
   sku: ccs.ManagedClusterSKUTier;
+  nodeResourceGroup?: pulumi.Input<string>;
+  namespaces?: Record<string, ccs.NamespaceArgs['properties']>;
   agentPoolProfiles: pulumi.Input<
     inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
       vmSize: pulumi.Input<string>;
       vnetSubnetID: pulumi.Input<string>;
+      enableEncryptionAtHost: pulumi.Input<boolean>;
+      osDiskSizeGB: pulumi.Input<number>;
     }
   >[];
   attachToAcr?: types.ResourceInputs;
@@ -37,7 +37,7 @@ export interface AzKubernetesArgs
     enablePrivateClusterPublicFQDN?: boolean;
     enableVerticalPodAutoscaler?: boolean;
     /** KEDA (Kubernetes Event-driven Autoscaling) settings for the workload auto-scaler profile. */
-    enableKeda?: boolean;
+    //enableKeda?: boolean;
     enableWorkloadIdentity?: boolean;
     enablePodIdentity?: boolean;
   };
@@ -64,6 +64,8 @@ export interface AzKubernetesArgs
 export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
+  public readonly namespaces: Record<string, types.ResourceOutputs>;
+  public readonly privateDnsZone: types.ResourceOutputs | undefined;
 
   constructor(name: string, args: AzKubernetesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzKubernetes', name, args, opts);
@@ -73,10 +75,16 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
     this.createMaintenance(cluster);
     this.assignPermission(cluster);
-    this.addAksCredentialToVault(cluster);
+    const nss = this.createNameSpaces(cluster);
+    this.privateDnsZone = this.getPrivateDNSZone(cluster);
 
     this.id = cluster.id;
     this.resourceName = cluster.name;
+
+    this.namespaces = rsHelpers.dictReduce(nss, (n, ns) => ({
+      id: ns.id,
+      resourceName: ns.name.apply((n) => n!),
+    }));
 
     this.registerOutputs();
   }
@@ -85,6 +93,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      namespaces: this.namespaces,
+      privateDnsZone: this.privateDnsZone,
     };
   }
 
@@ -128,8 +138,10 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private createDiskEncryptionSet() {
-    const { rsGroup, enableEncryption, defaultUAssignedId, vaultInfo } = this.args;
+    const { rsGroup, enableEncryption, diskEncryptionSet, defaultUAssignedId, vaultInfo } = this.args;
     if (!enableEncryption) return undefined;
+    if (diskEncryptionSet) return diskEncryptionSet;
+
     return new DiskEncryptionSet(
       `${this.name}-disk-encryption-set`,
       {
@@ -139,7 +151,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
-    );
+    ).getOutputs();
   }
 
   private createCluster(app: AppRegistration) {
@@ -148,16 +160,17 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       vaultInfo,
       groupRoles,
       defaultUAssignedId,
-
       enableEncryption,
+      nodeResourceGroup,
       features,
       addonProfiles,
       network,
       logWorkspace,
       sku,
+      autoScalerProfile,
       ...props
     } = this.args;
-    const nodeResourceGroup = pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
+    const nodeRg = nodeResourceGroup ?? pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
     const login = this.createUserNameAndSshKeys();
     const diskEncryptionSet = this.createDiskEncryptionSet();
 
@@ -166,10 +179,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       {
         ...props,
         ...rsGroup,
-        nodeResourceGroup,
+        nodeResourceGroup: nodeRg,
         dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
 
         enableRBAC: true,
+        disableLocalAccounts: true,
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,
@@ -235,12 +249,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           ssh: { publicKeys: [{ keyData: login.sshPublicKey }] },
         },
         windowsProfile: undefined,
-
         workloadAutoScalerProfile: {
           verticalPodAutoscaler: {
             enabled: features?.enableVerticalPodAutoscaler || false,
           },
-          keda: { enabled: features?.enableKeda || false },
+          keda: { enabled: true },
         },
 
         //azureMonitorProfile: { metrics: { enabled } },
@@ -280,6 +293,10 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
         },
 
+        // identityProfile: defaultUAssignedId
+        //   ? pulumi.output(defaultUAssignedId).apply((uID) => ({ [uID.id]: uID }))
+        //   : undefined,
+
         networkProfile: {
           ...network,
           networkMode: ccs.NetworkMode.Transparent,
@@ -288,6 +305,30 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
           loadBalancerSku: 'Standard',
           outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
+        },
+
+        autoScalerProfile: autoScalerProfile ?? {
+          balanceSimilarNodeGroups: 'false',
+          expander: 'random',
+          maxEmptyBulkDelete: '10',
+          maxGracefulTerminationSec: '600',
+          maxNodeProvisionTime: '15m',
+          maxTotalUnreadyPercentage: '45',
+          newPodScaleUpDelay: '0s',
+          okTotalUnreadyCount: '3',
+          scaleDownDelayAfterAdd: '10m',
+          scaleDownDelayAfterDelete: '10s',
+          scaleDownDelayAfterFailure: '3m',
+          scaleDownUnneededTime: '10m',
+          scaleDownUnreadyTime: '20m',
+          scaleDownUtilizationThreshold: '0.5',
+          scanInterval: '10s',
+          skipNodesWithLocalStorage: 'false',
+          skipNodesWithSystemPods: 'true',
+        },
+        autoUpgradeProfile: {
+          nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,
+          upgradeChannel: ccs.UpgradeChannel.Stable,
         },
       },
       {
@@ -298,83 +339,106 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     );
   }
 
+  private createNameSpaces(aks: ccs.ManagedCluster) {
+    const { rsGroup, namespaces } = this.args;
+    if (!namespaces) return {} as Record<string, ccs.Namespace>;
+
+    return rsHelpers.dictReduce(
+      namespaces,
+      (n, props) =>
+        new ccs.Namespace(
+          `${this.name}-ns-${n}`,
+          {
+            ...rsGroup,
+            resourceName: aks.name,
+            namespaceName: n,
+            properties: props,
+          },
+          { dependsOn: aks, parent: this, retainOnDelete: true },
+        ),
+    );
+  }
+
   private createMaintenance(aks: ccs.ManagedCluster) {
     const { rsGroup, maintenance } = this.args;
-    if (!maintenance) return undefined;
 
     return new ccs.MaintenanceConfiguration(
       `${this.name}-MaintenanceConfiguration`,
       {
         ...rsGroup,
-        ...maintenance,
         configName: 'default',
         resourceName: aks.name,
-        timeInWeek: maintenance.timeInWeek ?? [
+        timeInWeek: maintenance?.timeInWeek ?? [
           {
             day: ccs.WeekDay.Sunday,
             hourSlots: [0, 23],
           },
         ],
+        notAllowedTime: maintenance?.notAllowedTime,
       },
-      { dependsOn: aks, deleteBeforeReplace: true },
+      { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
     );
   }
 
   private assignPermission(aks: ccs.ManagedCluster) {
     const { rsGroup, attachToAcr } = this.args;
-    pulumi.all([aks.identity, aks.identityProfile]).apply(([identity, identityProfile]) => {
-      if (identityProfile?.kubeletIdentity) {
-        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletIdentity!.objectId! });
+    pulumi
+      .all([aks.identity, aks.identityProfile, aks.addonProfiles, attachToAcr])
+      .apply(([identity, identityProfile, addon, acr]) => {
+        //User Assigned Identity
+        //console.log(Object.values(identityProfile!));
+        if (identityProfile?.kubeletidentity) {
+          this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletidentity!.objectId! });
 
-        if (attachToAcr) {
+          if (acr) {
+            new RoleAssignment(
+              `${this.name}-aks-acr`,
+              {
+                principalId: identityProfile.kubeletidentity!.objectId!,
+                principalType: 'ServicePrincipal',
+                roleName: 'AcrPull',
+                scope: acr.id,
+              },
+              { dependsOn: aks, deletedWith: aks, parent: this },
+            );
+          }
+        }
+
+        //System Managed Identity
+        if (identity?.principalId) {
           new RoleAssignment(
-            `${this.name}-aks-acr`,
+            `${this.name}-aks-identity`,
             {
-              principalId: identityProfile.kubeletIdentity!.objectId!,
+              principalId: identity.principalId!,
               principalType: 'ServicePrincipal',
-              roleName: 'acr-pull',
-              scope: attachToAcr.id,
+              roleName: 'Contributor',
+              scope: rsHelpers.getRsGroupIdFrom(rsGroup),
             },
-            { dependsOn: aks, parent: this },
+            { dependsOn: aks, deletedWith: aks, parent: this },
           );
         }
-      }
-      if (identity) {
-        new RoleAssignment(
-          `${this.name}-aks-identity`,
-          {
-            principalId: identity.principalId!,
-            principalType: 'ServicePrincipal',
-            roleName: 'Contributor',
-            scope: rsHelpers.getRsGroupIdFrom(rsGroup),
-          },
-          { dependsOn: aks, parent: this },
-        );
-      }
-    });
+
+        //addon
+        if (addon?.azureKeyvaultSecretsProvider?.identity) {
+          this.addIdentityToRole('readOnly', {
+            principalId: addon.azureKeyvaultSecretsProvider.identity!.objectId!,
+          });
+        }
+      });
   }
 
-  private addAksCredentialToVault(aks: ccs.ManagedCluster) {
-    const { rsGroup, disableLocalAccounts, vaultInfo } = this.args;
-    if (!vaultInfo) return undefined;
-    return pulumi.all([aks.name, rsGroup.resourceGroupName, disableLocalAccounts]).apply(([name, rgName, disabled]) => {
-      if (!name) return;
+  private getPrivateDNSZone(aks: ccs.ManagedCluster): types.ResourceOutputs | undefined {
+    const { features } = this.args;
+    if (!features.enablePrivateCluster) return undefined;
 
-      const credential = aksHelpers.getAksConfig({
-        resourceName: name,
-        resourceGroupName: rgName,
-        disableLocalAccounts: disabled,
-      });
-
-      return new VaultSecret(
-        `${this.name}-credential`,
-        {
-          vaultInfo,
-          value: credential,
-          contentType: `AzKubernetes ${this.name} aks config`,
-        },
-        { dependsOn: aks, parent: this, retainOnDelete: true },
-      );
+    const rsGroup = aks.nodeResourceGroup;
+    const zoneName = aks.privateFQDN.apply((fqdn) => {
+      if (!fqdn) return fqdn!;
+      const firstDot = fqdn.indexOf('.');
+      return firstDot >= 0 ? fqdn.substring(firstDot + 1) : fqdn;
     });
+
+    const id = pulumi.interpolate`/subscriptions/${azureEnv.subscriptionId}/resourceGroups/${rsGroup}/providers/Microsoft.Network/privateDnsZones/${zoneName}`;
+    return { id, resourceName: zoneName };
   }
 }

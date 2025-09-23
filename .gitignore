@@ -2,3 +2,4 @@ node_modules
 .devcontainer/.env
 bin
 .pnpm-store
+.idea

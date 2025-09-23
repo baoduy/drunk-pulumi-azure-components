@@ -13,7 +13,7 @@ export type RouteArgs = Omit<
 
 export interface RouteTableArgs
   extends types.WithResourceGroupInputs,
-    Pick<network.RouteTableArgs, 'disableBgpRoutePropagation'> {
+    Partial<Pick<network.RouteTableArgs, 'disableBgpRoutePropagation'>> {
   routes?: Array<
     RouteArgs & {
       name: string;
@@ -46,7 +46,7 @@ export class RouteTable extends BaseComponent<RouteTableArgs> {
       this.addRoute(r.name, { ...r, ...rsGroup });
     });
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {

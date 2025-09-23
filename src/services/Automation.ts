@@ -1,6 +1,6 @@
 import * as automation from '@pulumi/azure-native/automation';
 import * as pulumi from '@pulumi/pulumi';
-import { UserAssignedIdentity } from '../azAd';
+import { UserAssignedIdentity, UserAssignedIdentityArgs } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 
@@ -8,7 +8,10 @@ export interface AutomationArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
-    Pick<automation.AutomationAccountArgs, 'sku'> {}
+    Partial<Pick<automation.AutomationAccountArgs, 'sku'>>,
+    Omit<UserAssignedIdentityArgs, types.CommonProps | 'memberof'> {
+  memberof?: types.GroupRoleTypes;
+}
 
 export class Automation extends BaseResourceComponent<AutomationArgs> {
   public readonly id: pulumi.Output<string>;
@@ -17,21 +20,21 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
   constructor(name: string, args: AutomationArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Automation', name, args, opts);
 
-    const { rsGroup, enableEncryption, groupRoles, defaultUAssignedId, ...props } = args;
+    const { rsGroup, enableEncryption, defaultUAssignedId, sku } = args;
     const uAssignedId = this.createUAssignedId();
-    const encryptionKey = args.enableEncryption ? this.getEncryptionKey() : undefined;
+    const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
 
     const auto = new automation.AutomationAccount(
       name,
       {
-        ...props,
         ...rsGroup,
+        sku: sku ?? { name: 'Free' },
         publicNetworkAccess: false,
         disableLocalAuth: true,
 
         identity: {
-          type: automation.ResourceIdentityType.SystemAssigned_UserAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [uAssignedId.id, defaultUAssignedId.id] : [uAssignedId.id],
+          type: automation.ResourceIdentityType.UserAssigned,
+          userAssignedIdentities: [uAssignedId.id],
         },
 
         encryption: {
@@ -61,11 +64,12 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
       resourceName: this.resourceName,
     };
   }
+
   private createUAssignedId() {
-    const { rsGroup, groupRoles, vaultInfo } = this.args;
+    const { rsGroup, groupRoles, vaultInfo, federations, memberof } = this.args;
     return new UserAssignedIdentity(
-      this.name,
-      { rsGroup, vaultInfo, memberof: groupRoles ? [groupRoles.contributor] : undefined },
+      `${this.name}-auto`,
+      { rsGroup, vaultInfo, federations, memberof: groupRoles ? [groupRoles[memberof ?? 'contributor']] : undefined },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
   }

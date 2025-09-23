@@ -1,9 +1,19 @@
 import * as pulumi from '@pulumi/pulumi';
+
 import { PrivateEndpointType } from './vnet';
 
 export type DnsRecordTypes = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'PTR' | 'SOA' | 'SRV' | 'TXT' | 'CAA';
 
 export type GroupRoleTypes = 'admin' | 'contributor' | 'readOnly';
+
+export type CommonProps =
+  | 'rsGroup'
+  | 'groupRoles'
+  | 'vaultInfo'
+  | 'resourceGroupName'
+  | 'location'
+  | 'resourceName'
+  | 'tags';
 
 type AsInput<T> = {
   [K in keyof T]: T[K] extends object
@@ -19,6 +29,11 @@ type AsOutput<T> = {
       ? pulumi.Output<NonNullable<T[K]>>
       : AsOutput<NonNullable<T[K]>>
     : pulumi.Output<NonNullable<T[K]>>;
+};
+
+export type WithName = {
+  /** The options customize the resource name. If not provided the default name from parent will be used. */
+  name?: string;
 };
 
 export type ResourceGroupType = {
@@ -63,7 +78,7 @@ export type WithVaultInfo = {
   vaultInfo?: ResourceInputs;
 };
 
-export type WithDiskEncryptSet = { diskEncryptionSet: SubResourceInputs };
+export type WithDiskEncryptSet = { diskEncryptionSet?: SubResourceInputs };
 
 export type WithMemberOfArgs = {
   /** The Id of the EntraID group */
@@ -85,6 +100,17 @@ export type WithUserAssignedIdentity = {
   defaultUAssignedId?: UserAssignedIdentityInputs;
 };
 
+export type AppIdentityType = {
+  clientId: string;
+  servicePrincipalId: string;
+};
+
+export type AppIdentityInputs = AsInput<AppIdentityType>;
+export type AppIdentityOutputs = AsOutput<AppIdentityType>;
+export type WithAppIdentity = {
+  defaultAppIdentity?: AppIdentityInputs;
+};
+
 export type WithEncryptionEnabler = {
   /** this only work when vaultInfo is provided.
    * for MySql and Postgres the feature 'CMK Encryption' need to be enabled on the subscription.
@@ -92,14 +118,25 @@ export type WithEncryptionEnabler = {
   enableEncryption?: boolean;
 };
 
-export type GroupRolesArgs = {
-  admin: pulumi.Output<{ objectId: string }>;
-  contributor: pulumi.Output<{ objectId: string }>;
-  readOnly: pulumi.Output<{ objectId: string }>;
+export interface GroupRoleOutput {
+  objectId: string;
+  displayName: string;
+}
+
+export type GroupRoleOutputTypes = {
+  admin: pulumi.Output<GroupRoleOutput>;
+  contributor: pulumi.Output<GroupRoleOutput>;
+  readOnly: pulumi.Output<GroupRoleOutput>;
 };
 
+// export type GroupRolesArgs = {
+//   admin: pulumi.Output<GroupRoleOutput>;
+//   contributor: pulumi.Output<GroupRoleOutput>;
+//   readOnly: pulumi.Output<GroupRoleOutput>;
+// };
+
 export type WithGroupRolesArgs = {
-  groupRoles?: GroupRolesArgs;
+  groupRoles?: GroupRoleOutputTypes;
 };
 
 export type WorkspaceType = ResourceType & { customerId: string };
@@ -122,6 +159,10 @@ export type LogsInputs = {
   appInsight?: AppInsightInputs;
 };
 
+export type WithLogs = {
+  logs?: LogsInputs;
+};
+
 export type LogsOutputs = {
   storage?: ResourceOutputs;
   workspace?: WorkspaceOutputs;
@@ -129,16 +170,30 @@ export type LogsOutputs = {
 };
 
 export type NetworkArgs = {
+  allowAllInbound?: boolean;
   publicNetworkAccess?: 'disabled' | 'enabled';
   bypass?: 'AzureServices' | 'None' | string;
   defaultAction?: 'Allow' | 'Deny';
 
   //subnet?: { id: pulumi.Input<string> };
   ipRules?: pulumi.Input<pulumi.Input<string>[]>;
-  vnetRules?: pulumi.Input<pulumi.Input<{ subnetId: string; ignoreMissingVnetServiceEndpoint?: boolean }>[]>;
+  vnetRules?: Array<{ subnetId: pulumi.Input<string>; ignoreMissingVnetServiceEndpoint?: boolean }>;
   privateLink?: PrivateEndpointType;
 };
 
 export type WithNetworkArgs = {
   network?: NetworkArgs;
+};
+
+export type DbCredentialsType = {
+  host: pulumi.Output<string>;
+  port: string;
+  username: pulumi.Input<string>;
+  password: pulumi.Output<string>;
+};
+
+export type GrantIdentityRoles = {
+  roleNames: string[];
+  identity: pulumi.Input<{ principalId: pulumi.Input<string> } | undefined>;
+  resource: ResourceInputs;
 };

@@ -1,15 +1,15 @@
 import * as keyvault from '@pulumi/azure-native/keyvault';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+import { BaseArgs, BaseResourceComponent } from '../base';
 import { azureEnv } from '../helpers';
-import { ResourceGroupInputs, WithNetworkArgs, WithResourceGroupInputs } from '../types';
+import { WithNetworkArgs, WithResourceGroupInputs } from '../types';
 import { PrivateEndpoint } from '../vnet';
 
 export interface KeyVaultArgs
   extends BaseArgs,
     WithResourceGroupInputs,
     WithNetworkArgs,
-    Pick<keyvault.VaultArgs, 'tags'> {
+    Partial<Pick<keyvault.VaultArgs, 'tags'>> {
   sku?: 'standard' | 'premium';
 
   properties?: {
@@ -39,7 +39,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
           enableRbacAuthorization: true,
           enablePurgeProtection: true,
           enableSoftDelete: true,
-          softDeleteRetentionInDays: 7,
+          softDeleteRetentionInDays: 90,
           //Allows to be overwritten
           ...args.properties,
           tenantId: azureEnv.tenantId,

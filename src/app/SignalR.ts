@@ -1,14 +1,17 @@
-import * as ss from '@pulumi/azure-native/signalrservice';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as ss from '@pulumi/azure-native/signalrservice';
 import * as types from '../types';
-import * as vault from '../vault';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { VaultSecretResult, VaultSecrets } from '../vault/VaultSecrets';
+
+import { PrivateEndpoint } from '../vnet';
+import { SecretItemArgs } from 'vault';
 
 export interface SignalRArgs
   extends CommonBaseArgs,
     types.WithUserAssignedIdentity,
-    Pick<ss.SignalRArgs, 'kind' | 'cors' | 'features' | 'tls' | 'identity'> {
+    Partial<Pick<ss.SignalRArgs, 'kind' | 'cors' | 'features' | 'tls' | 'identity'>> {
   sku: {
     /**
      * Optional, integer. The unit count of the resource.
@@ -60,27 +63,27 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
         networkACLs: isFreeTier
           ? undefined
           : network?.privateLink
-          ? {
-              defaultAction: ss.ACLAction.Allow,
-              publicNetwork: {
-                allow: [ss.SignalRRequestType.ClientConnection],
-                deny: [ss.SignalRRequestType.ServerConnection, ss.SignalRRequestType.RESTAPI],
-              },
-              privateEndpoints: [
-                {
-                  name: '',
+            ? {
+                defaultAction: ss.ACLAction.Allow,
+                publicNetwork: {
+                  allow: [ss.SignalRRequestType.ClientConnection],
+                  deny: [ss.SignalRRequestType.ServerConnection, ss.SignalRRequestType.RESTAPI],
+                },
+                privateEndpoints: [
+                  {
+                    name: '',
+                    allow: [ss.SignalRRequestType.ClientConnection, ss.SignalRRequestType.ServerConnection],
+                    deny: [ss.SignalRRequestType.RESTAPI],
+                  },
+                ],
+              }
+            : {
+                defaultAction: ss.ACLAction.Allow,
+                publicNetwork: {
                   allow: [ss.SignalRRequestType.ClientConnection, ss.SignalRRequestType.ServerConnection],
                   deny: [ss.SignalRRequestType.RESTAPI],
                 },
-              ],
-            }
-          : {
-              defaultAction: ss.ACLAction.Allow,
-              publicNetwork: {
-                allow: [ss.SignalRRequestType.ClientConnection, ss.SignalRRequestType.ServerConnection],
-                deny: [ss.SignalRRequestType.RESTAPI],
               },
-            },
       },
       { ...opts, parent: this },
     );
@@ -113,10 +116,9 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
   }
 
   private addSecretsToVault(service: ss.SignalR) {
-    const { rsGroup, disableLocalAuth, vaultInfo } = this.args;
-    if (disableLocalAuth || !vaultInfo) return;
-
-    pulumi.output([service.name, rsGroup.resourceGroupName]).apply(async ([svName, rgName]) => {
+    const { rsGroup, defaultUAssignedId, vaultInfo } = this.args;
+    if (!vaultInfo) return;
+    return pulumi.output([service.name, rsGroup.resourceGroupName]).apply(async ([svName, rgName]) => {
       if (!svName) return;
 
       const keys = await ss.listSignalRKeys({
@@ -124,23 +126,40 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
         resourceGroupName: rgName,
       });
 
-      new vault.VaultSecrets(
-        this.name,
+      const secrets: Record<string, SecretItemArgs> = {
+        [`${this.name}-signalR-primary-conn`]: {
+          value: keys.primaryConnectionString!,
+          contentType: `${this.name} SignalR`,
+        },
+        [`${this.name}-signalR-secondary-conn`]: {
+          value: keys.secondaryConnectionString!,
+          contentType: `${this.name} SignalR`,
+        },
+        [`${this.name}-signalR-default-system-id`]: {
+          value: pulumi.interpolate`Endpoint=https://${service.name}.service.signalr.net;AuthType=azure.msi;Version=1.0;`,
+          contentType: `${this.name} SignalR`,
+        },
+      };
+
+      if (defaultUAssignedId) {
+        secrets[`${this.name}-signalR-default-user-assigned-id`] = {
+          value: pulumi.interpolate`Endpoint=https://${service.name}.service.signalr.net;AuthType=azure.msi;ClientId=${defaultUAssignedId.clientId};Version=1.0;`,
+          contentType: `${this.name} SignalR`,
+        };
+      }
+
+      // if (defaultAppIdentity) {
+      //   secrets[`${this.name}-default-app-id`] =
+      //     pulumi.interpolate`Endpoint=https://${service.name}.service.signalr.net;AuthType=azure.app;ClientId=${defaultAppIdentity.clientId};ClientSecret=789;TenantId=${azureEnv.tenantId};Version=1.0;`;
+      // }
+
+      return new VaultSecrets(
+        `${this.name}-signalR`,
         {
           vaultInfo,
-          secrets: {
-            [`${this.name}-primary-conn`]: {
-              value: keys.primaryConnectionString!,
-              contentType: `SignalR Primary ConnectionString`,
-            },
-
-            [`${this.name}-secondary-conn`]: {
-              value: keys.secondaryConnectionString!,
-              contentType: `SignalR Secondary ConnectionString`,
-            },
-          },
+          secrets,
         },
-        { dependsOn: service, parent: this },
+        { dependsOn: service, deletedWith: service, parent: this },
       );
     });
   }

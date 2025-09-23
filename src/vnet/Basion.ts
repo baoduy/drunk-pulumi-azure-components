@@ -1,28 +1,32 @@
 import * as nw from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
-import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
+
+import { BaseComponent } from '../base/BaseComponent';
+import { IpAddresses } from './IpAddresses';
+import { getComponentResourceType } from '../base/helpers';
 
 export interface BasionArgs
   extends types.WithResourceGroupInputs,
-    Pick<
-      nw.BastionHostArgs,
-      | 'disableCopyPaste'
-      | 'dnsName'
-      | 'enableFileCopy'
-      | 'enableIpConnect'
-      | 'enableKerberos'
-      | 'enablePrivateOnlyBastion'
-      | 'enableSessionRecording'
-      | 'enableShareableLink'
-      | 'enableTunneling'
-      | 'scaleUnits'
-      | 'zones'
-      | 'tags'
+    Partial<
+      Pick<
+        nw.BastionHostArgs,
+        | 'disableCopyPaste'
+        | 'dnsName'
+        | 'enableFileCopy'
+        | 'enableIpConnect'
+        | 'enableKerberos'
+        | 'enablePrivateOnlyBastion'
+        | 'enableSessionRecording'
+        | 'enableShareableLink'
+        | 'enableTunneling'
+        | 'scaleUnits'
+        | 'zones'
+        | 'tags'
+      >
     > {
   sku: nw.BastionHostSkuName;
-  publicIPAddress: types.SubResourceInputs;
+  publicIPAddress?: types.SubResourceInputs;
   subnetId: pulumi.Input<string>;
   network?: Pick<types.NetworkArgs, 'ipRules'>;
 }
@@ -34,7 +38,9 @@ export class Basion extends BaseComponent<BasionArgs> {
   constructor(name: string, args: BasionArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('Basion'), name, args, opts);
 
-    const { rsGroup, sku, network, publicIPAddress, subnetId, ...props } = args;
+    const { rsGroup, sku, network, subnetId, ...props } = args;
+
+    const ipAddress = this.createIpAddress();
 
     const bs = new nw.BastionHost(
       name,
@@ -45,7 +51,7 @@ export class Basion extends BaseComponent<BasionArgs> {
         ipConfigurations: [
           {
             name: 'IpConfig',
-            publicIPAddress: sku !== 'Developer' ? publicIPAddress : undefined,
+            publicIPAddress: sku !== 'Developer' ? ipAddress : undefined,
             subnet: { id: subnetId },
             privateIPAllocationMethod: nw.IPAllocationMethod.Dynamic,
           },
@@ -64,7 +70,7 @@ export class Basion extends BaseComponent<BasionArgs> {
     this.id = bs.id;
     this.resourceName = bs.name;
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {
@@ -72,5 +78,21 @@ export class Basion extends BaseComponent<BasionArgs> {
       id: this.id,
       resourceName: this.resourceName,
     };
+  }
+
+  private createIpAddress() {
+    const { rsGroup, publicIPAddress } = this.args;
+    if (publicIPAddress) return publicIPAddress;
+    const n = `${this.name}-bastion-ip`;
+
+    return new IpAddresses(
+      `${this.name}-ip`,
+      {
+        rsGroup,
+        sku: { name: 'Standard' },
+        ipAddresses: [{ name: n }],
+      },
+      { parent: this },
+    ).getOutputs()[n];
   }
 }

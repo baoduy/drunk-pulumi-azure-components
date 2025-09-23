@@ -1,6 +1,6 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
 import * as types from '../types';
@@ -12,15 +12,10 @@ export interface GroupRoleArgs
   preventDuplicateNames?: pulumi.Input<boolean>;
 }
 
-export interface GroupRoleOutput {
-  objectId: string;
-  displayName: string;
-}
-
 export class GroupRole extends BaseComponent<GroupRoleArgs> {
-  public readonly admin: pulumi.Output<GroupRoleOutput>;
-  public readonly contributor: pulumi.Output<GroupRoleOutput>;
-  public readonly readOnly: pulumi.Output<GroupRoleOutput>;
+  public readonly admin: pulumi.Output<types.GroupRoleOutput>;
+  public readonly contributor: pulumi.Output<types.GroupRoleOutput>;
+  public readonly readOnly: pulumi.Output<types.GroupRoleOutput>;
 
   constructor(name: string = stackInfo.stack, args: GroupRoleArgs = {}, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('GroupRole'), name, args, opts);
@@ -59,7 +54,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
 
     this.configHierarchyRoles(roleInstances);
 
-    this.registerOutputs(this.getOutputs());
+    this.registerOutputs();
   }
 
   public getOutputs() {
@@ -71,6 +66,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
   }
 
   private configHierarchyRoles(roles: { [k: string]: AzRole }) {
+    const deps = Object.values(roles);
     if (this.admin && this.contributor) {
       new azAd.GroupMember(
         `${this.name}-admin2contributor`,
@@ -78,7 +74,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
           groupObjectId: this.contributor.objectId,
           memberObjectId: this.admin.objectId,
         },
-        { dependsOn: Object.values(roles), parent: this },
+        { dependsOn: deps, parent: this, retainOnDelete: true },
       );
     }
 
@@ -89,7 +85,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
           groupObjectId: this.readOnly.objectId,
           memberObjectId: this.contributor.objectId,
         },
-        { dependsOn: Object.values(roles), parent: this },
+        { dependsOn: deps, parent: this, retainOnDelete: true },
       );
     }
   }

@@ -1,10 +1,13 @@
 import * as azAd from '@pulumi/azuread';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
-import { getComponentResourceType } from '../base/helpers';
-import { WithMemberOfArgs, WithVaultInfo } from '../types';
-import { VaultSecret } from '../vault';
+
 import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
+import { WithMemberOfArgs, WithVaultInfo } from '../types';
+
+import { BaseComponent } from '../base/BaseComponent';
+import { VaultSecrets } from '../vault';
+import { getComponentResourceType } from '../base/helpers';
+import { stackInfo } from '../helpers';
 
 export enum GroupMembershipClaimsTypes {
   None = 'None',
@@ -17,16 +20,18 @@ export enum GroupMembershipClaimsTypes {
 export interface AppRegistrationArgs
   extends WithVaultInfo,
     WithMemberOfArgs,
-    Pick<
-      azAd.ApplicationArgs,
-      | 'identifierUris'
-      | 'oauth2PostResponseRequired'
-      | 'optionalClaims'
-      | 'featureTags'
-      | 'api'
-      | 'appRoles'
-      | 'owners'
-      | 'requiredResourceAccesses'
+    Partial<
+      Pick<
+        azAd.ApplicationArgs,
+        | 'identifierUris'
+        | 'oauth2PostResponseRequired'
+        | 'optionalClaims'
+        | 'featureTags'
+        | 'api'
+        | 'appRoles'
+        | 'owners'
+        | 'requiredResourceAccesses'
+      >
     > {
   info?: Pick<
     azAd.ApplicationArgs,
@@ -58,47 +63,46 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   public readonly clientSecret?: pulumi.Output<string>;
   public readonly servicePrincipalId?: pulumi.Output<string>;
   public readonly servicePrincipalPassword?: pulumi.Output<string>;
-
-  //private readonly _app: azAd.Application;
+  public readonly vaultSecrets: { [key: string]: ReturnType<VaultSecrets['getOutputs']> } = {};
 
   constructor(name: string, args: AppRegistrationArgs = { appType: 'native' }, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('AppRegistration'), name, args, opts);
 
     //Application
-    const app = this.createAppRegistration();
-    const secret = this.createClientSecret(app);
-    this.clientSecret = secret.clientSecret;
-
+    const { app, clientSecret } = this.createAppRegistration();
     const sp = this.createServicePrincipal(app);
     this.servicePrincipalId = sp.servicePrincipalId;
     this.servicePrincipalPassword = sp.servicePrincipalPassword;
 
-    this.addMemberOf(app);
-
     this.clientId = app.clientId;
-    this.registerOutputs(this.getOutputs());
+    this.addSecrets({
+      clientId: app.clientId,
+      clientSecret: clientSecret,
+      servicePrincipalId: sp.servicePrincipalId,
+      servicePrincipalPass: sp.servicePrincipalPassword,
+    });
+
+    this.registerOutputs();
   }
 
   public getOutputs() {
     return {
       clientId: this.clientId,
-      clientSecret: this.clientSecret,
       servicePrincipalId: this.servicePrincipalId,
-      servicePrincipalPassword: this.servicePrincipalPassword,
+      vaultSecrets: this.vaultSecrets,
     };
   }
 
   private createAppRegistration() {
-    const ops = this.args.info ?? {
-      displayName: this.name,
-      description: this.name,
-    };
+    const { info } = this.args;
 
     const app = new azAd.Application(
-      this.name,
+      `${stackInfo.stack}-${this.name}`,
       {
         ...this.args,
-        ...ops,
+        ...info,
+        displayName: info?.displayName ?? `${stackInfo.stack}-${this.name}`,
+        description: info?.description ?? `${stackInfo.stack}-${this.name}`,
         preventDuplicateNames: true,
         signInAudience: 'AzureADMyOrg',
 
@@ -118,8 +122,16 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       { ...this.opts, parent: this },
     );
 
-    this.addSecret('client-id', app.clientId);
-    return app;
+    const clientSecret = new azAd.ApplicationPassword(
+      `${this.name}-client-secret`,
+      {
+        displayName: this.name,
+        applicationId: app.id,
+      },
+      { dependsOn: app, parent: this },
+    );
+
+    return { app, clientSecret: clientSecret.value };
   }
 
   private createServicePrincipal(app: azAd.Application) {
@@ -132,7 +144,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         clientId: app.clientId,
         owners: this.args.owners,
       },
-      { dependsOn: app, parent: this },
+      { dependsOn: app, deletedWith: app, parent: this },
     );
 
     var spPass = new azAd.ServicePrincipalPassword(
@@ -141,32 +153,15 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         displayName: this.name,
         servicePrincipalId: pulumi.interpolate`/servicePrincipals/${sp.objectId}`,
       },
-      { dependsOn: sp, parent: this },
+      { dependsOn: sp, deletedWith: app, parent: this },
     );
 
     this.addRoleAssignments(sp);
-    this.addSecret('sp-pass', spPass.value);
+    this.addMemberOf(sp);
 
     return {
       servicePrincipalId: sp.id,
       servicePrincipalPassword: spPass.value,
-    };
-  }
-
-  private createClientSecret(app: azAd.Application) {
-    const clientSecret = new azAd.ApplicationPassword(
-      `${this.name}-client-secret`,
-      {
-        displayName: this.name,
-        applicationId: app.id,
-      },
-      { dependsOn: app, parent: this },
-    );
-
-    this.addSecret('client-secret', clientSecret.value);
-
-    return {
-      clientSecret: clientSecret.value,
     };
   }
 
@@ -179,12 +174,12 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         new RoleAssignment(
           `${this.name}-${role.roleName}`,
           { ...role, principalId: sv.objectId, principalType: 'ServicePrincipal' },
-          { dependsOn: sv, parent: this },
+          { dependsOn: sv, deletedWith: sv, parent: this },
         ),
     );
   }
 
-  private addMemberOf(app: azAd.Application) {
+  private addMemberOf(sv: azAd.ServicePrincipal) {
     if (!this.args.memberof) return;
     this.args.memberof.map((group) =>
       pulumi.output(group).apply(
@@ -193,24 +188,47 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
             `${this.name}-${id.objectId}`,
             {
               groupObjectId: id.objectId,
-              memberObjectId: app.objectId,
+              memberObjectId: sv.objectId,
             },
-            { dependsOn: app, parent: this },
+            { dependsOn: sv, deletedWith: sv, parent: this },
           ),
       ),
     );
   }
 
-  private addSecret(name: string, value: pulumi.Output<string>) {
+  private addSecrets({
+    clientId,
+    clientSecret,
+    servicePrincipalId,
+    servicePrincipalPass,
+  }: {
+    clientId: pulumi.Input<string>;
+    clientSecret: pulumi.Input<string>;
+    servicePrincipalId: pulumi.Input<string>;
+    servicePrincipalPass: pulumi.Input<string>;
+  }) {
     if (!this.args.vaultInfo) return;
-    new VaultSecret(
-      `${this.name}-${name}`,
+    const n = `${this.name}-secrets`;
+    const secret = new VaultSecrets(
+      n,
       {
         vaultInfo: this.args.vaultInfo,
-        value: value,
-        contentType: `${this.name} ${name}`,
+        secrets: {
+          [`${this.name}-app-client-id`]: { value: clientId, contentType: `AppRegistration:${this.name} ` },
+          [`${this.name}-app-client-secret`]: { value: clientSecret, contentType: `AppRegistration:${this.name} ` },
+          [`${this.name}-service-principal-id`]: {
+            value: servicePrincipalId,
+            contentType: `AppRegistration:${this.name} `,
+          },
+          [`${this.name}-service-principal-pass`]: {
+            value: servicePrincipalPass,
+            contentType: `AppRegistration:${this.name} `,
+          },
+        },
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
+    this.vaultSecrets[n] = secret.getOutputs();
+    return secret;
   }
 }

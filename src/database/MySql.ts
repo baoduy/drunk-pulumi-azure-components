@@ -2,7 +2,7 @@ import * as mysql from '@pulumi/azure-native/dbformysql';
 import * as pulumi from '@pulumi/pulumi';
 import { UserAssignedIdentity } from '../azAd';
 import { BaseArgs, BaseResourceComponent } from '../base';
-import { azureEnv } from '../helpers';
+import { azureEnv, stackInfo } from '../helpers';
 import * as types from '../types';
 import * as vnet from '../vnet';
 import { convertToIpRange } from './helpers';
@@ -14,15 +14,12 @@ export interface MySqlArgs
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
     types.WithNetworkArgs,
-    Pick<
-      mysql.ServerArgs,
-      | 'version'
-      | 'storage'
-      | 'administratorLogin'
-      | 'maintenanceWindow'
-      | 'backup'
-      | 'highAvailability'
-      | 'availabilityZone'
+    Pick<mysql.ServerArgs, 'administratorLogin'>,
+    Partial<
+      Pick<
+        mysql.ServerArgs,
+        'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
+      >
     > {
   sku: {
     /**
@@ -46,10 +43,11 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   constructor(name: string, args: MySqlArgs, opts?: pulumi.ComponentResourceOptions) {
     super('MySql', name, args, opts);
 
-    const server = this.createMySql();
+    const uAssignedId = this.getUAssignedId();
+    const { server, credentials } = this.createMySql(uAssignedId);
     this.createNetwork(server);
-    this.enableADAdmin(server);
-    this.createDatabases(server);
+    this.enableADAdmin(server, uAssignedId);
+    this.createDatabases(server, credentials);
 
     if (args.lock) this.lockFromDeleting(server);
 
@@ -66,20 +64,19 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     };
   }
 
-  private createMySql() {
+  private createMySql(uid: types.UserAssignedIdentityInputs) {
     const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
-    const uAssignedId = this.getUAssignedId();
 
     const server = new mysql.Server(
       this.name,
       {
         ...this.args,
         ...rsGroup,
-
+        //serverName: this.name,
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
@@ -87,23 +84,26 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
 
         identity: {
           type: mysql.ManagedServiceIdentityType.UserAssigned,
-          userAssignedIdentities: [uAssignedId.id],
+          userAssignedIdentities: [uid.id],
         },
 
         dataEncryption: encryptionKey
           ? {
               type: mysql.DataEncryptionType.AzureKeyVault,
-              primaryUserAssignedIdentityId: uAssignedId.id,
+              primaryUserAssignedIdentityId: uid.id,
               primaryKeyURI: encryptionKey.id,
             }
           : { type: 'SystemManaged' },
 
-        maintenanceWindow: this.args.maintenanceWindow ?? {
-          customWindow: 'Enabled',
-          dayOfWeek: 0, //0 is Sunday
-          startHour: 0,
-          startMinute: 0,
-        },
+        maintenanceWindow:
+          this.args.sku.tier !== 'Burstable'
+            ? this.args.maintenanceWindow ?? {
+                customWindow: 'Enabled',
+                dayOfWeek: 0, //0 is Sunday
+                startHour: 0,
+                startMinute: 0,
+              }
+            : undefined,
 
         backup: this.args.backup ?? {
           geoRedundantBackup: azureEnv.isPrd ? 'Enabled' : 'Disabled',
@@ -131,21 +131,38 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       },
     );
 
+    const credentials: types.DbCredentialsType = {
+      host: pulumi.interpolate`${server.name}.mysql.database.azure.com`,
+      port: '3306',
+      username: adminLogin,
+      password: password.value,
+    };
+
     this.addSecrets({
-      [`${this.name}-host`]: pulumi.interpolate`${server.name}.mysql.database.azure.com`,
-      [`${this.name}-port`]: '3306',
-      [`${this.name}-login`]: this.args.administratorLogin!,
-      [`${this.name}-pass`]: password.value,
-      [`${this.name}-username`]: adminLogin,
+      [`${this.name}-mysql-host`]: credentials.host,
+      [`${this.name}-mysql-port`]: credentials.port,
+      [`${this.name}-mysql-login`]: credentials.username,
+      [`${this.name}-mysql-pass`]: credentials.password,
     });
 
-    return server;
+    return { server, credentials };
   }
 
   private createNetwork(server: mysql.Server) {
     const { rsGroup, network } = this.args;
 
-    if (network?.ipRules) {
+    if (network?.allowAllInbound) {
+      new mysql.FirewallRule(
+        `${this.name}-firewall-allow-all`,
+        {
+          ...rsGroup,
+          serverName: server.name,
+          startIpAddress: '0.0.0.0',
+          endIpAddress: '255.255.255.255',
+        },
+        { dependsOn: server, parent: this },
+      );
+    } else if (network?.ipRules) {
       pulumi.output(network.ipRules).apply((ips) =>
         convertToIpRange(ips).map(
           (f, i) =>
@@ -178,7 +195,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     }
   }
 
-  private enableADAdmin(server: mysql.Server) {
+  private enableADAdmin(server: mysql.Server, uid: types.UserAssignedIdentityInputs) {
     const { rsGroup, groupRoles, enableAzureADAdmin } = this.args;
     if (!enableAzureADAdmin || !groupRoles) return undefined;
 
@@ -186,19 +203,19 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       this.name,
       {
         ...rsGroup,
-        administratorName: `${this.name}-azure-ad`,
+        administratorName: 'activeDirectory',
         serverName: server.name,
-
-        login: server.administratorLogin.apply((login) => login as string),
+        login: groupRoles.admin.displayName,
         administratorType: 'ActiveDirectory',
-        sid: groupRoles.contributor.objectId,
+        sid: groupRoles.admin.objectId,
         tenantId: azureEnv.tenantId,
+        identityResourceId: uid.id,
       },
       { dependsOn: server, parent: this },
     );
   }
 
-  private createDatabases(server: mysql.Server) {
+  private createDatabases(server: mysql.Server, cred: types.DbCredentialsType) {
     const { rsGroup, databases } = this.args;
     if (!databases) return undefined;
 
@@ -214,8 +231,8 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       );
 
       //add connection string to vault
-      //   const conn = pulumi.interpolate``;
-      //   this.addSecret(`${this.name}-${d.name}-conn`, conn);
+      const conn = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+      this.addSecret(`${this.name}-${d.name}-mysql-conn`, conn);
 
       return db;
     });

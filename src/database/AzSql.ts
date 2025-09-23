@@ -1,14 +1,16 @@
-import * as sql from '@pulumi/azure-native/sql';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
-import { RandomPassword } from '../common';
-import { azureEnv } from '../helpers';
-import { storageHelpers } from '../storage';
-import { getStorageAccessKeyOutputs } from '../storage/helpers';
+import * as sql from '@pulumi/azure-native/sql';
 import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
+
+import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+
+import { RandomPassword } from '../common';
+import { azureEnv } from '../helpers';
 import { convertToIpRange } from './helpers';
+import { getStorageAccessKeyOutputs } from '../storage/helpers';
+import { storageHelpers } from '../storage';
 
 export type AzSqlSkuType = {
   /**
@@ -39,25 +41,29 @@ export interface AzSqlArgs
     types.WithResourceGroupInputs,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
-    Pick<
-      sql.ServerArgs,
-      'administratorLogin' | 'federatedClientId' | 'isIPv6Enabled' | 'restrictOutboundNetworkAccess' | 'version'
+    Partial<
+      Pick<
+        sql.ServerArgs,
+        'administratorLogin' | 'federatedClientId' | 'isIPv6Enabled' | 'restrictOutboundNetworkAccess' | 'version'
+      >
     > {
   administrators?: {
     azureAdOnlyAuthentication?: boolean;
     useDefaultUAssignedIdForConnection?: boolean;
+    additionalUAssigneds?: Record<string, pulumi.Input<string>>;
     adminGroup: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
   };
 
-  elasticPool?: Pick<
-    sql.ElasticPoolArgs,
-    'autoPauseDelay' | 'availabilityZone' | 'highAvailabilityReplicaCount' | 'licenseType' | 'perDatabaseSettings'
+  elasticPoolCreate?: Partial<
+    Pick<
+      sql.ElasticPoolArgs,
+      'autoPauseDelay' | 'availabilityZone' | 'highAvailabilityReplicaCount' | 'licenseType' | 'perDatabaseSettings'
+    >
   > & {
     maxSizeGB?: number;
     sku: AzSqlSkuType;
   };
   network?: Omit<types.NetworkArgs, 'bypass' | 'defaultAction' | 'vnetRules'> & {
-    acceptAllPublicConnection?: boolean;
     subnets?: pulumi.Input<Array<{ id: string }>>;
   };
   vulnerabilityAssessment?: {
@@ -127,7 +133,9 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
-    const encryptionKey = enableEncryption ? this.getEncryptionKey({ keySize: 3072 }) : undefined;
+    const encryptionKey = enableEncryption
+      ? this.getEncryptionKey({ name: `${this.name}-az-sql`, keySize: 3072 })
+      : undefined;
 
     const server = new sql.Server(
       this.name,
@@ -153,7 +161,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
                 ? sql.AdministratorType.ActiveDirectory
                 : undefined,
               azureADOnlyAuthentication: administrators.adminGroup?.objectId
-                ? administrators.azureAdOnlyAuthentication ?? true
+                ? (administrators.azureAdOnlyAuthentication ?? true)
                 : false,
 
               principalType: sql.PrincipalType.Group,
@@ -186,12 +194,11 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     if (!network) return;
 
     //Allows Ip Addresses
-    if (network.acceptAllPublicConnection) {
+    if (network.allowAllInbound) {
       new sql.FirewallRule(
-        `${this.name}-allows-all-connection`,
+        `${this.name}-allows-all`,
         {
           ...rsGroup,
-          //firewallRuleName: 'allows-all-connection',
           serverName: server.name,
           startIpAddress: '0.0.0.0',
           endIpAddress: '255.255.255.255',
@@ -252,19 +259,19 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createElasticPool(server: sql.Server) {
-    const { rsGroup, elasticPool } = this.args;
-    if (!elasticPool) return undefined;
+    const { rsGroup, elasticPoolCreate } = this.args;
+    if (!elasticPoolCreate) return undefined;
 
     return new sql.ElasticPool(
       `${this.name}-elasticPool`,
       {
-        ...elasticPool,
+        ...elasticPoolCreate,
         ...rsGroup,
         //autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
         preferredEnclaveType: sql.AlwaysEncryptedEnclaveType.VBS,
 
         serverName: server.name,
-        maxSizeBytes: elasticPool.maxSizeGB ? elasticPool.maxSizeGB * 1024 * 1024 * 1024 : undefined,
+        maxSizeBytes: elasticPoolCreate.maxSizeGB ? elasticPoolCreate.maxSizeGB * 1024 * 1024 * 1024 : undefined,
       },
       { dependsOn: server, parent: this },
     );
@@ -320,7 +327,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         serverName: server.name,
         emailAccountAdmins: true,
         emailAddresses: vulnerabilityAssessment.alertEmails,
-        retentionDays: vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd ? 30 : 7,
+        retentionDays: (vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd) ? 30 : 7,
 
         storageAccountAccessKey: storageKey,
         storageEndpoint: stgEndpoints.blob,
@@ -345,7 +352,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         isStorageSecondaryKeyInUse: false,
         predicateExpression: "object_name = 'SensitiveData'",
         queueDelayMs: 4000,
-        retentionDays: vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd ? 30 : 7,
+        retentionDays: (vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd) ? 30 : 7,
         state: 'Enabled',
         isDevopsAuditEnabled: true,
 
@@ -401,13 +408,27 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         { dependsOn: elasticPool ? [server, password, elasticPool] : [server, password], parent: this },
       );
 
-      const connectionString = administrators?.azureAdOnlyAuthentication
-        ? administrators?.useDefaultUAssignedIdForConnection
-          ? pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${defaultUAssignedId?.principalId}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`
-          : pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; MultipleActiveResultSets=False;Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`
-        : pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; User Id=${server.administratorLogin}; Password=${password.value}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
+      const secrets: Record<string, pulumi.Input<string>> = {
+        [`${name}-sql-default-sysid-conn`]: pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; MultipleActiveResultSets=False;Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`,
+      };
 
-      this.addSecret(`${name}-conn`, connectionString);
+      if (defaultUAssignedId && administrators?.useDefaultUAssignedIdForConnection)
+        secrets[`${name}-sql-default-uid-conn`] =
+          pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${defaultUAssignedId?.principalId}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
+
+      if (!administrators?.azureAdOnlyAuthentication) {
+        secrets[`${name}-sql-password-conn`] =
+          pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; User Id=${server.administratorLogin}; Password=${password.value}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
+      }
+
+      const adds = administrators?.additionalUAssigneds;
+      if (adds) {
+        Object.keys(adds).forEach((k) => {
+          const conn = pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${adds[k]}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
+          secrets[`${name}-sql-${k}-conn`] = conn;
+        });
+      }
+      this.addSecrets(secrets);
       return db;
     });
   }

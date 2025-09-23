@@ -5,6 +5,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
+import { rsHelpers } from '../helpers';
 
 export type VmScheduleType = {
   /** The time zone ID: https://stackoverflow.com/questions/7908343/list-of-timezone-ids-for-use-with-findtimezonebyid-in-c */
@@ -27,9 +28,8 @@ export interface VirtualMachineArgs
       'osProfile' | 'storageProfile' | 'identity' | 'networkProfile' | 'resourceGroupName' | 'location'
     > {
   osProfile?: Omit<inputs.compute.OSProfileArgs, 'adminPassword' | 'adminUsername'>;
-  storageProfile: Pick<
-    inputs.compute.StorageProfileArgs,
-    'imageReference' | 'alignRegionalDisksToVMZone' | 'diskControllerType'
+  storageProfile: Partial<
+    Pick<inputs.compute.StorageProfileArgs, 'imageReference' | 'alignRegionalDisksToVMZone' | 'diskControllerType'>
   > & {
     osDisk: Omit<inputs.compute.OSDiskArgs, 'encryptionSettings'>;
     dataDisks?: Omit<inputs.compute.DataDiskArgs, 'managedDisk'>[];
@@ -68,13 +68,10 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       ...props
     } = args;
 
-    const adminLogin = pulumi.interpolate`${this.name}-vn-admin-${
-      this.createRandomString({ type: 'string', length: 6 }).value
-    }`;
-    const password = this.createPassword();
-    const keyEncryption = enableEncryption ? this.getEncryptionKey({ name: 'key' }) : undefined;
-    const diskEncryption = enableEncryption ? this.getEncryptionKey({ name: 'disk' }) : undefined;
+    const keyEncryption = enableEncryption && !diskEncryptionSet ? this.getEncryptionKey({ name: 'key' }) : undefined;
+    const diskEncryption = enableEncryption && !diskEncryptionSet ? this.getEncryptionKey({ name: 'disk' }) : undefined;
     const nic = this.createNetworkInterface();
+    const credential = this.createCredentials();
 
     const vm = new compute.VirtualMachine(
       this.name,
@@ -93,11 +90,13 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           networkInterfaces: [{ id: nic.id, primary: true }],
         },
         //az feature register --name EncryptionAtHost  --namespace Microsoft.Compute
-        securityProfile: props.securityProfile ?? { encryptionAtHost: true },
+        securityProfile: props.securityProfile ?? {
+          encryptionAtHost: true,
+        },
         osProfile: {
           ...osProfile,
-          adminUsername: adminLogin,
-          adminPassword: password.value,
+          adminUsername: credential.login,
+          adminPassword: credential.pass,
         },
         storageProfile: {
           ...storageProfile,
@@ -109,7 +108,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                 ? {
                     diskEncryptionKey: diskEncryption
                       ? {
-                          secretUrl: diskEncryption.id,
+                          secretUrl: pulumi.interpolate`${diskEncryption.vaultUrl}/secrets/${diskEncryption.keyName}/${diskEncryption.version}`,
                           sourceVault: {
                             id: vaultInfo!.id,
                           },
@@ -117,7 +116,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                       : undefined,
                     keyEncryptionKey: keyEncryption
                       ? {
-                          keyUrl: keyEncryption.id,
+                          keyUrl: pulumi.interpolate`${keyEncryption.vaultUrl}/keys/${keyEncryption.keyName}/${keyEncryption.version}`,
                           sourceVault: {
                             id: vaultInfo!.id,
                           },
@@ -133,10 +132,13 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                     id: diskEncryptionSet.id,
                   }
                 : undefined,
-              securityProfile: {
-                diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
-                securityEncryptionType: storageProfile.securityEncryptionType,
-              },
+
+              securityProfile: storageProfile.securityEncryptionType
+                ? {
+                    diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
+                    securityEncryptionType: storageProfile.securityEncryptionType,
+                  }
+                : undefined,
               storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
             },
           },
@@ -150,10 +152,12 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                         id: diskEncryptionSet.id,
                       }
                     : undefined,
-                  securityProfile: {
-                    diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
-                    securityEncryptionType: storageProfile.securityEncryptionType,
-                  },
+                  securityProfile: storageProfile.securityEncryptionType
+                    ? {
+                        diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
+                        securityEncryptionType: storageProfile.securityEncryptionType,
+                      }
+                    : undefined,
                   storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
                 },
               }))
@@ -171,11 +175,6 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     this.createExtensions(vm);
     if (lock) this.lockFromDeleting(vm);
 
-    this.addSecrets({
-      login: adminLogin,
-      pass: password.value,
-    });
-
     this.id = vm.id;
     this.resourceName = vm.name;
 
@@ -188,36 +187,63 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       resourceName: this.resourceName,
     };
   }
+
+  private createCredentials() {
+    const adminLogin = pulumi.interpolate`${this.name}-admin-${
+      this.createRandomString({ type: 'string', length: 6 }).value
+    }`.apply((s) => rsHelpers.removeDashes(s.substring(0, 20)));
+
+    const password = this.createPassword();
+
+    this.addSecrets({
+      login: adminLogin,
+      pass: password.value,
+    });
+
+    return { login: adminLogin, pass: password.value };
+  }
+
   private createNetworkInterface() {
     const { rsGroup, network } = this.args;
-    return new nw.NetworkInterface(this.name, {
-      ...rsGroup,
-      ipConfigurations: [{ name: 'ipconfig', subnet: { id: network.subnetId }, primary: true }],
-      nicType: network.nicType ?? nw.NetworkInterfaceNicType.Standard,
-    });
+    return new nw.NetworkInterface(
+      this.name,
+      {
+        ...rsGroup,
+        ipConfigurations: [{ name: 'ipconfig', subnet: { id: network.subnetId }, primary: true }],
+        nicType: network.nicType ?? nw.NetworkInterfaceNicType.Standard,
+      },
+      { ...this.opts, parent: this },
+    );
   }
 
   private createSchedule(vm: compute.VirtualMachine) {
     const { rsGroup, schedule } = this.args;
     if (!schedule) return undefined;
-    return new devtestlab.GlobalSchedule(
-      this.name,
-      {
-        ...rsGroup,
-        dailyRecurrence: { time: schedule.autoShutdownTime },
-        timeZoneId: schedule.timeZone,
-        status: 'Enabled',
-        targetResourceId: vm.id,
-        taskType: 'ComputeVmShutdownTask',
-        notificationSettings: {
-          status: schedule.webHook || schedule.emailNotification ? 'Enabled' : 'Disabled',
-          emailRecipient: schedule.emailNotification?.join(';'),
-          notificationLocale: 'en',
-          timeInMinutes: 30,
-          webhookUrl: schedule.webHook,
-        },
-      },
-      { dependsOn: vm, parent: this },
+
+    return vm.name.apply(
+      (n) =>
+        new devtestlab.GlobalSchedule(
+          `shutdown-computevm-${n}`,
+          {
+            ...rsGroup,
+            name: `shutdown-computevm-${n}`,
+            dailyRecurrence: { time: schedule.autoShutdownTime },
+
+            timeZoneId: schedule.timeZone,
+            status: 'Enabled',
+            targetResourceId: vm.id,
+            taskType: 'ComputeVmShutdownTask',
+
+            notificationSettings: {
+              status: schedule.webHook || schedule.emailNotification ? 'Enabled' : 'Disabled',
+              emailRecipient: schedule.emailNotification?.join(';'),
+              notificationLocale: 'en',
+              timeInMinutes: 30,
+              webhookUrl: schedule.webHook,
+            },
+          },
+          { dependsOn: vm, parent: this, deleteBeforeReplace: true, deletedWith: vm },
+        ),
     );
   }
 

@@ -32,9 +32,23 @@ export type AzSqlSkuType = {
   /**
    * The tier or edition of the particular SKU, e.g. Basic, Premium.
    */
-  tier?: 'Standard' | 'Basic';
+  tier?: 'Standard' | 'Basic' | string;
 };
 
+export type AzSqlDbType = Omit<
+  sql.DatabaseArgs,
+  | 'resourceGroupName'
+  | 'serverName'
+  | 'elasticPoolId'
+  | 'encryptionProtector'
+  | 'encryptionProtectorAutoRotation'
+  | 'federatedClientId'
+  | 'preferredEnclaveType'
+  | 'sku'
+> & {
+  /** sample: sku: { name: 'Basic', tier: 'Basic', capacity: 0 } */
+  sku?: AzSqlSkuType;
+};
 export interface AzSqlArgs
   extends BaseArgs,
     types.WithEncryptionEnabler,
@@ -72,23 +86,7 @@ export interface AzSqlArgs
     retentionDays?: number;
   };
   lock?: boolean;
-  databases?: Record<
-    string,
-    Omit<
-      sql.DatabaseArgs,
-      | 'resourceGroupName'
-      | 'serverName'
-      | 'elasticPoolId'
-      | 'encryptionProtector'
-      | 'encryptionProtectorAutoRotation'
-      | 'federatedClientId'
-      | 'preferredEnclaveType'
-      | 'sku'
-    > & {
-      /** sample: sku: { name: 'Basic', tier: 'Basic', capacity: 0 } */
-      sku?: AzSqlSkuType;
-    }
-  >;
+  databases?: Record<string, AzSqlDbType>;
 }
 
 export class AzSql extends BaseResourceComponent<AzSqlArgs> {

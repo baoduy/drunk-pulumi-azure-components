@@ -158,6 +158,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
               administratorType: administrators.adminGroup?.objectId
                 ? sql.AdministratorType.ActiveDirectory
                 : undefined,
+
               azureADOnlyAuthentication: administrators.adminGroup?.objectId
                 ? (administrators.azureAdOnlyAuthentication ?? true)
                 : false,
@@ -177,6 +178,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         ...this.opts,
         protect: lock ?? this.opts?.protect,
         dependsOn: this.opts?.dependsOn ? this.opts.dependsOn : password,
+        ignoreChanges: ['administrators.azureAdOnlyAuthentication'],
         parent: this,
       },
     );

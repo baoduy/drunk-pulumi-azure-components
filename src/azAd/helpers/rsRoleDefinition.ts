@@ -1,4 +1,5 @@
 import * as types from '../../types';
+
 import { dictReduce } from '../../helpers/rsHelpers';
 
 export type RsRoleDefinitionType = Record<types.GroupRoleTypes, string[]>;
@@ -15,8 +16,8 @@ const rsRoles = {
       'Azure Kubernetes Service Cluster User Role',
       'Azure Kubernetes Service RBAC Reader',
     ],
-    contributor: ['Azure Arc Kubernetes Writer'],
-    admin: ['Azure Arc Kubernetes Admin'],
+    contributor: ['Azure Arc Kubernetes Writer', 'Azure Kubernetes Service RBAC Writer'],
+    admin: ['Azure Arc Kubernetes Admin', 'Azure Kubernetes Service RBAC Admin'],
   },
   iotHub: {
     readOnly: ['IoT Hub Data Reader'],
@@ -144,7 +145,7 @@ function getRsRoleDefinitions() {
           contributor: roles.contributor,
           readOnly: roles.readOnly,
         }),
-      } as RsRoleDefinitionWithMethods),
+      }) as RsRoleDefinitionWithMethods,
   );
 }
 

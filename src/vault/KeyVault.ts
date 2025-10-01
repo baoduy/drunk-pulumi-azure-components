@@ -1,9 +1,13 @@
 import * as keyvault from '@pulumi/azure-native/keyvault';
 import * as pulumi from '@pulumi/pulumi';
+
 import { BaseArgs, BaseResourceComponent } from '../base';
-import { azureEnv } from '../helpers';
 import { WithNetworkArgs, WithResourceGroupInputs } from '../types';
+
 import { PrivateEndpoint } from '../vnet';
+import { SecretItemArgs } from './VaultSecret';
+import { VaultSecrets } from './VaultSecrets';
+import { azureEnv } from '../helpers';
 
 export interface KeyVaultArgs
   extends BaseArgs,
@@ -21,6 +25,8 @@ export interface KeyVaultArgs
     enabledForTemplateDeployment?: pulumi.Input<boolean>;
     softDeleteRetentionInDays?: pulumi.Input<number>;
   };
+
+  aditionalSecrets?: { [key: string]: SecretItemArgs };
 }
 
 export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
@@ -80,6 +86,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     );
 
     this.createPrivateEndpoint(vault);
+    this.addSecretsToVault(vault);
 
     this.resourceName = vault.name;
     this.id = vault.id;
@@ -107,6 +114,20 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
         ...network.privateLink,
       },
       { dependsOn: vault, parent: this },
+    );
+  }
+
+  private addSecretsToVault(vault: keyvault.Vault) {
+    const { aditionalSecrets } = this.args;
+    if (!aditionalSecrets) return;
+
+    return new VaultSecrets(
+      `${this.name}-secrets`,
+      {
+        vaultInfo: { resourceName: vault.name, id: vault.id },
+        secrets: aditionalSecrets,
+      },
+      { dependsOn: vault, deletedWith: vault, parent: this },
     );
   }
 }

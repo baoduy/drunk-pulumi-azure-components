@@ -13,7 +13,7 @@
     "url": "https://github.com/baoduy/drunk-pulumi-azure-components.git"
   },
   "scripts": {
-    "fastBuild": "cross-env NODE_ENV=production && NODE_OPTIONS=\"--max-old-space-size=2048\" npx tsc",
+    "fastBuild": "cross-env NODE_ENV=production && NODE_OPTIONS=\"--max-old-space-size=1024\" npx tsc",
     "build": "pnpm run update-tsconfig && pnpm run fastBuild && npm run copy-pkg",
     "copy-pkg": "ts-node ./.tasks/npm-package.ts && cpy README.md bin/ && cpy PulumiPlugin.yaml bin/",
     "update-tsconfig": "ts-node ./.tasks/update-tsconfig.ts",

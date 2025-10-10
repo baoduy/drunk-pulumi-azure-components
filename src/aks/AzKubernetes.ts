@@ -356,7 +356,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             ...rsGroup,
             ...profile,
             resourceName: aks.name,
-            agentPoolName: aks.name,
+            agentPoolName: profile.name,
           },
           { dependsOn: aks, deletedWith: aks, parent: this },
         ),

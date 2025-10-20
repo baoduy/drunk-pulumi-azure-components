@@ -15,7 +15,7 @@ export type CommonProps =
   | 'resourceName'
   | 'tags';
 
-type AsInput<T> = {
+export type AsInput<T> = {
   [K in keyof T]: T[K] extends object
     ? T[K] extends Array<any>
       ? pulumi.Input<NonNullable<T[K]>>
@@ -23,7 +23,7 @@ type AsInput<T> = {
     : pulumi.Input<NonNullable<T[K]>>;
 };
 
-type AsOutput<T> = {
+export type AsOutput<T> = {
   [K in keyof T]: T[K] extends object
     ? T[K] extends Array<any>
       ? pulumi.Output<NonNullable<T[K]>>

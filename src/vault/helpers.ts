@@ -1,11 +1,13 @@
-import { rsHelpers, stackInfo } from '../helpers';
 import * as pulumi from '@pulumi/pulumi';
-import getKeyVaultBase from '@drunk-pulumi/azure-providers/AzBase/KeyVaultBase';
-import _ from 'lodash';
-import { KeyVaultKey } from '@azure/keyvault-keys';
+import * as types from '../types';
+
+import { rsHelpers, stackInfo } from '../helpers';
+
 import { KeyVaultCertificateWithPolicy } from '@azure/keyvault-certificates';
+import { KeyVaultKey } from '@azure/keyvault-keys';
 import { KeyVaultSecret } from '@azure/keyvault-secrets';
-import { ResourceType } from '../types';
+import _ from 'lodash';
+import getKeyVaultBase from '@drunk-pulumi/azure-providers/AzBase/KeyVaultBase';
 
 export function getSecretName(name: string) {
   const sanitizedStack = _.escapeRegExp(stackInfo.stack);
@@ -14,7 +16,7 @@ export function getSecretName(name: string) {
   return rsHelpers.getNameNormalized(n);
 }
 
-export type GetVaultItemArgs = { name: string; version?: string; vaultInfo: ResourceType };
+export type GetVaultItemArgs = { name: string; version?: string; vaultInfo: types.ResourceType };
 export type GetVaultItemArgsInputs = pulumi.Input<GetVaultItemArgs>;
 
 export const getKey = ({ name, version, vaultInfo }: GetVaultItemArgs): Promise<KeyVaultKey | undefined> =>
@@ -31,3 +33,15 @@ export const getSecret = ({ name, version, vaultInfo }: GetVaultItemArgs): Promi
   getKeyVaultBase(vaultInfo.resourceName).getSecret(name, version);
 
 export const getSecretOutput = (args: GetVaultItemArgsInputs) => pulumi.output(args).apply(getSecret);
+
+export const getVaultId = ({
+  name,
+  version,
+  vaultInfo,
+  type,
+}: types.AsInput<GetVaultItemArgs> & { type: 'secrets' | 'keys' | 'certificates' }) => {
+  const vaultUrl = pulumi.interpolate`https://${vaultInfo.resourceName}.vault.azure.net`;
+  return version
+    ? pulumi.interpolate`${vaultUrl}/${type}/${name}/${version}`
+    : pulumi.interpolate`${vaultUrl}/${type}/${name}`;
+};

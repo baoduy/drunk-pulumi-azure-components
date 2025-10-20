@@ -1,12 +1,21 @@
 import * as ccs from '@pulumi/azure-native/containerservice';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
+import * as types from '../types';
+
 import { AppRegistration, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { SshGenerator } from '../common';
 import { azureEnv, rsHelpers } from '../helpers';
-import * as types from '../types';
+
 import { DiskEncryptionSet } from '../vm/DiskEncryptionSet';
+import { SshGenerator } from '../common';
+
+type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
+  vmSize: pulumi.Input<string>;
+  vnetSubnetID: pulumi.Input<string>;
+  enableEncryptionAtHost: pulumi.Input<boolean>;
+  osDiskSizeGB: pulumi.Input<number>;
+} & { name: string };
 
 export interface AzKubernetesArgs
   extends CommonBaseArgs,
@@ -23,14 +32,9 @@ export interface AzKubernetesArgs
   sku: ccs.ManagedClusterSKUTier;
   nodeResourceGroup?: pulumi.Input<string>;
   namespaces?: Record<string, ccs.NamespaceArgs['properties']>;
-  agentPoolProfiles: pulumi.Input<
-    inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
-      vmSize: pulumi.Input<string>;
-      vnetSubnetID: pulumi.Input<string>;
-      enableEncryptionAtHost: pulumi.Input<boolean>;
-      osDiskSizeGB: pulumi.Input<number>;
-    }
-  >[];
+  /** This only allows when cluster creating. For additional agent pool after cluster created please use extraAgentPools */
+  agentPoolProfiles: AgentPoolProfile[];
+  extraAgentPoolProfiles?: AgentPoolProfile[];
   attachToAcr?: types.ResourceInputs;
   features: {
     enablePrivateCluster: boolean;
@@ -46,6 +50,7 @@ export interface AzKubernetesArgs
     inputs.containerservice.ContainerServiceNetworkProfileArgs,
     'networkMode' | 'networkPolicy' | 'networkPlugin' | 'loadBalancerSku' | 'loadBalancerProfile'
   > & {
+    networkPolicy?: ccs.NetworkPolicy;
     outboundType?: ccs.OutboundType;
     loadBalancerProfile?: inputs.containerservice.ManagedClusterLoadBalancerProfileArgs & {
       backendPoolType?: ccs.BackendPoolType;
@@ -72,7 +77,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
     const app = this.createIdentity();
     const cluster = this.createCluster(app);
-
+    this.createExtraAgentPoolProfiles(cluster);
     this.createMaintenance(cluster);
     this.assignPermission(cluster);
     const nss = this.createNameSpaces(cluster);
@@ -168,6 +173,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       logWorkspace,
       sku,
       autoScalerProfile,
+      extraAgentPoolProfiles,
       ...props
     } = this.args;
     const nodeRg = nodeResourceGroup ?? pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
@@ -194,7 +200,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           : undefined,
 
         apiServerAccessProfile: {
-          authorizedIPRanges: features?.enablePrivateCluster ? undefined : network?.authorizedIPRanges ?? [],
+          authorizedIPRanges: features?.enablePrivateCluster ? undefined : (network?.authorizedIPRanges ?? []),
           disableRunCommand: true,
           enablePrivateCluster: features?.enablePrivateCluster,
           //TODO: to make the life simple we enable this to allows IP DNS query from public internet.
@@ -300,7 +306,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         networkProfile: {
           ...network,
           networkMode: ccs.NetworkMode.Transparent,
-          networkPolicy: ccs.NetworkPolicy.Azure,
+          networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
           networkPlugin: ccs.NetworkPlugin.Azure,
 
           loadBalancerSku: 'Standard',
@@ -336,6 +342,25 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         dependsOn: app,
         parent: this,
       },
+    );
+  }
+
+  private createExtraAgentPoolProfiles(aks: ccs.ManagedCluster) {
+    const { rsGroup, extraAgentPoolProfiles } = this.args;
+    if (!extraAgentPoolProfiles || extraAgentPoolProfiles.length === 0) return;
+
+    return extraAgentPoolProfiles.map(
+      (profile) =>
+        new ccs.AgentPool(
+          `${this.name}-${profile.name}`,
+          {
+            ...rsGroup,
+            ...profile,
+            resourceName: aks.name,
+            agentPoolName: profile.name,
+          },
+          { dependsOn: aks, deletedWith: aks, parent: this },
+        ),
     );
   }
 

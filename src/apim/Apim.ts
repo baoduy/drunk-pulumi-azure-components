@@ -7,6 +7,7 @@ import * as types from '../types';
 import { ApimProduct, ApimProductArgs } from './ApimProduct';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { azureEnv, stackInfo } from '../helpers';
+
 import { AppRegistration } from '../azAd';
 import { PrivateEndpoint } from '../vnet';
 
@@ -37,8 +38,8 @@ export interface ApimArgs
   customProperties?: string[];
   hostnameConfigurations?: Array<{
     hostName: pulumi.Input<string>;
-    negotiateClientCertificate: boolean;
-    defaultSslBinding: boolean;
+    negotiateClientCertificate?: boolean;
+    defaultSslBinding?: boolean;
     cert?: ApimCertType;
   }>;
   additionalLocations?: inputs.apimanagement.AdditionalLocationArgs[] | undefined;

@@ -50,6 +50,7 @@ export interface AzKubernetesArgs
     inputs.containerservice.ContainerServiceNetworkProfileArgs,
     'networkMode' | 'networkPolicy' | 'networkPlugin' | 'loadBalancerSku' | 'loadBalancerProfile'
   > & {
+    networkPolicy?: ccs.NetworkPolicy;
     outboundType?: ccs.OutboundType;
     loadBalancerProfile?: inputs.containerservice.ManagedClusterLoadBalancerProfileArgs & {
       backendPoolType?: ccs.BackendPoolType;
@@ -305,7 +306,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         networkProfile: {
           ...network,
           networkMode: ccs.NetworkMode.Transparent,
-          networkPolicy: ccs.NetworkPolicy.Azure,
+          networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
           networkPlugin: ccs.NetworkPlugin.Azure,
 
           loadBalancerSku: 'Standard',

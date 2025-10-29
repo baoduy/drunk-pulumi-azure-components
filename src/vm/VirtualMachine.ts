@@ -49,7 +49,6 @@ export interface VirtualMachineArgs
     }
   >;
   lock?: boolean;
-  enableAutoUpdates?: boolean;
   maintenance?: Pick<mnc.MaintenanceConfigurationArgs, 'recurEvery'|'timeZone'|'duration'|'maintenanceScope'>;
 }
 
@@ -59,7 +58,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
 
   constructor(name: string, args: VirtualMachineArgs, opts?: pulumi.ComponentResourceOptions) {
     super('VirtualMachine', name, args, opts);
-
+    const enableAutoUpdates = true;
     const {
       rsGroup,
       defaultUAssignedId,
@@ -69,7 +68,6 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       vaultInfo,
       diskEncryptionSet,
       lock,
-      enableAutoUpdates,
       ...props
     } = args;
 

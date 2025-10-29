@@ -334,6 +334,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         },
 
         nodeResourceGroup: nodeRg,
+
         oidcIssuerProfile: { enabled: Boolean(features?.enableWorkloadIdentity) },
         podIdentityProfile: features?.enablePodIdentity
           ? {

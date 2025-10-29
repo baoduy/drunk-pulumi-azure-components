@@ -28,6 +28,7 @@
     "src/aks/ContainerRegistry.ts",
     "src/aks/helpers.ts",
     "src/aks/index.ts",
+    "src/apim/Apim.ts",
     "src/apim/ApimApi.ts",
     "src/apim/ApimApiSet.ts",
     "src/apim/ApimPolicyBuilder.ts",

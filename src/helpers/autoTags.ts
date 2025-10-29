@@ -9,9 +9,11 @@ const ignoredTags = [
   'Group',
   'GroupMember',
   'Application',
+  'AppRegistration',
   'ApplicationPassword',
   'ServicePrincipal',
   'ServicePrincipalPassword',
+  'RoleAssignment',
   'kubernetes',
   'cloudflare',
   'providers',
@@ -38,6 +40,7 @@ export const registerAutoTags = (autoTags: Record<string, string>) =>
     )
       return { props: resource.props, opts: resource.opts };
 
+    //console.log("Applying auto tags to resource:", resource.type);
     //Apply default tag
     resource.props['tags'] = { ...resource.props['tags'], ...autoTags };
     return { props: resource.props, opts: resource.opts };

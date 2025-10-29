@@ -17,6 +17,37 @@ type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileAr
   osDiskSizeGB: pulumi.Input<number>;
 } & { name: string };
 
+type LegacyMaintenanceArgs = Pick<ccs.MaintenanceConfigurationArgs, 'timeInWeek' | 'notAllowedTime'>;
+
+type AutoUpgradeScheduleArgs = inputs.containerservice.MaintenanceWindowArgs & {
+  configName?: pulumi.Input<string>;
+};
+
+type MaintenanceArgs =
+  | LegacyMaintenanceArgs
+  | { default?: LegacyMaintenanceArgs; autoUpgrade?: AutoUpgradeScheduleArgs; nodeOS?: AutoUpgradeScheduleArgs };
+
+const isLegacyMaintenanceArgs = (maintenance: MaintenanceArgs | undefined): maintenance is LegacyMaintenanceArgs => {
+  if (!maintenance) return false;
+  return 'timeInWeek' in maintenance || 'notAllowedTime' in maintenance;
+};
+
+const getDefaultMaintenanceArgs = (maintenance: MaintenanceArgs | undefined): LegacyMaintenanceArgs | undefined => {
+  if (!maintenance) return undefined;
+  if (isLegacyMaintenanceArgs(maintenance)) return maintenance;
+  return maintenance.default;
+};
+
+const getAutoUpgradeWindow = (maintenance: MaintenanceArgs | undefined): AutoUpgradeScheduleArgs | undefined => {
+  if (!maintenance || isLegacyMaintenanceArgs(maintenance)) return undefined;
+  return maintenance.autoUpgrade;
+};
+
+const getNodeOSWindow = (maintenance: MaintenanceArgs | undefined): AutoUpgradeScheduleArgs | undefined => {
+  if (!maintenance || isLegacyMaintenanceArgs(maintenance)) return undefined;
+  return maintenance.nodeOS;
+};
+
 export interface AzKubernetesArgs
   extends CommonBaseArgs,
     types.WithEncryptionEnabler,
@@ -60,7 +91,7 @@ export interface AzKubernetesArgs
     authorizedIPRanges?: pulumi.Input<string>[];
     virtualHostSubnetName?: pulumi.Input<string>;
   };
-  maintenance?: Pick<ccs.MaintenanceConfigurationArgs, 'timeInWeek' | 'notAllowedTime'>;
+  maintenance?: MaintenanceArgs;
   logWorkspace?: types.ResourceInputs & {
     defenderEnabled?: boolean;
   };
@@ -185,11 +216,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       {
         ...props,
         ...rsGroup,
-        nodeResourceGroup: nodeRg,
-        dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
-
-        enableRBAC: true,
-        disableLocalAccounts: true,
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,
@@ -198,16 +224,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
               tenantID: azureEnv.tenantId,
             }
           : undefined,
-
-        apiServerAccessProfile: {
-          authorizedIPRanges: features?.enablePrivateCluster ? undefined : (network?.authorizedIPRanges ?? []),
-          disableRunCommand: true,
-          enablePrivateCluster: features?.enablePrivateCluster,
-          //TODO: to make the life simple we enable this to allows IP DNS query from public internet.
-          enablePrivateClusterPublicFQDN: features?.enablePrivateClusterPublicFQDN ?? true,
-          privateDNSZone: features?.enablePrivateCluster ? 'system' : undefined,
-          //privateDNSZone: privateDnsZone?.id,
-        },
 
         addonProfiles: {
           azureKeyvaultSecretsProvider: {
@@ -245,72 +261,14 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           },
         },
 
-        sku: {
-          name: ccs.ManagedClusterSKUName.Base,
-          tier: sku,
-        },
-
-        linuxProfile: {
-          adminUsername: login.userName,
-          ssh: { publicKeys: [{ keyData: login.sshPublicKey }] },
-        },
-        windowsProfile: undefined,
-        workloadAutoScalerProfile: {
-          verticalPodAutoscaler: {
-            enabled: features?.enableVerticalPodAutoscaler || false,
-          },
-          keda: { enabled: true },
-        },
-
-        //azureMonitorProfile: { metrics: { enabled } },
-        //Refer here for details https://learn.microsoft.com/en-us/azure/aks/use-managed-identity
-        //enablePodSecurityPolicy: true,
-        diskEncryptionSetID: diskEncryptionSet?.id,
-
-        servicePrincipalProfile: {
-          clientId: app.clientId,
-          secret: app.clientSecret,
-        },
-        oidcIssuerProfile: { enabled: Boolean(features?.enableWorkloadIdentity) },
-
-        securityProfile: {
-          defender: logWorkspace?.defenderEnabled
-            ? {
-                logAnalyticsWorkspaceResourceId: logWorkspace.id,
-                securityMonitoring: { enabled: true },
-              }
-            : undefined,
-          imageCleaner: { enabled: true, intervalHours: 24 },
-          workloadIdentity: {
-            enabled: Boolean(features?.enableWorkloadIdentity),
-          },
-        },
-
-        podIdentityProfile: features?.enablePodIdentity
-          ? {
-              enabled: features.enablePodIdentity,
-              //Not allow pod to use kublet command
-              allowNetworkPluginKubenet: false,
-            }
-          : undefined,
-
-        identity: {
-          type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
-
-        // identityProfile: defaultUAssignedId
-        //   ? pulumi.output(defaultUAssignedId).apply((uID) => ({ [uID.id]: uID }))
-        //   : undefined,
-
-        networkProfile: {
-          ...network,
-          networkMode: ccs.NetworkMode.Transparent,
-          networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
-          networkPlugin: ccs.NetworkPlugin.Azure,
-
-          loadBalancerSku: 'Standard',
-          outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
+        apiServerAccessProfile: {
+          authorizedIPRanges: features?.enablePrivateCluster ? undefined : (network?.authorizedIPRanges ?? []),
+          disableRunCommand: true,
+          enablePrivateCluster: features?.enablePrivateCluster,
+          //TODO: to make the life simple we enable this to allows IP DNS query from public internet.
+          enablePrivateClusterPublicFQDN: features?.enablePrivateClusterPublicFQDN ?? true,
+          privateDNSZone: features?.enablePrivateCluster ? 'system' : undefined,
+          //privateDNSZone: privateDnsZone?.id,
         },
 
         autoScalerProfile: autoScalerProfile ?? {
@@ -332,10 +290,85 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           skipNodesWithLocalStorage: 'false',
           skipNodesWithSystemPods: 'true',
         },
+
         autoUpgradeProfile: {
           nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,
           upgradeChannel: ccs.UpgradeChannel.Stable,
         },
+
+        disableLocalAccounts: true,
+        diskEncryptionSetID: diskEncryptionSet?.id,
+        dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
+        enableRBAC: true,
+
+        identity: {
+          type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
+          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+        },
+
+        // identityProfile: defaultUAssignedId
+        //   ? pulumi.output(defaultUAssignedId).apply((uID) => ({ [uID.id]: uID }))
+        //   : undefined,
+
+        linuxProfile: {
+          adminUsername: login.userName,
+          ssh: { publicKeys: [{ keyData: login.sshPublicKey }] },
+        },
+
+        networkProfile: {
+          ...network,
+          networkMode: ccs.NetworkMode.Transparent,
+          networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
+          networkPlugin: ccs.NetworkPlugin.Azure,
+
+          loadBalancerSku: 'Standard',
+          outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
+        },
+
+        nodeResourceGroup: nodeRg,
+        oidcIssuerProfile: { enabled: Boolean(features?.enableWorkloadIdentity) },
+        podIdentityProfile: features?.enablePodIdentity
+          ? {
+              enabled: features.enablePodIdentity,
+              //Not allow pod to use kublet command
+              allowNetworkPluginKubenet: false,
+            }
+          : undefined,
+
+        securityProfile: {
+          defender: logWorkspace?.defenderEnabled
+            ? {
+                logAnalyticsWorkspaceResourceId: logWorkspace.id,
+                securityMonitoring: { enabled: true },
+              }
+            : undefined,
+          imageCleaner: { enabled: true, intervalHours: 24 },
+          workloadIdentity: {
+            enabled: Boolean(features?.enableWorkloadIdentity),
+          },
+        },
+
+        servicePrincipalProfile: {
+          clientId: app.clientId,
+          secret: app.clientSecret,
+        },
+
+        sku: {
+          name: ccs.ManagedClusterSKUName.Base,
+          tier: sku,
+        },
+
+        windowsProfile: undefined,
+        workloadAutoScalerProfile: {
+          verticalPodAutoscaler: {
+            enabled: features?.enableVerticalPodAutoscaler || false,
+          },
+          keda: { enabled: true },
+        },
+
+        //azureMonitorProfile: { metrics: { enabled } },
+        //Refer here for details https://learn.microsoft.com/en-us/azure/aks/use-managed-identity
+        //enablePodSecurityPolicy: true,
       },
       {
         ...this.opts,
@@ -386,23 +419,51 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
   private createMaintenance(aks: ccs.ManagedCluster) {
     const { rsGroup, maintenance } = this.args;
+    const defaultMaintenanceArgs = getDefaultMaintenanceArgs(maintenance);
+    const autoUpgradeWindow = getAutoUpgradeWindow(maintenance) ?? this.getDefaultAutoUpgradeWindow();
+    const nodeOSWindow = getNodeOSWindow(maintenance) ?? this.getDefaultAutoUpgradeWindow();
 
-    return new ccs.MaintenanceConfiguration(
+    const defaultMaintenance = new ccs.MaintenanceConfiguration(
       `${this.name}-MaintenanceConfiguration`,
       {
         ...rsGroup,
         configName: 'default',
         resourceName: aks.name,
-        timeInWeek: maintenance?.timeInWeek ?? [
+        timeInWeek: defaultMaintenanceArgs?.timeInWeek ?? [
           {
             day: ccs.WeekDay.Sunday,
             hourSlots: [0, 23],
           },
         ],
-        notAllowedTime: maintenance?.notAllowedTime,
+        notAllowedTime: defaultMaintenanceArgs?.notAllowedTime,
       },
       { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
     );
+
+    const autoUpgradeMaintenance = new ccs.MaintenanceConfiguration(
+      `${this.name}-AutoUpgradeSchedule`,
+      {
+        ...rsGroup,
+        configName: autoUpgradeWindow.configName ?? 'aksManagedAutoUpgradeSchedule',
+        resourceName: aks.name,
+        maintenanceWindow: autoUpgradeWindow,
+      },
+      { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
+    );
+
+    const nodeOSMaintenance = new ccs.MaintenanceConfiguration(
+      `${this.name}-NodeOSUpgradeSchedule`,
+      {
+        ...rsGroup,
+        configName: nodeOSWindow.configName ?? 'aksManagedNodeOSUpgradeSchedule',
+        resourceName: aks.name,
+        maintenanceWindow: nodeOSWindow,
+      },
+      { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
+    );
+
+
+    return { default: defaultMaintenance, autoUpgrade: autoUpgradeMaintenance, nodeOS: nodeOSMaintenance };
   }
 
   private assignPermission(aks: ccs.ManagedCluster) {
@@ -465,5 +526,23 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
     const id = pulumi.interpolate`/subscriptions/${azureEnv.subscriptionId}/resourceGroups/${rsGroup}/providers/Microsoft.Network/privateDnsZones/${zoneName}`;
     return { id, resourceName: zoneName };
+  }
+
+  private getDefaultAutoUpgradeWindow(): AutoUpgradeScheduleArgs {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const startDate = tomorrow.toISOString().split('T')[0];
+    return {
+      schedule: {
+        weekly: {
+          dayOfWeek: "Sunday",
+          intervalWeeks: 1,
+        },
+      },
+      durationHours: 4,
+      utcOffset: '+08:00',
+      startTime: '00:00',
+      startDate,
+    };
   }
 }

@@ -119,7 +119,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         singlePageApplication:
           this.args.appType == 'singlePageApplication' ? { redirectUris: this.args.redirectUris } : undefined,
       },
-      { ...this.opts, parent: this },
+      { ...this.opts, parent: this,ignoreChanges:['tags'] },
     );
 
     const clientSecret = new azAd.ApplicationPassword(

@@ -1,4 +1,5 @@
 import * as compute from '@pulumi/azure-native/compute';
+import * as mnc from '@pulumi/azure-native/maintenance';
 import * as devtestlab from '@pulumi/azure-native/devtestlab';
 import * as nw from '@pulumi/azure-native/network';
 import * as inputs from '@pulumi/azure-native/types/input';
@@ -6,6 +7,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 import { rsHelpers, zoneHelper } from '../helpers';
+import { MaintenanceConfigurationArgs } from '@pulumi/azure-native/maintenance/maintenanceConfiguration';
 
 export type VmScheduleType = {
   /** The time zone ID: https://stackoverflow.com/questions/7908343/list-of-timezone-ids-for-use-with-findtimezonebyid-in-c */
@@ -13,7 +15,7 @@ export type VmScheduleType = {
   /** The format is ISO 8601 Standard ex: 2200 */
   autoShutdownTime: pulumi.Input<string>;
   /** The format is ISO 8601 Standard ex: 0900 */
-  //autoStartTime?: Input<string>;
+  autoStartTime?: pulumi.Input<string>;
   emailNotification?: string[];
   webHook?: pulumi.Input<string>;
 };
@@ -47,6 +49,8 @@ export interface VirtualMachineArgs
     }
   >;
   lock?: boolean;
+  enableAutoUpdates?: boolean;
+  maintenance?: Pick<mnc.MaintenanceConfigurationArgs, 'recurEvery'|'timeZone'|'duration'>;
 }
 
 export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
@@ -65,6 +69,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       vaultInfo,
       diskEncryptionSet,
       lock,
+      enableAutoUpdates,
       ...props
     } = args;
 
@@ -98,6 +103,21 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           ...osProfile,
           adminUsername: credential.login,
           adminPassword: credential.pass,
+          ...(enableAutoUpdates
+            ? {
+                windowsConfiguration: {
+                  enableAutomaticUpdates: true,
+                  ...osProfile?.windowsConfiguration,
+                },
+                linuxConfiguration: {
+                  patchSettings: {
+                    patchMode: 'AutomaticByPlatform',
+                    assessmentMode: 'AutomaticByPlatform',
+                  },
+                  ...osProfile?.linuxConfiguration,
+                },
+              }
+            : {}),
         },
         storageProfile: {
           ...storageProfile,
@@ -174,6 +194,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
 
     this.createSchedule(vm);
     this.createExtensions(vm);
+    this.createMaintenance(vm);
     if (lock) this.lockFromDeleting(vm);
 
     this.id = vm.id;
@@ -219,10 +240,10 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
 
   private createSchedule(vm: compute.VirtualMachine) {
     const { rsGroup, schedule } = this.args;
-    if (!schedule) return undefined;
+    if (!schedule) return;
 
-    return vm.name.apply(
-      (n) =>
+    vm.name.apply((n) => {
+      if (schedule.autoShutdownTime) {
         new devtestlab.GlobalSchedule(
           `shutdown-computevm-${n}`,
           {
@@ -244,8 +265,34 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
             },
           },
           { dependsOn: vm, parent: this, deleteBeforeReplace: true, deletedWith: vm },
-        ),
-    );
+        );
+      }
+
+      if (schedule.autoStartTime) {
+        new devtestlab.GlobalSchedule(
+          `startup-computevm-${n}`,
+          {
+            ...rsGroup,
+            name: `startup-computevm-${n}`,
+            dailyRecurrence: { time: schedule.autoStartTime },
+
+            timeZoneId: schedule.timeZone,
+            status: 'Enabled',
+            targetResourceId: vm.id,
+            taskType: 'ComputeVmStartupTask',
+
+            notificationSettings: {
+              status: schedule.webHook || schedule.emailNotification ? 'Enabled' : 'Disabled',
+              emailRecipient: schedule.emailNotification?.join(';'),
+              notificationLocale: 'en',
+              timeInMinutes: 30,
+              webhookUrl: schedule.webHook,
+            },
+          },
+          { dependsOn: vm, parent: this, deleteBeforeReplace: true, deletedWith: vm },
+        );
+      }
+    });
   }
 
   private createExtensions(vm: compute.VirtualMachine) {
@@ -263,6 +310,30 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           },
           { dependsOn: vm, parent: this },
         ),
+    );
+  }
+
+  private createMaintenance(vm: compute.VirtualMachine) {
+    const { rsGroup, maintenance } = this.args;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const startDate = tomorrow.toISOString().split('T')[0];
+
+    return new mnc.MaintenanceConfiguration(
+      `${this.name}-maintenance`,
+      {
+        ...rsGroup,
+        maintenanceScope: 'InGuestPatch',
+        timeZone: maintenance?.timeZone??"Singapore Standard Time",
+        visibility: 'Custom',
+        duration: maintenance?.duration??"04:00",
+        startDateTime: startDate,
+        recurEvery: maintenance?.recurEvery??'1Week Saturday,Sunday',
+        extensionProperties: {
+          InGuestPatchMode: 'User',
+        },
+      },
+      { dependsOn: vm, parent: this },
     );
   }
 }

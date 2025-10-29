@@ -7,7 +7,7 @@ import { AppRegistration, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { azureEnv, rsHelpers, zoneHelper } from '../helpers';
 
-import { DiskEncryptionSet } from '../vm/DiskEncryptionSet';
+import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {

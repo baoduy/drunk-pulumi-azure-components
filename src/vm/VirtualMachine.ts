@@ -50,7 +50,7 @@ export interface VirtualMachineArgs
   >;
   lock?: boolean;
   enableAutoUpdates?: boolean;
-  maintenance?: Pick<mnc.MaintenanceConfigurationArgs, 'recurEvery'|'timeZone'|'duration'>;
+  maintenance?: Pick<mnc.MaintenanceConfigurationArgs, 'recurEvery'|'timeZone'|'duration'|'maintenanceScope'>;
 }
 
 export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
@@ -319,11 +319,11 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const startDate = tomorrow.toISOString().split('T')[0];
 
-    return new mnc.MaintenanceConfiguration(
+    const config = new mnc.MaintenanceConfiguration(
       `${this.name}-maintenance`,
       {
         ...rsGroup,
-        maintenanceScope: 'InGuestPatch',
+        maintenanceScope:maintenance?.maintenanceScope?? mnc.MaintenanceScope.OSImage,
         timeZone: maintenance?.timeZone??"Singapore Standard Time",
         visibility: 'Custom',
         duration: maintenance?.duration??"04:00",
@@ -333,7 +333,17 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           InGuestPatchMode: 'User',
         },
       },
-      { dependsOn: vm, parent: this },
+      { dependsOn: vm, parent: this,deletedWith:vm },
     );
+
+    return new mnc.ConfigurationAssignment("${this.name}-maintenance-assignment", {
+      ...rsGroup,
+      resourceName:vm.name,
+      maintenanceConfigurationId:config.id,
+      resourceId:vm.id,
+      resourceType:"VirtualMachine",
+      providerName: "Microsoft.Compute",
+    },
+      { dependsOn: vm, parent: this,deletedWith:vm });
   }
 }

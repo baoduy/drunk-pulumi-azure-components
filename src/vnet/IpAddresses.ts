@@ -1,6 +1,7 @@
 import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { zoneHelper } from '../helpers';
 
 type IpSku = {
   /**
@@ -56,7 +57,7 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
           sku: ip.sku ?? sku,
           publicIPPrefix: prefix ? { id: prefix.id } : undefined,
           publicIPAllocationMethod: network.IPAllocationMethod.Static,
-          zones: ip.zones ?? defaultConfig?.zones,
+          zones: zoneHelper.getDefaultZones(ip.zones ?? defaultConfig?.zones),
         },
         { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this, ignoreChanges: ['natGateway'] },
       );

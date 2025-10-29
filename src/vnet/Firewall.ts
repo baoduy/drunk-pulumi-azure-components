@@ -3,6 +3,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
+import { zoneHelper } from '../helpers';
 
 export type RulePolicyArgs = {
   priority: number;
@@ -164,6 +165,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
         ...props,
         ...rsGroup,
         sku,
+        zones: zoneHelper.getDefaultZones(props.zones),
         additionalProperties: properties,
         firewallPolicy: firewallPolicy ? { id: firewallPolicy.id } : undefined,
         threatIntelMode:

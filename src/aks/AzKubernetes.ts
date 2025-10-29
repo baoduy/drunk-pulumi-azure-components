@@ -5,7 +5,7 @@ import * as types from '../types';
 
 import { AppRegistration, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv, rsHelpers } from '../helpers';
+import { azureEnv, rsHelpers, zoneHelper } from '../helpers';
 
 import { DiskEncryptionSet } from '../vm/DiskEncryptionSet';
 import { SshGenerator } from '../common';
@@ -205,17 +205,25 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       sku,
       autoScalerProfile,
       extraAgentPoolProfiles,
+      agentPoolProfiles,
       ...props
     } = this.args;
     const nodeRg = nodeResourceGroup ?? pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
     const login = this.createUserNameAndSshKeys();
     const diskEncryptionSet = this.createDiskEncryptionSet();
 
+    // Add default zones for PRD environment to agent pools
+    const poolsWithZones = agentPoolProfiles.map((pool) => ({
+      ...pool,
+      availabilityZones: zoneHelper.getDefaultZones(pool.availabilityZones),
+    }));
+
     return new ccs.ManagedCluster(
       this.name,
       {
         ...props,
         ...rsGroup,
+        agentPoolProfiles: poolsWithZones,
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,
@@ -389,6 +397,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           {
             ...rsGroup,
             ...profile,
+            availabilityZones: zoneHelper.getDefaultZones(profile.availabilityZones),
             resourceName: aks.name,
             agentPoolName: profile.name,
           },

@@ -8,6 +8,7 @@ import { BaseArgs, BaseResourceComponent } from '../base';
 
 import { PrivateEndpointType } from '../vnet';
 import { convertToIpRange } from './helpers';
+import { zoneHelper } from '../helpers';
 
 export interface RedisArgs
   extends BaseArgs,
@@ -88,6 +89,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         staticIP: network?.staticIP,
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
         updateChannel: redis.UpdateChannel.Stable,
+        zones: zoneHelper.getDefaultZones(props.zones),
 
         identity: {
           type: defaultUAssignedId

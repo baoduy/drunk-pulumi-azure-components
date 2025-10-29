@@ -136,7 +136,15 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
 
   private createMaintenance(rds: redis.Redis) {
     const { rsGroup, scheduleEntries } = this.args;
-    if (!scheduleEntries) return undefined;
+    
+    // Use provided scheduleEntries or default to Sunday maintenance
+    const schedule = scheduleEntries ?? [
+      {
+        dayOfWeek: redis.DayOfWeek.Sunday,
+        startHourUtc: 0,
+        maintenanceWindow: 'PT5H', // 5 hour maintenance window
+      },
+    ];
 
     return new redis.PatchSchedule(
       this.name,
@@ -144,7 +152,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         ...rsGroup,
         name: rds.name,
         default: 'default',
-        scheduleEntries,
+        scheduleEntries: schedule,
       },
       { dependsOn: rds, deletedWith: rds, parent: this },
     );

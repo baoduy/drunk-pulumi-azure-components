@@ -27,6 +27,7 @@ The following Azure components now support automatic zone configuration:
 | NAT Gateway | `zones` | `['1', '2', '3']` | Yes |
 | Container Registry | `zoneRedundancy` | `Enabled` | Yes |
 | Service Bus | `zoneRedundant` | `true` | Yes |
+| AKS Node Pools | `availabilityZones` | `['1', '2', '3']` | Yes |
 
 ## Usage Examples
 
@@ -99,6 +100,63 @@ const serviceBusNoRedundancy = new ServiceBus('my-bus-no-redundancy', {
   rsGroup: { resourceGroupName: 'my-rg' },
   sku: { name: 'Premium', capacity: 1 },
   zoneRedundant: false, // Override
+});
+```
+
+### AKS Node Pools
+
+```typescript
+import { AzKubernetes } from '@drunk-pulumi/azure-components';
+
+// In PRD, node pools automatically get zones ['1', '2', '3']
+const aks = new AzKubernetes('my-aks', {
+  rsGroup: { resourceGroupName: 'my-rg' },
+  sku: 'Standard',
+  features: { enablePrivateCluster: true },
+  agentPoolProfiles: [
+    {
+      name: 'default',
+      vmSize: 'Standard_D4s_v3',
+      count: 3,
+      mode: 'System',
+      vnetSubnetID: subnetId,
+      enableEncryptionAtHost: true,
+      osDiskSizeGB: 100,
+      // availabilityZones automatically set to ['1', '2', '3'] in PRD
+    },
+  ],
+});
+
+// Override zones for specific node pool
+const aksCustomZones = new AzKubernetes('my-aks-custom', {
+  rsGroup: { resourceGroupName: 'my-rg' },
+  sku: 'Standard',
+  features: { enablePrivateCluster: true },
+  agentPoolProfiles: [
+    {
+      name: 'default',
+      vmSize: 'Standard_D4s_v3',
+      count: 3,
+      mode: 'System',
+      vnetSubnetID: subnetId,
+      enableEncryptionAtHost: true,
+      osDiskSizeGB: 100,
+      availabilityZones: ['1'], // Override: use only zone 1
+    },
+  ],
+  // Extra agent pools also get zone configuration
+  extraAgentPoolProfiles: [
+    {
+      name: 'userpool',
+      vmSize: 'Standard_D8s_v3',
+      count: 2,
+      mode: 'User',
+      vnetSubnetID: subnetId,
+      enableEncryptionAtHost: true,
+      osDiskSizeGB: 100,
+      // Also gets ['1', '2', '3'] in PRD unless overridden
+    },
+  ],
 });
 ```
 

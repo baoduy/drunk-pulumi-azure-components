@@ -5,7 +5,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
-import { rsHelpers } from '../helpers';
+import { rsHelpers, zoneHelper } from '../helpers';
 
 export type VmScheduleType = {
   /** The time zone ID: https://stackoverflow.com/questions/7908343/list-of-timezone-ids-for-use-with-findtimezonebyid-in-c */
@@ -78,6 +78,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       {
         ...props,
         ...rsGroup,
+        zones: zoneHelper.getDefaultZones(props.zones),
 
         identity: {
           type: defaultUAssignedId

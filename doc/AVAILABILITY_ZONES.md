@@ -28,6 +28,9 @@ The following Azure components now support automatic zone configuration:
 | Container Registry | `zoneRedundancy` | `Enabled` | Yes |
 | Service Bus | `zoneRedundant` | `true` | Yes |
 | AKS Node Pools | `availabilityZones` | `['1', '2', '3']` | Yes |
+| Virtual Machine | `zones` | `['1', '2', '3']` | Yes |
+
+**Note:** Storage Account does not support availability zones configuration in Azure.
 
 ## Usage Examples
 
@@ -157,6 +160,58 @@ const aksCustomZones = new AzKubernetes('my-aks-custom', {
       // Also gets ['1', '2', '3'] in PRD unless overridden
     },
   ],
+});
+```
+
+### Virtual Machine
+
+```typescript
+import { VirtualMachine } from '@drunk-pulumi/azure-components';
+
+// In PRD, VM automatically gets zones ['1', '2', '3']
+const vm = new VirtualMachine('my-vm', {
+  rsGroup: { resourceGroupName: 'my-rg' },
+  hardwareProfile: { vmSize: 'Standard_D4s_v3' },
+  network: { subnetId: subnetId },
+  storageProfile: {
+    imageReference: {
+      publisher: 'Canonical',
+      offer: 'UbuntuServer',
+      sku: '18.04-LTS',
+      version: 'latest',
+    },
+    osDisk: {
+      caching: 'ReadWrite',
+      createOption: 'FromImage',
+      managedDisk: { storageAccountType: 'Premium_LRS' },
+    },
+    osDiskSizeGB: 100,
+    enableEncryptionAtHost: true,
+  },
+  // zones automatically set to ['1', '2', '3'] in PRD
+});
+
+// Override to use specific zone
+const vmSingleZone = new VirtualMachine('my-vm-zone1', {
+  rsGroup: { resourceGroupName: 'my-rg' },
+  hardwareProfile: { vmSize: 'Standard_D4s_v3' },
+  network: { subnetId: subnetId },
+  storageProfile: {
+    imageReference: {
+      publisher: 'Canonical',
+      offer: 'UbuntuServer',
+      sku: '18.04-LTS',
+      version: 'latest',
+    },
+    osDisk: {
+      caching: 'ReadWrite',
+      createOption: 'FromImage',
+      managedDisk: { storageAccountType: 'Premium_LRS' },
+    },
+    osDiskSizeGB: 100,
+    enableEncryptionAtHost: true,
+  },
+  zones: ['1'], // Override: use only zone 1
 });
 ```
 

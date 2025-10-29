@@ -6,7 +6,7 @@ import * as types from '../types';
 
 import { ApimProduct, ApimProductArgs } from './ApimProduct';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv, stackInfo } from '../helpers';
+import { azureEnv, stackInfo, zoneHelper } from '../helpers';
 
 import { AppRegistration } from '../azAd';
 import { PrivateEndpoint } from '../vnet';
@@ -181,14 +181,14 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             }
           : undefined,
 
-        zones,
+        zones: zoneHelper.getDefaultZones(zones),
         //Only available for Premium
         additionalLocations:
           sku.name === 'Premium'
             ? additionalLocations?.map((a) => ({
                 ...a,
                 sku,
-                zones,
+                zones: zoneHelper.getDefaultZones(zones),
               }))
             : undefined,
 

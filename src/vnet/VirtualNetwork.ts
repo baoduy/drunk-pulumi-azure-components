@@ -13,7 +13,7 @@ import { getBasionSecurityRules } from './securityRules';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import { IpAddresses, IpAddressesArgs } from './IpAddresses';
 import * as privateDns from '@pulumi/azure-native/privatedns';
-import { rsHelpers } from '../helpers';
+import { rsHelpers, zoneHelper } from '../helpers';
 
 export type SubnetArgs = Partial<
   Pick<
@@ -215,6 +215,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         ...rsGroup,
         ...natGatewayCreate,
         sku: { name: natGatewayCreate.sku },
+        zones: zoneHelper.getDefaultZones(natGatewayCreate.zones),
         publicIpAddresses: ipAddresses,
       },
       { dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },

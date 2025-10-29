@@ -5,6 +5,7 @@ import * as types from '../types';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+import { zoneHelper } from '../helpers';
 
 export interface ContainerRegistryArgs
   extends CommonBaseArgs,
@@ -53,6 +54,7 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
         sku: { name: sku },
         adminUserEnabled: false,
         anonymousPullEnabled: false,
+        zoneRedundancy: props.zoneRedundancy ?? (zoneHelper.getDefaultZones(undefined) ? 'Enabled' : undefined),
 
         identity: {
           type: defaultUAssignedId

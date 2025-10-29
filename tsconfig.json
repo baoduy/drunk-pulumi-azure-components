@@ -80,6 +80,7 @@
     "src/helpers/index.ts",
     "src/helpers/rsHelpers.ts",
     "src/helpers/stackEnv.ts",
+    "src/helpers/zoneHelper.ts",
     "src/index.ts",
     "src/logs/Logs.ts",
     "src/logs/helpers.ts",

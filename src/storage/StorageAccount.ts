@@ -165,6 +165,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
       {
         ...opts,
         dependsOn: encryptionKey,
+        parent:this,
       },
     );
 
@@ -207,7 +208,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             type: 'storage',
             storageType: t,
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg,deletedWith:stg, parent: this },
         ),
     );
   }
@@ -224,7 +225,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
           blobServicesName: 'default',
           ...policies.blob,
         },
-        { dependsOn: stg, parent: this },
+        { dependsOn: stg,deletedWith:stg, parent: this },
       );
     }
 
@@ -240,7 +241,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             rules: policies.defaultManagementPolicyRules,
           },
         },
-        { dependsOn: stg, parent: this },
+        { dependsOn: stg,deletedWith:stg, parent: this },
       );
     }
   }
@@ -257,7 +258,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         indexDocument: 'index.html',
         error404Document: 'index.html',
       },
-      { dependsOn: stg, parent: this },
+      { dependsOn: stg,deletedWith:stg, parent: this },
     );
 
     if (policies.staticWebsite.endpoint) {
@@ -268,7 +269,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
           rsGroup: policies.staticWebsite.existingProfile?.rsGroup ?? this.args.rsGroup,
           existingProfile: policies.staticWebsite.existingProfile,
         },
-        { dependsOn: [stg, staticWeb], parent: this },
+        { dependsOn: [stg, staticWeb],deletedWith:stg, parent: this },
       );
     }
   }
@@ -301,7 +302,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
               vaultInfo,
               secrets,
             },
-            { dependsOn: stg, parent: this },
+            { dependsOn: stg,deletedWith:stg, parent: this },
           );
         });
     });
@@ -321,7 +322,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             accountName: stg.name,
             publicAccess: c.isPublic ? 'Blob' : 'None',
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg,deletedWith:stg, parent: this },
         ),
     );
 
@@ -335,7 +336,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             accountName: stg.name,
             ...rsGroup,
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg,deletedWith:stg, parent: this },
         ),
     );
 
@@ -349,7 +350,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             accountName: stg.name,
             ...rsGroup,
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg,deletedWith:stg, parent: this },
         ),
     );
   }

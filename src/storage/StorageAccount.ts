@@ -1,24 +1,27 @@
-import * as storage from '@pulumi/azure-native/storage';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as storage from '@pulumi/azure-native/storage';
 import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
+
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 export interface StorageAccountArgs
   extends CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithUserAssignedIdentity,
-    Pick<
-      storage.StorageAccountArgs,
-      | 'accessTier'
-      | 'allowBlobPublicAccess'
-      | 'isHnsEnabled'
-      | 'allowSharedKeyAccess'
-      | 'isSftpEnabled'
-      | 'largeFileSharesState'
-      | 'routingPreference'
+    Partial<
+      Pick<
+        storage.StorageAccountArgs,
+        | 'accessTier'
+        | 'allowBlobPublicAccess'
+        | 'isHnsEnabled'
+        | 'allowSharedKeyAccess'
+        | 'isSftpEnabled'
+        | 'largeFileSharesState'
+        | 'routingPreference'
+      >
     > {
   sku?: storage.SkuName | string;
   network?: types.NetworkArgs & {

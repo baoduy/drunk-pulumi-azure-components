@@ -18,7 +18,12 @@
     "importsNotUsedAsValues": "remove",
     "verbatimModuleSyntax": false
   },
-  "exclude": ["node_modules", "**/__tests__", "bin", "pulumi-test"],
+  "exclude": [
+    "node_modules",
+    "**/__tests__",
+    "bin",
+    "pulumi-test"
+  ],
   "files": [
     "src/ResourceBuilder.ts",
     "src/aks/AzKubernetes.ts",

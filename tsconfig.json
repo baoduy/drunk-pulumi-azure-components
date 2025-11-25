@@ -40,6 +40,7 @@
     "src/apim/openApiHelper.ts",
     "src/app/AppCert.ts",
     "src/app/AppConfig.ts",
+    "src/app/AppContainer.ts",
     "src/app/AppService.ts",
     "src/app/IoTHub.ts",
     "src/app/LogicApp.ts",

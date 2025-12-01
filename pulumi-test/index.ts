@@ -13,7 +13,6 @@ const rs = (async () => {
     {
       vault: { sku: 'standard' },
       enableDefaultUAssignId: true,
-      //diskEncryption: { encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys' },
       groupRoles,
       roleAssignments: [rsRoleDefinitions.rsGroup.getReadOnly(), rsRoleDefinitions.keyVault],
     },

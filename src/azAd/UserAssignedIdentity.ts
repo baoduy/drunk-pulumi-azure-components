@@ -7,9 +7,7 @@ import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
 import { azureEnv, rsHelpers } from '../helpers';
 
 export interface UserAssignedIdentityArgs
-  extends Omit<BaseArgs, 'groupRoles'>,
-    WithMemberOfArgs,
-    WithResourceGroupInputs {
+  extends Omit<BaseArgs, 'groupRoles'>, WithMemberOfArgs, WithResourceGroupInputs {
   federations?: Record<
     string,
     Partial<Pick<mid.FederatedIdentityCredentialArgs, 'issuer'>> & Pick<mid.FederatedIdentityCredentialArgs, 'subject'>
@@ -74,7 +72,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
 
   private addMemberOf() {
     if (!this.args.memberof) return;
-    this.args.memberof.map((group) =>
+    return this.args.memberof.map((group) =>
       pulumi.output(group).apply(
         (id) =>
           new azAd.GroupMember(
@@ -83,7 +81,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
               groupObjectId: id.objectId,
               memberObjectId: this.principalId,
             },
-            { parent: this, deletedWith: this },
+            { parent: this, retainOnDelete: true },
           ),
       ),
     );

@@ -4,7 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
 import { WithMemberOfArgs, WithVaultInfo } from '../types';
 
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { VaultSecrets } from '../vault';
 import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
@@ -18,7 +18,8 @@ export enum GroupMembershipClaimsTypes {
 }
 
 export interface AppRegistrationArgs
-  extends WithVaultInfo,
+  extends
+    WithVaultInfo,
     WithMemberOfArgs,
     Partial<
       Pick<
@@ -119,7 +120,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         singlePageApplication:
           this.args.appType == 'singlePageApplication' ? { redirectUris: this.args.redirectUris } : undefined,
       },
-      { ...this.opts, parent: this,ignoreChanges:['tags'] },
+      { ...this.opts, parent: this, ignoreChanges: ['tags'] },
     );
 
     const clientSecret = new azAd.ApplicationPassword(

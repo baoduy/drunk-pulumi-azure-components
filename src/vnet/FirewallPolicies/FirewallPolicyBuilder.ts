@@ -1,5 +1,4 @@
 import * as inputs from '@pulumi/azure-native/types/input';
-import * as pulumi from '@pulumi/pulumi';
 import * as network from '@pulumi/azure-native/network';
 import { RulePolicyArgs } from '../Firewall';
 

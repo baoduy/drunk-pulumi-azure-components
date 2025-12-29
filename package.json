@@ -29,26 +29,26 @@
     "@azure/keyvault-keys": "^4.10.0",
     "@azure/keyvault-secrets": "^4.10.0",
     "@drunk-pulumi/azure-providers": "^1.0.10",
-    "@pulumi/azure-native": "^3.10.1",
-    "@pulumi/azuread": "^6.7.0",
-    "@pulumi/pulumi": "^3.208.0",
+    "@pulumi/azure-native": "^3.12.0",
+    "@pulumi/azuread": "^6.8.0",
+    "@pulumi/pulumi": "^3.213.0",
     "@pulumi/random": "^4.18.4",
     "lodash": "^4.17.21",
     "netmask": "^2.0.2",
-    "openpgp": "^6.2.2"
+    "openpgp": "^6.3.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.21",
     "@types/netmask": "^2.0.6",
-    "@types/node": "24.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.48.0",
-    "@typescript-eslint/parser": "^8.48.0",
+    "@types/node": "25.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
     "cpy-cli": "^6.0.0",
     "cross-env": "^10.1.0",
     "jest": "^30.2.0",
-    "prettier": "^3.6.2",
-    "ts-jest": "^29.4.5",
+    "prettier": "^3.7.4",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "5.9.3"
   },
@@ -64,5 +64,5 @@
       "eslint --fix"
     ]
   },
-  "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b"
+  "packageManager": "pnpm@10.26.2"
 }

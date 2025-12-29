@@ -17,7 +17,7 @@ import { Logs, LogsArgs } from './logs';
 import { RsGroup, RsGroupArgs } from './common';
 import { Vnet, VnetArgs } from './vnet';
 
-import { BaseComponent } from './base/BaseComponent';
+import { BaseComponent } from './base';
 import { getComponentResourceType } from './base/helpers';
 import { rsHelpers } from './helpers';
 
@@ -149,6 +149,15 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     };
   }
 
+  public grant(props: Omit<RoleAssignmentArgs, 'scope'>) {
+    new RoleAssignment(
+      `${this.name}-${props.roleName}`,
+      { ...props, scope: rsHelpers.getRsGroupIdFrom(this.rsGroup) },
+      { dependsOn: this, deletedWith: this, parent: this },
+    );
+    return this;
+  }
+
   private createGroupRoles() {
     const { groupRoles, groupRolesCreate } = this.args;
     if (groupRoles) {
@@ -263,14 +272,5 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       },
       { dependsOn: this.rsGroup, parent: this },
     );
-  }
-
-  public grant(props: Omit<RoleAssignmentArgs, 'scope'>) {
-    new RoleAssignment(
-      `${this.name}-${props.roleName}`,
-      { ...props, scope: rsHelpers.getRsGroupIdFrom(this.rsGroup) },
-      { dependsOn: this, deletedWith: this, parent: this },
-    );
-    return this;
   }
 }

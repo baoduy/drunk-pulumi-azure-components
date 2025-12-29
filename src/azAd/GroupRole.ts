@@ -7,7 +7,8 @@ import * as types from '../types';
 import { AzRole, AzRoleArgs } from './AzRole';
 
 export interface GroupRoleArgs
-  extends Pick<AzRoleArgs, 'owners' | 'preventDuplicateNames'>,
+  extends
+    Partial<Pick<AzRoleArgs, 'owners' | 'preventDuplicateNames'>>,
     Partial<Record<types.GroupRoleTypes, Pick<AzRoleArgs, 'members'>>> {
   preventDuplicateNames?: pulumi.Input<boolean>;
 }

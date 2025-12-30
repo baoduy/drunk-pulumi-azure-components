@@ -103,8 +103,8 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   public readonly defaultUAssignedId?: UserAssignedIdentity;
   public readonly defaultAppIdentity?: AppRegistration;
   public readonly logs?: Logs;
-  private readonly diskEncryptionSet?: DiskEncryptionSet;
-  private readonly vnet: Vnet | undefined;
+  public readonly diskEncryptionSet?: DiskEncryptionSet;
+  public readonly vnet: Vnet | undefined;
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);

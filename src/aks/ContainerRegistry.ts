@@ -5,10 +5,10 @@ import * as types from '../types';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
-import { zoneHelper } from '../helpers';
 
 export interface ContainerRegistryArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithUserAssignedIdentity,
     Partial<Pick<registry.RegistryArgs, 'dataEndpointEnabled' | 'zoneRedundancy'>> {
@@ -54,7 +54,7 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
         sku: { name: sku },
         adminUserEnabled: false,
         anonymousPullEnabled: false,
-        zoneRedundancy: props.zoneRedundancy ?? (zoneHelper.getDefaultZones(undefined) ? 'Enabled' : undefined),
+        zoneRedundancy: sku != 'Basic' && props.zoneRedundancy ? 'Enabled' : 'Disabled',
 
         identity: {
           type: defaultUAssignedId

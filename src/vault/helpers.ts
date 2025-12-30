@@ -17,7 +17,7 @@ export function getSecretName(name: string) {
 }
 
 export type GetVaultItemArgs = { name: string; version?: string; vaultInfo: types.ResourceType };
-export type GetVaultItemArgsInputs = pulumi.Input<GetVaultItemArgs>;
+export type GetVaultItemArgsInputs = types.AsInput<GetVaultItemArgs>;
 
 export const getKey = ({ name, version, vaultInfo }: GetVaultItemArgs): Promise<KeyVaultKey | undefined> =>
   getKeyVaultBase(vaultInfo.resourceName).getKey(name, version);

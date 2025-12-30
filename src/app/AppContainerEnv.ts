@@ -1,16 +1,33 @@
 import * as app from '@pulumi/azure-native/app';
-import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
-
+import { AppContainer, AppContainerArgs } from './AppContainer';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as enums from '@pulumi/azure-native/types/enums';
+
+interface ScheduledEntryArgs {
+  /**
+   * Length of maintenance window range from 8 to 24 hours.
+   */
+  durationHours: pulumi.Input<number>;
+  /**
+   * Start hour after which managed environment maintenance can start from 0 to 23 hour.
+   */
+  startHourUtc: pulumi.Input<number>;
+  /**
+   * Day of the week when a managed environment can be patched.
+   */
+  weekDay: pulumi.Input<enums.app.WeekDay>;
+}
 
 /**
  * Azure Container Apps Managed Environment component providing isolated hosting
  * environment for container apps with networking, monitoring, and scaling features.
  */
 export interface AppContainerEnvArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
+    types.WithUserAssignedIdentity,
     Partial<
       Pick<
         app.ManagedEnvironmentArgs,
@@ -23,6 +40,7 @@ export interface AppContainerEnvArgs
         | 'workloadProfiles'
         | 'zoneRedundant'
         | 'appInsightsConfiguration'
+        | 'appLogsConfiguration'
         | 'openTelemetryConfiguration'
         | 'publicNetworkAccess'
       >
@@ -49,6 +67,9 @@ export interface AppContainerEnvArgs
     /** Application Insights instrumentation key for Dapr telemetry */
     instrumentationKey?: pulumi.Input<string>;
   };
+
+  containerApps?: Record<string, Omit<AppContainerArgs, types.CommonProps | 'managedEnvironmentId'>>;
+  maintenanceSchedules?: pulumi.Input<ScheduledEntryArgs>[];
 }
 
 export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> {
@@ -61,6 +82,8 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
     super('AppContainerEnv', name, args, opts);
 
     const managedEnv = this.createManagedEnvironment();
+    this.createMaintenance(managedEnv);
+    this.createApps(managedEnv);
 
     this.id = managedEnv.id;
     this.resourceName = managedEnv.name;
@@ -81,7 +104,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
   }
 
   private createManagedEnvironment() {
-    const { rsGroup, vnetConfiguration, logAnalyticsWorkspace, dapr, ...props } = this.args;
+    const { rsGroup, defaultUAssignedId, vnetConfiguration, logAnalyticsWorkspace, dapr, ...props } = this.args;
 
     // Build Log Analytics configuration
     const appLogsConfiguration = logAnalyticsWorkspace
@@ -100,6 +123,15 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
       {
         ...props,
         ...rsGroup,
+        // Logging and monitoring
+        ...appLogsConfiguration,
+
+        // identity: {
+        //   type: defaultUAssignedId
+        //     ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
+        //     : app.ManagedServiceIdentityType.SystemAssigned,
+        //   userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+        // },
 
         // VNet integration
         vnetConfiguration: vnetConfiguration
@@ -111,41 +143,65 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
             }
           : undefined,
 
-        // Logging and monitoring
-        ...appLogsConfiguration,
-
         // Dapr telemetry
         daprAIConnectionString: dapr?.connectionString ?? this.args.daprAIConnectionString,
         daprAIInstrumentationKey: dapr?.instrumentationKey ?? this.args.daprAIInstrumentationKey,
 
         // Custom domain
         customDomainConfiguration: this.args.customDomainConfiguration,
-
         // Infrastructure resource group (optional separate RG for managed resources)
         infrastructureResourceGroup: this.args.infrastructureResourceGroup,
-
         // mTLS peer authentication
         peerAuthentication: this.args.peerAuthentication,
-
         // Peer traffic encryption
         peerTrafficConfiguration: this.args.peerTrafficConfiguration,
-
         // Workload profiles for dedicated compute
         workloadProfiles: this.args.workloadProfiles,
-
         // Zone redundancy for high availability
         zoneRedundant: this.args.zoneRedundant ?? false,
-
         // Public network access
         publicNetworkAccess: this.args.publicNetworkAccess,
-
         // App Insights configuration
         appInsightsConfiguration: this.args.appInsightsConfiguration,
-
         // OpenTelemetry configuration
         openTelemetryConfiguration: this.args.openTelemetryConfiguration,
       },
       { ...this.opts, parent: this },
+    );
+  }
+
+  private createMaintenance(env: app.ManagedEnvironment) {
+    const { rsGroup, maintenanceSchedules } = this.args;
+
+    new app.MaintenanceConfiguration(
+      `${this.name}-maintenance`,
+      {
+        configName: 'default',
+        environmentName: env.name,
+        resourceGroupName: rsGroup.resourceGroupName,
+        scheduledEntries: maintenanceSchedules ?? [
+          {
+            weekDay: 'Sunday',
+            durationHours: 8,
+            startHourUtc: 0,
+          },
+        ],
+      },
+      { dependsOn: env, deletedWith: env, parent: this },
+    );
+  }
+
+  private createApps(env: app.ManagedEnvironment) {
+    const { containerApps, rsGroup, vaultInfo, defaultUAssignedId, groupRoles } = this.args;
+    if (!containerApps) return undefined;
+
+    return Object.entries(containerApps).forEach(
+      ([appName, appArgs]) =>
+        new AppContainer(
+          appName,
+          { ...appArgs, rsGroup, vaultInfo, defaultUAssignedId, groupRoles, managedEnvironmentId: env.id },
+          { dependsOn: env, deletedWith: env, parent: this },
+        ),
     );
   }
 }

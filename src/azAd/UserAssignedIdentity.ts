@@ -37,7 +37,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     this.clientId = managedIdentity.clientId;
     this.principalId = managedIdentity.principalId;
 
-    this.addMemberOf();
+    this.addMemberOf(managedIdentity);
     this.registerOutputs();
   }
 
@@ -70,7 +70,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     );
   }
 
-  private addMemberOf() {
+  private addMemberOf(uid: mid.UserAssignedIdentity) {
     if (!this.args.memberof) return;
     return this.args.memberof.map((group) =>
       pulumi.output(group).apply(
@@ -79,9 +79,9 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
             `${this.name}-${id.objectId}`,
             {
               groupObjectId: id.objectId,
-              memberObjectId: this.principalId,
+              memberObjectId: uid.principalId,
             },
-            { parent: this, retainOnDelete: true },
+            { dependsOn: uid, parent: this, retainOnDelete: true },
           ),
       ),
     );

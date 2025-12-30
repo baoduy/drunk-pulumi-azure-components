@@ -2,7 +2,6 @@ import * as app from '@pulumi/azure-native/app';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
-import * as vnet from '../vnet';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
@@ -11,7 +10,8 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
  * with auto-scaling, ingress, and managed environment integration.
  */
 export interface AppContainerArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithUserAssignedIdentity,
     Partial<Pick<app.ContainerAppArgs, 'workloadProfileName' | 'extendedLocation'>> {
   /** Resource ID of the Container Apps Managed Environment */
@@ -115,11 +115,6 @@ export interface AppContainerArgs
     /** Max inactive revisions */
     maxInactiveRevisions?: pulumi.Input<number>;
   };
-
-  /** Network configuration */
-  network?: {
-    privateLink?: vnet.PrivateEndpointType;
-  };
 }
 
 export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
@@ -133,15 +128,12 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
     super('AppContainer', name, args, opts);
 
     const containerApp = this.createContainerApp();
-    this.createPrivateLink(containerApp);
 
     this.id = containerApp.id;
     this.resourceName = containerApp.name;
     this.fqdn = containerApp.configuration.apply((c) => c?.ingress?.fqdn);
     this.latestRevisionName = containerApp.latestRevisionName;
     this.outboundIpAddresses = containerApp.outboundIpAddresses;
-
-    this.addIdentityToRole('readOnly', containerApp.identity);
 
     this.registerOutputs();
   }
@@ -158,8 +150,7 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
   }
 
   private createContainerApp() {
-    const { rsGroup, defaultUAssignedId, managedEnvironmentId, template, configuration, network, ...props } =
-      this.args;
+    const { rsGroup, defaultUAssignedId, managedEnvironmentId, template, configuration, ...props } = this.args;
 
     return new app.ContainerApp(
       this.name,
@@ -241,19 +232,19 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
     );
   }
 
-  private createPrivateLink(containerApp: app.ContainerApp) {
-    const { rsGroup, network } = this.args;
-    if (!network?.privateLink) return undefined;
-
-    return new vnet.PrivateEndpoint(
-      this.name,
-      {
-        ...network.privateLink,
-        resourceInfo: containerApp,
-        rsGroup,
-        type: 'containerapp',
-      },
-      { dependsOn: containerApp, deletedWith: containerApp, parent: this },
-    );
-  }
+  // private createPrivateLink(containerApp: app.ContainerApp) {
+  //   const { rsGroup, network } = this.args;
+  //   if (!network?.privateLink) return undefined;
+  //
+  //   return new vnet.PrivateEndpoint(
+  //     this.name,
+  //     {
+  //       ...network.privateLink,
+  //       resourceInfo: containerApp,
+  //       rsGroup,
+  //       type: 'containerapp',
+  //     },
+  //     { dependsOn: containerApp, deletedWith: containerApp, parent: this },
+  //   );
+  // }
 }

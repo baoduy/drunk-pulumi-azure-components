@@ -10,6 +10,7 @@ export type CommonProps =
   | 'rsGroup'
   | 'groupRoles'
   | 'vaultInfo'
+  | 'defaultUAssignedId'
   | 'resourceGroupName'
   | 'location'
   | 'resourceName'

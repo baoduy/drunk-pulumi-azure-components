@@ -5,7 +5,7 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { dictReduce } from '../helpers/rsHelpers';
 import * as types from '../types';
 import { Basion, BasionArgs } from './Basion';
-import { Firewall, FirewallArgs } from './Firewall';
+import { Firewall, FirewallArgs, FirewallOutputs } from './Firewall';
 import * as helpers from './helpers';
 import { NetworkPeering, NetworkPeeringArgs } from './NetworkPeering';
 import { RouteTable, RouteTableArgs } from './RouteTable';
@@ -36,12 +36,13 @@ export type SubnetArgs = Partial<
   defaultOutboundAccess?: boolean;
 };
 
+type PublicIpCreateType = Omit<IpAddressesArgs, 'rsGroup' | 'vaultInfo' | 'groupRoles'>;
 export interface VnetArgs extends CommonBaseArgs {
   /**
    * An array of public ip addresses associated with the nat gateway resource.
    */
   publicIpAddresses?: types.ResourceInputs[];
-  publicIpCreate?: Omit<IpAddressesArgs, 'rsGroup' | 'vaultInfo'>;
+  publicIpCreate?: PublicIpCreateType;
 
   securityGroupCreate?: Partial<Pick<network.NetworkSecurityGroupArgs, 'flushConnection'>> & {
     securityRules?: pulumi.Input<inputs.network.SecurityRuleArgs>[];
@@ -88,9 +89,10 @@ export interface VnetArgs extends CommonBaseArgs {
 export type VnetOutputs = {
   securityGroup?: types.ResourceOutputs;
   routeTable: types.ResourceOutputs;
+  ipAddresses: types.AsInput<types.ResourceType>[];
   natGateway?: types.ResourceOutputs;
   vpnGateway?: types.ResourceOutputs;
-  firewall?: types.ResourceOutputs;
+  firewall?: FirewallOutputs;
   vnet: types.ResourceOutputs;
   subnets: Record<string, types.ResourceOutputs>;
 };
@@ -101,9 +103,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   public readonly routeTable: types.ResourceOutputs;
   public readonly natGateway?: types.ResourceOutputs;
   public readonly vpnGateway?: types.ResourceOutputs;
-  public readonly firewall?: types.ResourceOutputs;
+  public readonly firewall?: FirewallOutputs;
   public readonly vnet: types.ResourceOutputs;
   public readonly subnets: Record<string, types.ResourceOutputs>;
+  public readonly ipAddresses: types.AsInput<types.ResourceType>[] = [];
   private ipAddressInstance: IpAddresses | undefined;
 
   constructor(name: string, args: VnetArgs, opts?: pulumi.ComponentResourceOptions) {
@@ -126,9 +129,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     this.routeTable = { id: routeTable.id, resourceName: routeTable.resourceName };
     if (natGateway) this.natGateway = { id: natGateway.id, resourceName: natGateway.name };
     if (vpnGateway) this.vpnGateway = { id: vpnGateway.id, resourceName: vpnGateway.resourceName };
-    if (firewall) this.firewall = firewall.firewall;
+    if (firewall) this.firewall = firewall.getOutputs();
     this.vnet = { id: vnet.id, resourceName: vnet.name };
     this.subnets = dictReduce(subnets, (name, s) => ({ id: s.id, resourceName: s.name.apply((n) => n!) }));
+    this.ipAddresses = ipAddresses;
     this.createPrivateZonesLinks(vnet);
 
     this.registerOutputs();
@@ -138,6 +142,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     return {
       securityGroup: this.securityGroup,
       routeTable: this.routeTable,
+      ipAddresses: this.ipAddresses,
       natGateway: this.natGateway,
       vpnGateway: this.vpnGateway,
       firewall: this.firewall,
@@ -188,17 +193,25 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     );
   }
 
+  /** Create a public IP address for NatGateway or Firewall and retain it when resource is deleting */
   private createPublicIpAddresses(): types.ResourceInputs[] {
-    const { publicIpCreate, publicIpAddresses, rsGroup } = this.args;
+    const { publicIpCreate, publicIpAddresses, rsGroup, natGatewayCreate, firewallCreate } = this.args;
     if (publicIpAddresses) return publicIpAddresses;
-    if (!publicIpCreate) return [];
+    const ipCreate: PublicIpCreateType | undefined =
+      (natGatewayCreate || firewallCreate) && !publicIpCreate
+        ? {
+            sku: { name: natGatewayCreate?.sku ?? 'Standard', tier: 'Regional' },
+            ipAddresses: [{ name: 'default-ip' }],
+          }
+        : publicIpCreate;
 
+    if (!ipCreate) return [];
     this.ipAddressInstance = new IpAddresses(
       `${this.name}-ip`,
-      { ...publicIpCreate, rsGroup },
+      { ...ipCreate, rsGroup },
       {
-        dependsOn: this.opts?.dependsOn,
         parent: this,
+        retainOnDelete: true,
       },
     );
 
@@ -223,7 +236,8 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   private createNatGateway(ipAddresses: types.ResourceInputs[]) {
     const { rsGroup, natGatewayCreate } = this.args;
     if (!natGatewayCreate) return undefined;
-    if (!ipAddresses) throw new Error('PublicIpAddresses is required when NatGateway is created');
+    if (!ipAddresses || ipAddresses.length <= 0)
+      throw new Error('PublicIpAddresses is required when NatGateway is created');
 
     return new network.NatGateway(
       `${this.name}-ngw`,

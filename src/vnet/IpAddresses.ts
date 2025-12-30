@@ -7,7 +7,7 @@ type IpSku = {
   /**
    * Name of a public IP address SKU.
    */
-  name: network.PublicIPAddressSkuName;
+  name: network.PublicIPAddressSkuName | string;
   /**
    * Tier of a public IP address SKU.
    */

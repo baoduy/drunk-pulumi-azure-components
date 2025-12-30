@@ -67,6 +67,12 @@ export interface FirewallArgs
   };
 }
 
+export type FirewallOutputs = {
+  firewall: types.ResourceOutputs;
+  policy: types.ResourceOutputs;
+  privateIpAddress: pulumi.Output<string>;
+};
+
 export class Firewall extends BaseResourceComponent<FirewallArgs> {
   public readonly firewall: types.ResourceOutputs;
   public readonly policy: types.ResourceOutputs;
@@ -87,7 +93,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): FirewallOutputs {
     return { firewall: this.firewall, policy: this.policy, privateIpAddress: this.privateIpAddress };
   }
 

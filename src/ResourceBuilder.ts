@@ -45,7 +45,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps
    * Pre-created group role outputs or the `GroupRole` component itself to reuse instead of creating new ones.
    * When supplied, `groupRolesCreate` is ignored.
    */
-  groupRoles?: types.GroupRoleOutputTypes | GroupRole;
+  groupRoles?: types.GroupRoleInputTypes | GroupRole;
 
   /**
    * Definition to create a new set of Azure AD groups / roles (reader, contributor, etc.).
@@ -158,10 +158,10 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     return this;
   }
 
-  private createGroupRoles() {
+  private createGroupRoles(): types.GroupRoleOutputTypes | undefined {
     const { groupRoles, groupRolesCreate } = this.args;
     if (groupRoles) {
-      return groupRoles instanceof GroupRole ? groupRoles.getOutputs() : groupRoles;
+      return groupRoles instanceof GroupRole ? groupRoles.getOutputs() : pulumi.output(groupRoles);
     }
 
     if (groupRolesCreate) {

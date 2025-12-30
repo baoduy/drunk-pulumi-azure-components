@@ -8,7 +8,8 @@ import * as vnet from '../vnet';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 export interface StorageAccountArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithUserAssignedIdentity,
     Partial<
@@ -38,9 +39,7 @@ export interface StorageAccountArgs
      */
     sasExpirationPeriod?: pulumi.Input<string>;
     sasExpirationAction?: 'Log' | 'Block';
-
     blob?: Omit<storage.BlobServicePropertiesArgs, 'blobServicesName' | 'resourceGroupName' | 'accountName'>;
-
     defaultManagementPolicyRules?: pulumi.Input<pulumi.Input<inputs.storage.ManagementPolicyRuleArgs>[]>;
   };
 

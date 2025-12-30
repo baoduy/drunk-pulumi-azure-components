@@ -48,7 +48,7 @@ export interface VnetArgs extends CommonBaseArgs {
   };
   routeTableCreate?: Omit<RouteTableArgs, 'rsGroup'>;
   natGatewayCreate?: Partial<Pick<network.NatGatewayArgs, 'idleTimeoutInMinutes' | 'zones'>> & {
-    sku: network.NatGatewaySkuName;
+    sku: network.NatGatewaySkuName | string;
   };
   vpnGatewayCreate?: Omit<VpnGatewayArgs, 'rsGroup' | 'subnetId'> & { subnetPrefix: pulumi.Input<string> };
   basion?: Omit<BasionArgs, 'rsGroup' | 'subnetId'> & {
@@ -201,7 +201,23 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         parent: this,
       },
     );
+
     return Object.values(this.ipAddressInstance.ipAddresses);
+  }
+
+  private createManagePublicIpAddress(): types.SubResourceInputs | undefined {
+    const { firewallCreate, rsGroup } = this.args;
+    if (firewallCreate?.managementPublicIpAddress) return firewallCreate.managementPublicIpAddress;
+
+    if (firewallCreate?.sku.tier == 'Basic')
+      return (this.ipAddressInstance = new IpAddresses(
+        `${this.name}-mag-ip`,
+        { sku: { name: 'Standard', tier: 'Regional' }, ipAddresses: [{ name: 'mag-ip' }], rsGroup },
+        {
+          dependsOn: this.opts?.dependsOn,
+          parent: this,
+        },
+      )).ipAddresses['mag-ip'];
   }
 
   private createNatGateway(ipAddresses: types.ResourceInputs[]) {
@@ -215,7 +231,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         ...rsGroup,
         ...natGatewayCreate,
         sku: { name: natGatewayCreate.sku },
-        zones: zoneHelper.getDefaultZones(natGatewayCreate.zones),
+        zones: natGatewayCreate.sku == 'Standard' ? ['1'] : zoneHelper.getDefaultZones(natGatewayCreate.zones),
         publicIpAddresses: ipAddresses,
       },
       { dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },
@@ -242,6 +258,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     const { rsGroup, natGatewayCreate, publicIpAddresses, firewallCreate } = this.args;
     if (!firewallCreate) return undefined;
 
+    const magIp = this.createManagePublicIpAddress();
     const firewallSubnet = subnets[helpers.AzureSubnetNames.AzFirewallSubnet];
     const firewallManageSubnet = subnets[helpers.AzureSubnetNames.AzFirewallManagementSubnet];
 
@@ -251,10 +268,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         ...firewallCreate,
         rsGroup,
         managementIpConfiguration:
-          firewallManageSubnet && firewallCreate.managementPublicIpAddress
+          firewallManageSubnet && magIp
             ? {
                 name: `${this.name}-fw-management`,
-                publicIPAddress: firewallCreate.managementPublicIpAddress,
+                publicIPAddress: magIp,
                 subnet: { id: firewallManageSubnet.id },
               }
             : undefined,
@@ -424,8 +441,8 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
               networkSecurityGroup: s.disableSecurityGroup
                 ? undefined
                 : securityGroup
-                ? { id: securityGroup.id }
-                : undefined,
+                  ? { id: securityGroup.id }
+                  : undefined,
               natGateway: s.disableNatGateway ? undefined : natGateway ? { id: natGateway.id } : undefined,
             },
             { dependsOn: vnet, deleteBeforeReplace: true, parent: this },

@@ -123,6 +123,12 @@ export interface GroupRoleOutput {
   displayName: string;
 }
 
+export type GroupRoleInputTypes = {
+  admin: pulumi.Input<GroupRoleOutput>;
+  contributor: pulumi.Input<GroupRoleOutput>;
+  readOnly: pulumi.Input<GroupRoleOutput>;
+};
+
 export type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;
   contributor: pulumi.Output<GroupRoleOutput>;

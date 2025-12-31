@@ -4,5 +4,5 @@
  * @returns Formatted resource type string with drunk-pulumi prefix if not already present
  */
 export function getComponentResourceType(type: string) {
-  return type.includes('drunk-pulumi') ? type : `drunk:pulumi:${type}`;
+  return type.includes('drunk:azure') ? type : `drunk:azure:${type}`;
 }

@@ -486,12 +486,12 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private assignPermission(aks: ccs.ManagedCluster) {
     const { rsGroup, attachToAcr } = this.args;
     //Add KeyVault Secret Provider to Group Roles
-    // aks.addonProfiles.apply((aa) => {
-    //   if (aa?.azureKeyvaultSecretsProvider?.identity)
-    //     this.addIdentityToRole('readOnly', {
-    //       principalId: aa.azureKeyvaultSecretsProvider.identity.objectId!,
-    //     });
-    // });
+    aks.addonProfiles.apply((aa) => {
+      if (aa?.azureKeyvaultSecretsProvider?.identity)
+        this.addIdentityToRole('readOnly', {
+          principalId: aa.azureKeyvaultSecretsProvider.identity.objectId!,
+        });
+    });
 
     pulumi.all([aks.identity, aks.identityProfile, attachToAcr]).apply(([identity, identityProfile, acr]) => {
       //User Assigned Identity

@@ -2,12 +2,9 @@ import * as compute from '@pulumi/azure-native/compute';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
-import { rsHelpers } from '../helpers';
 
 export interface DiskEncryptionSetArgs
-  extends CommonBaseArgs,
-    types.WithUserAssignedIdentity,
-    types.WithGroupRolesArgs {
+  extends CommonBaseArgs, types.WithUserAssignedIdentity, types.WithGroupRolesArgs {
   encryptionType: compute.DiskEncryptionSetType;
 }
 
@@ -38,6 +35,8 @@ export class DiskEncryptionSet extends BaseResourceComponent<DiskEncryptionSetAr
       },
       {
         ...opts,
+        deleteBeforeReplace: true,
+        replaceOnChanges: ['encryptionType'],
         parent: this,
       },
     );

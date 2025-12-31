@@ -49,7 +49,8 @@ const getNodeOSWindow = (maintenance: MaintenanceArgs | undefined): AutoUpgradeS
 };
 
 export interface AzKubernetesArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
@@ -72,11 +73,13 @@ export interface AzKubernetesArgs
     enablePrivateClusterPublicFQDN?: boolean;
     enableVerticalPodAutoscaler?: boolean;
     /** KEDA (Kubernetes Event-driven Autoscaling) settings for the workload auto-scaler profile. */
-    //enableKeda?: boolean;
+    enableKeda?: boolean;
     enableWorkloadIdentity?: boolean;
     enablePodIdentity?: boolean;
+    enableAzurePolicy?: boolean;
+    enableAzureKeyVault?: boolean;
   };
-  addonProfiles?: { enableAzureKeyVault?: boolean };
+
   network?: Omit<
     inputs.containerservice.ContainerServiceNetworkProfileArgs,
     'networkMode' | 'networkPolicy' | 'networkPlugin' | 'loadBalancerSku' | 'loadBalancerProfile'
@@ -190,7 +193,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     ).getOutputs();
   }
 
-  private createCluster(app: AppRegistration) {
+  private createCluster(appID: AppRegistration) {
     const {
       rsGroup,
       vaultInfo,
@@ -199,13 +202,15 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       enableEncryption,
       nodeResourceGroup,
       features,
-      addonProfiles,
       network,
       logWorkspace,
       sku,
       autoScalerProfile,
       extraAgentPoolProfiles,
       agentPoolProfiles,
+      attachToAcr,
+      maintenance,
+      namespaces,
       ...props
     } = this.args;
     const nodeRg = nodeResourceGroup ?? pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
@@ -235,15 +240,15 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
         addonProfiles: {
           azureKeyvaultSecretsProvider: {
-            config: addonProfiles?.enableAzureKeyVault
+            config: features?.enableAzureKeyVault
               ? {
                   enableSecretRotation: 'true',
                 }
               : undefined,
-            enabled: Boolean(addonProfiles?.enableAzureKeyVault),
+            enabled: Boolean(features?.enableAzureKeyVault),
           },
 
-          azurePolicy: { enabled: true },
+          azurePolicy: { enabled: features?.enableAzurePolicy || false },
           kubeDashboard: { enabled: false },
           httpApplicationRouting: { enabled: false },
           aciConnectorLinux: {
@@ -310,8 +315,9 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         enableRBAC: true,
 
         identity: {
-          type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+          type: ccs.ResourceIdentityType.SystemAssigned,
+          //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
+          //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
         },
 
         // identityProfile: defaultUAssignedId
@@ -325,16 +331,17 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
         networkProfile: {
           ...network,
-          networkMode: ccs.NetworkMode.Transparent,
-          networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
+          //networkMode: ccs.NetworkMode.Transparent,
           networkPlugin: ccs.NetworkPlugin.Azure,
+          networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
+          networkDataplane: network?.networkPolicy ?? ccs.NetworkDataplane.Cilium,
+          networkPluginMode: ccs.NetworkPluginMode.Overlay,
 
           loadBalancerSku: 'Standard',
           outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
         },
 
         nodeResourceGroup: nodeRg,
-
         oidcIssuerProfile: { enabled: Boolean(features?.enableWorkloadIdentity) },
         podIdentityProfile: features?.enablePodIdentity
           ? {
@@ -358,8 +365,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         },
 
         servicePrincipalProfile: {
-          clientId: app.clientId,
-          secret: app.clientSecret,
+          clientId: appID.clientId,
+          secret: appID.clientSecret,
         },
 
         sku: {
@@ -372,7 +379,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           verticalPodAutoscaler: {
             enabled: features?.enableVerticalPodAutoscaler || false,
           },
-          keda: { enabled: true },
+          keda: { enabled: features?.enableKeda || false },
         },
 
         //azureMonitorProfile: { metrics: { enabled } },
@@ -381,7 +388,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       },
       {
         ...this.opts,
-        dependsOn: app,
+        dependsOn: appID,
         parent: this,
       },
     );
@@ -472,7 +479,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
     );
 
-
     return { default: defaultMaintenance, autoUpgrade: autoUpgradeMaintenance, nodeOS: nodeOSMaintenance };
   }
 
@@ -545,7 +551,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return {
       schedule: {
         weekly: {
-          dayOfWeek: "Sunday",
+          dayOfWeek: 'Sunday',
           intervalWeeks: 1,
         },
       },

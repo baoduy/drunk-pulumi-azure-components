@@ -61,10 +61,10 @@ export interface AppRegistrationArgs
 
 export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   public readonly clientId: pulumi.Output<string>;
-  public readonly clientSecret?: pulumi.Output<string>;
-  public readonly servicePrincipalId?: pulumi.Output<string>;
-  public readonly servicePrincipalPassword?: pulumi.Output<string>;
-  public readonly vaultSecrets: { [key: string]: ReturnType<VaultSecrets['getOutputs']> } = {};
+  public readonly clientSecret: pulumi.Output<string>;
+  public readonly servicePrincipalId: pulumi.Output<string>;
+  public readonly servicePrincipalPassword: pulumi.Output<string>;
+  private vaultSecrets: ReturnType<VaultSecrets['getOutputs']> = {};
 
   constructor(name: string, args: AppRegistrationArgs = { appType: 'native' }, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('AppRegistration'), name, args, opts);
@@ -72,10 +72,12 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     //Application
     const { app, clientSecret } = this.createAppRegistration();
     const sp = this.createServicePrincipal(app);
+
     this.servicePrincipalId = sp.servicePrincipalId;
     this.servicePrincipalPassword = sp.servicePrincipalPassword;
-
     this.clientId = app.clientId;
+    this.clientSecret = clientSecret;
+
     this.addSecrets({
       clientId: app.clientId,
       clientSecret: clientSecret,
@@ -148,7 +150,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       { dependsOn: app, deletedWith: app, parent: this },
     );
 
-    var spPass = new azAd.ServicePrincipalPassword(
+    const spPass = new azAd.ServicePrincipalPassword(
       `${this.name}-sp-pass`,
       {
         displayName: this.name,
@@ -209,19 +211,18 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     servicePrincipalPass: pulumi.Input<string>;
   }) {
     if (!this.args.vaultInfo) return;
-    const n = `${this.name}-secrets`;
     const secret = new VaultSecrets(
-      n,
+      this.name,
       {
         vaultInfo: this.args.vaultInfo,
         secrets: {
-          [`${this.name}-app-client-id`]: { value: clientId, contentType: `AppRegistration:${this.name} ` },
-          [`${this.name}-app-client-secret`]: { value: clientSecret, contentType: `AppRegistration:${this.name} ` },
-          [`${this.name}-service-principal-id`]: {
+          ['client-id']: { value: clientId, contentType: `AppRegistration:${this.name} ` },
+          ['client-secret']: { value: clientSecret, contentType: `AppRegistration:${this.name} ` },
+          ['principal-id']: {
             value: servicePrincipalId,
             contentType: `AppRegistration:${this.name} `,
           },
-          [`${this.name}-service-principal-pass`]: {
+          ['principal-secret']: {
             value: servicePrincipalPass,
             contentType: `AppRegistration:${this.name} `,
           },
@@ -229,7 +230,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
-    this.vaultSecrets[n] = secret.getOutputs();
+    this.vaultSecrets = secret.getOutputs();
     return secret;
   }
 }

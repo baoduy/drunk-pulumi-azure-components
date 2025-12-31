@@ -8,7 +8,8 @@ import { getComponentResourceType } from '../base/helpers';
 import { zoneHelper } from '../helpers';
 
 export interface BasionArgs
-  extends types.WithResourceGroupInputs,
+  extends
+    types.WithResourceGroupInputs,
     Partial<
       Pick<
         nw.BastionHostArgs,
@@ -49,7 +50,7 @@ export class Basion extends BaseComponent<BasionArgs> {
         ...props,
         ...rsGroup,
         sku: { name: sku },
-        zones: zoneHelper.getDefaultZones(props.zones),
+        zones: sku != 'Basic' && sku != 'Developer' ? zoneHelper.getDefaultZones(props.zones) : undefined,
         ipConfigurations: [
           {
             name: 'IpConfig',

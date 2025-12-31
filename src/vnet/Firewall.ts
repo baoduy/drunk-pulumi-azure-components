@@ -184,7 +184,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
             ? network.AzureFirewallThreatIntelMode.Deny
             : undefined,
       },
-      { ...this.opts, dependsOn: firewallPolicy ? firewallPolicy : this.opts?.dependsOn, parent: this },
+      { ...this.opts, dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 
@@ -203,7 +203,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
               ...p,
               firewallPolicyName: firewallPolicy.name,
             },
-            { dependsOn: [firewallPolicy], parent: this },
+            { dependsOn: firewallPolicy, parent: this, deletedWith: firewallPolicy },
           ),
       );
   }

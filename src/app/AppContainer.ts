@@ -228,7 +228,7 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
           terminationGracePeriodSeconds: template.terminationGracePeriodSeconds ?? 30,
         },
       },
-      { ...this.opts, parent: this },
+      { ...this.opts, parent: this, deletedWith: this },
     );
   }
 

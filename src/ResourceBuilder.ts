@@ -168,6 +168,7 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       return new GroupRole(groupRolesCreate.name ?? this.name, groupRolesCreate, {
         dependsOn: this.opts?.dependsOn,
         parent: this,
+        deletedWith: this,
       }).getOutputs();
     }
   }

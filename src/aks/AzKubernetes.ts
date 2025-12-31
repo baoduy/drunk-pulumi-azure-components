@@ -177,7 +177,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private createDiskEncryptionSet() {
-    const { rsGroup, enableEncryption, diskEncryptionSet, defaultUAssignedId, vaultInfo } = this.args;
+    const { rsGroup, enableEncryption, diskEncryptionSet, groupRoles, defaultUAssignedId, vaultInfo } = this.args;
     if (!enableEncryption) return undefined;
     if (diskEncryptionSet) return diskEncryptionSet;
 
@@ -187,6 +187,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         rsGroup,
         vaultInfo,
         defaultUAssignedId,
+        groupRoles,
         encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
@@ -484,49 +485,48 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
   private assignPermission(aks: ccs.ManagedCluster) {
     const { rsGroup, attachToAcr } = this.args;
-    pulumi
-      .all([aks.identity, aks.identityProfile, aks.addonProfiles, attachToAcr])
-      .apply(([identity, identityProfile, addon, acr]) => {
-        //User Assigned Identity
-        //console.log(Object.values(identityProfile!));
-        if (identityProfile?.kubeletidentity) {
-          this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletidentity!.objectId! });
+    //Add KeyVault Secret Provider to Group Roles
+    // aks.addonProfiles.apply((aa) => {
+    //   if (aa?.azureKeyvaultSecretsProvider?.identity)
+    //     this.addIdentityToRole('readOnly', {
+    //       principalId: aa.azureKeyvaultSecretsProvider.identity.objectId!,
+    //     });
+    // });
 
-          if (acr) {
-            new RoleAssignment(
-              `${this.name}-aks-acr`,
-              {
-                principalId: identityProfile.kubeletidentity!.objectId!,
-                principalType: 'ServicePrincipal',
-                roleName: 'AcrPull',
-                scope: acr.id,
-              },
-              { dependsOn: aks, deletedWith: aks, parent: this },
-            );
-          }
-        }
+    pulumi.all([aks.identity, aks.identityProfile, attachToAcr]).apply(([identity, identityProfile, acr]) => {
+      //User Assigned Identity
+      //console.log(Object.values(identityProfile!));
+      if (identityProfile?.kubeletidentity?.objectId) {
+        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletidentity!.objectId! });
 
-        //System Managed Identity
-        if (identity?.principalId) {
+        if (acr) {
           new RoleAssignment(
-            `${this.name}-aks-identity`,
+            `${this.name}-aks-acr`,
             {
-              principalId: identity.principalId!,
+              principalId: identityProfile.kubeletidentity!.objectId!,
               principalType: 'ServicePrincipal',
-              roleName: 'Contributor',
-              scope: rsHelpers.getRsGroupIdFrom(rsGroup),
+              roleName: 'AcrPull',
+              scope: acr.id,
             },
             { dependsOn: aks, deletedWith: aks, parent: this },
           );
         }
+      }
 
-        //addon
-        if (addon?.azureKeyvaultSecretsProvider?.identity) {
-          this.addIdentityToRole('readOnly', {
-            principalId: addon.azureKeyvaultSecretsProvider.identity!.objectId!,
-          });
-        }
-      });
+      //System Managed Identity
+      if (identity?.principalId) {
+        new RoleAssignment(
+          `${this.name}-aks-identity`,
+          {
+            principalId: identity.principalId!,
+            principalType: 'ServicePrincipal',
+            roleName: 'Contributor',
+            scope: rsHelpers.getRsGroupIdFrom(rsGroup),
+          },
+          { dependsOn: aks, deletedWith: aks, parent: this },
+        );
+      }
+    });
   }
 
   private getPrivateDNSZone(aks: ccs.ManagedCluster): types.ResourceOutputs | undefined {

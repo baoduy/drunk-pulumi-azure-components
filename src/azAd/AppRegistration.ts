@@ -7,7 +7,7 @@ import { WithMemberOfArgs, WithVaultInfo } from '../types';
 import { BaseComponent } from '../base';
 import { VaultSecrets } from '../vault';
 import { getComponentResourceType } from '../base/helpers';
-import { stackInfo } from '../helpers';
+import { azureEnv, stackInfo } from '../helpers';
 
 export enum GroupMembershipClaimsTypes {
   None = 'None',
@@ -60,6 +60,7 @@ export interface AppRegistrationArgs
 }
 
 export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
+  public readonly tenantId: pulumi.Output<string>;
   public readonly clientId: pulumi.Output<string>;
   public readonly clientSecret: pulumi.Output<string>;
   public readonly servicePrincipalId: pulumi.Output<string>;
@@ -77,6 +78,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     this.servicePrincipalPassword = sp.servicePrincipalPassword;
     this.clientId = app.clientId;
     this.clientSecret = clientSecret;
+    this.tenantId = azureEnv.tenantId;
 
     this.addSecrets({
       clientId: app.clientId,
@@ -90,6 +92,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
 
   public getOutputs() {
     return {
+      tenantId: this.tenantId,
       clientId: this.clientId,
       servicePrincipalId: this.servicePrincipalId,
       vaultSecrets: this.vaultSecrets,

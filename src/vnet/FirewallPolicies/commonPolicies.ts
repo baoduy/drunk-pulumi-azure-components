@@ -20,6 +20,10 @@ export const allAzurePorts = [
   '10255',
 ];
 
+export function newFirewallPolicy(name: string, { priority, action }: { priority: number; action: 'Allow' | 'Deny' }) {
+  return new FirewallPolicyBuilder(name, { priority, action });
+}
+
 export function defaultAllowedPolicies({
   name = 'default-allows',
   priority = 100,

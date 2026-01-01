@@ -3,6 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
 import { AppContainer, AppContainerArgs } from './AppContainer';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { azureEnv } from '../helpers';
 import * as enums from '@pulumi/azure-native/types/enums';
 
 interface ScheduledEntryArgs {
@@ -104,7 +105,16 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
   }
 
   private createManagedEnvironment() {
-    const { rsGroup, defaultUAssignedId, vnetConfiguration, logAnalyticsWorkspace, dapr, ...props } = this.args;
+    const {
+      rsGroup,
+      defaultUAssignedId,
+      vnetConfiguration,
+      logAnalyticsWorkspace,
+      dapr,
+      workloadProfiles,
+      zoneRedundant,
+      ...props
+    } = this.args;
 
     // Build Log Analytics configuration
     const appLogsConfiguration = logAnalyticsWorkspace
@@ -125,13 +135,18 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
         ...rsGroup,
         // Logging and monitoring
         ...appLogsConfiguration,
-
-        // identity: {
-        //   type: defaultUAssignedId
-        //     ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
-        //     : app.ManagedServiceIdentityType.SystemAssigned,
-        //   userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        // },
+        workloadProfiles: workloadProfiles ?? [
+          {
+            name: 'Consumption',
+            workloadProfileType: 'Consumption',
+          },
+        ],
+        identity: {
+          type: defaultUAssignedId
+            ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
+            : app.ManagedServiceIdentityType.SystemAssigned,
+          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+        },
 
         // VNet integration
         vnetConfiguration: vnetConfiguration
@@ -146,27 +161,9 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
         // Dapr telemetry
         daprAIConnectionString: dapr?.connectionString ?? this.args.daprAIConnectionString,
         daprAIInstrumentationKey: dapr?.instrumentationKey ?? this.args.daprAIInstrumentationKey,
-
-        // Custom domain
-        customDomainConfiguration: this.args.customDomainConfiguration,
-        // Infrastructure resource group (optional separate RG for managed resources)
-        infrastructureResourceGroup: this.args.infrastructureResourceGroup,
-        // mTLS peer authentication
-        peerAuthentication: this.args.peerAuthentication,
-        // Peer traffic encryption
-        peerTrafficConfiguration: this.args.peerTrafficConfiguration,
-        // Workload profiles for dedicated compute
-        workloadProfiles: this.args.workloadProfiles,
-        // Zone redundancy for high availability
-        zoneRedundant: this.args.zoneRedundant ?? false,
-        // Public network access
-        publicNetworkAccess: this.args.publicNetworkAccess,
-        // App Insights configuration
-        appInsightsConfiguration: this.args.appInsightsConfiguration,
-        // OpenTelemetry configuration
-        openTelemetryConfiguration: this.args.openTelemetryConfiguration,
+        zoneRedundant: zoneRedundant ?? azureEnv.isPrd,
       },
-      { ...this.opts, parent: this },
+      { ...this.opts, parent: this, deleteBeforeReplace: true },
     );
   }
 
@@ -187,7 +184,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
           },
         ],
       },
-      { dependsOn: env, deletedWith: env, parent: this },
+      { dependsOn: env, deletedWith: env, parent: this, deleteBeforeReplace: true },
     );
   }
 
@@ -199,7 +196,14 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
       ([appName, appArgs]) =>
         new AppContainer(
           appName,
-          { ...appArgs, rsGroup, vaultInfo, defaultUAssignedId, groupRoles, managedEnvironmentId: env.id },
+          {
+            ...appArgs,
+            rsGroup,
+            vaultInfo,
+            defaultUAssignedId: appArgs.defaultUAssignedId ?? defaultUAssignedId,
+            groupRoles,
+            managedEnvironmentId: env.id,
+          },
           { dependsOn: env, deletedWith: env, parent: this },
         ),
     );

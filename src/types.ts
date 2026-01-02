@@ -85,6 +85,15 @@ export type WithMemberOfArgs = {
   memberof?: pulumi.Input<{ objectId: string }>[];
 };
 
+export type IdentityType = {
+  id: string;
+  clientId: string;
+  objectId: string;
+};
+
+export type IdentityInputs = AsInput<IdentityType>;
+export type IdentityOutputs = AsOutput<IdentityType>;
+
 export type UserAssignedIdentityType = {
   id: string;
   clientId: string;

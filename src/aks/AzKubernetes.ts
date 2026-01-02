@@ -9,6 +9,8 @@ import { azureEnv, rsHelpers, zoneHelper } from '../helpers';
 
 import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
+import { getAksClusterOutput } from './helpers';
+import { getPrivateRecordSetOutput } from '../vnet/helpers';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
   vmSize: pulumi.Input<string>;
@@ -104,7 +106,12 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
   public readonly namespaces: Record<string, types.ResourceOutputs>;
-  public readonly privateDnsZone: types.ResourceOutputs | undefined;
+  public readonly privateDnsZone?: types.ResourceOutputs;
+  public readonly privateIpAddress?: pulumi.Output<string | undefined>;
+  public readonly azAppIdentity: ReturnType<AppRegistration['getOutputs']>;
+  public readonly keyVaultSecretProviderIdentity?: types.IdentityOutputs;
+  public readonly kubeletIdentity?: types.IdentityOutputs;
+  public readonly systemIdentityId?: pulumi.Output<string>;
 
   constructor(name: string, args: AzKubernetesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzKubernetes', name, args, opts);
@@ -113,18 +120,32 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     const cluster = this.createCluster(app);
     this.createExtraAgentPoolProfiles(cluster);
     this.createMaintenance(cluster);
-    this.assignPermission(cluster);
+
     const nss = this.createNameSpaces(cluster);
-    this.privateDnsZone = this.getPrivateDNSZone(cluster);
-
-    this.id = cluster.id;
-    this.resourceName = cluster.name;
-
     this.namespaces = rsHelpers.dictReduce(nss, (n, ns) => ({
       id: ns.id,
       resourceName: ns.name.apply((n) => n!),
     }));
 
+    const privateDns = this.getPrivateDNSZone(cluster);
+    this.privateDnsZone = privateDns?.privateZone;
+    this.privateIpAddress = privateDns?.privateIpAddress;
+
+    this.azAppIdentity = app.getOutputs();
+    this.id = cluster.id;
+    this.resourceName = cluster.name;
+
+    this.systemIdentityId = cluster.identity.apply((id) => id!.principalId);
+    this.keyVaultSecretProviderIdentity = args.features.enableAzureKeyVault
+      ? cluster.addonProfiles.apply((aa) => ({
+          id: aa!.azureKeyvaultSecretsProvider.identity.resourceId!,
+          clientId: aa!.azureKeyvaultSecretsProvider.identity.clientId!,
+          objectId: aa!.azureKeyvaultSecretsProvider.identity.objectId!,
+        }))
+      : undefined;
+    this.kubeletIdentity = this.getExtraAksOutputs(cluster);
+
+    this.assignPermission(cluster);
     this.registerOutputs();
   }
 
@@ -134,6 +155,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       resourceName: this.resourceName,
       namespaces: this.namespaces,
       privateDnsZone: this.privateDnsZone,
+      privateIpAddress: this.privateIpAddress,
+      azAppIdentity: this.azAppIdentity,
+      keyVaultSecretProviderIdentity: this.keyVaultSecretProviderIdentity,
+      kubeletIdentity: this.kubeletIdentity,
+      systemIdentityId: this.systemIdentityId,
     };
   }
 
@@ -483,65 +509,73 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return { default: defaultMaintenance, autoUpgrade: autoUpgradeMaintenance, nodeOS: nodeOSMaintenance };
   }
 
+  private getExtraAksOutputs(aks: ccs.ManagedCluster) {
+    const { rsGroup } = this.args;
+    const aksInfo = getAksClusterOutput({ resourceGroupName: rsGroup.resourceGroupName, resourceName: aks.name });
+    return aksInfo.properties.identityProfile.apply((p) => ({
+      id: p!.kubeletidentity.resourceId!,
+      clientId: p!.kubeletidentity.clientId!,
+      objectId: p!.kubeletidentity.objectId!,
+    }));
+  }
+
   private assignPermission(aks: ccs.ManagedCluster) {
     const { rsGroup, attachToAcr } = this.args;
-    //Add KeyVault Secret Provider to Group Roles
-    aks.addonProfiles.apply((aa) => {
-      if (aa?.azureKeyvaultSecretsProvider?.identity)
-        this.addIdentityToRole('readOnly', {
-          principalId: aa.azureKeyvaultSecretsProvider.identity.objectId!,
-        });
-    });
 
-    pulumi.all([aks.identity, aks.identityProfile, attachToAcr]).apply(([identity, identityProfile, acr]) => {
-      //User Assigned Identity
-      //console.log(Object.values(identityProfile!));
-      if (identityProfile?.kubeletidentity?.objectId) {
-        this.addIdentityToRole('contributor', { principalId: identityProfile.kubeletidentity!.objectId! });
+    if (attachToAcr && this.kubeletIdentity) {
+      pulumi.output(this.kubeletIdentity!).apply((p) => {
+        new RoleAssignment(
+          `${this.name}-aks-acr`,
+          {
+            principalId: p!.objectId!,
+            principalType: 'ServicePrincipal',
+            roleName: 'AcrPull',
+            scope: attachToAcr.id,
+          },
+          { dependsOn: aks, deletedWith: aks, parent: this },
+        );
+      });
+    }
 
-        if (acr) {
-          new RoleAssignment(
-            `${this.name}-aks-acr`,
-            {
-              principalId: identityProfile.kubeletidentity!.objectId!,
-              principalType: 'ServicePrincipal',
-              roleName: 'AcrPull',
-              scope: acr.id,
-            },
-            { dependsOn: aks, deletedWith: aks, parent: this },
-          );
-        }
-      }
-
-      //System Managed Identity
-      if (identity?.principalId) {
+    //Allows AKS to have Contributor role on the resource group
+    aks.identity.apply(
+      (id) =>
         new RoleAssignment(
           `${this.name}-aks-identity`,
           {
-            principalId: identity.principalId!,
+            principalId: id!.principalId!,
             principalType: 'ServicePrincipal',
             roleName: 'Contributor',
             scope: rsHelpers.getRsGroupIdFrom(rsGroup),
           },
           { dependsOn: aks, deletedWith: aks, parent: this },
-        );
-      }
-    });
+        ),
+    );
   }
 
-  private getPrivateDNSZone(aks: ccs.ManagedCluster): types.ResourceOutputs | undefined {
+  private getPrivateDNSZone(aks: ccs.ManagedCluster) {
     const { features } = this.args;
     if (!features.enablePrivateCluster) return undefined;
 
     const rsGroup = aks.nodeResourceGroup;
-    const zoneName = aks.privateFQDN.apply((fqdn) => {
-      if (!fqdn) return fqdn!;
-      const firstDot = fqdn.indexOf('.');
-      return firstDot >= 0 ? fqdn.substring(firstDot + 1) : fqdn;
+    const zoneNames = aks.privateFQDN.apply((fqdn) => {
+      const p = fqdn.split('.');
+      return { privateClusterName: p[0], privateZoneName: p.slice(1).join('.') };
     });
 
-    const id = pulumi.interpolate`/subscriptions/${azureEnv.subscriptionId}/resourceGroups/${rsGroup}/providers/Microsoft.Network/privateDnsZones/${zoneName}`;
-    return { id, resourceName: zoneName };
+    const id = pulumi.interpolate`/subscriptions/${azureEnv.subscriptionId}/resourceGroups/${rsGroup}/providers/Microsoft.Network/privateDnsZones/${zoneNames.privateZoneName}`;
+    //Get private IpAddress from Private DNS Zone
+    const rs = getPrivateRecordSetOutput({
+      privateZoneName: zoneNames.privateZoneName,
+      resourceGroupName: rsGroup.apply((g) => g!),
+      relativeRecordSetName: zoneNames.privateClusterName,
+      recordType: 'A',
+    });
+
+    return {
+      privateZone: { id, resourceName: zoneNames.privateZoneName },
+      privateIpAddress: rs!.aRecords!.apply((ars) => (ars && ars.length > 0 ? ars[0].ipv4Address : undefined)),
+    };
   }
 
   private getDefaultAutoUpgradeWindow(): AutoUpgradeScheduleArgs {

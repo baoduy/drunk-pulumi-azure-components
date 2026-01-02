@@ -8,6 +8,7 @@ import { BaseArgs, BaseResourceComponent } from '../base';
 
 import { PrivateEndpointType } from '../vnet';
 import { convertToIpRange } from './helpers';
+import { zoneHelper } from '../helpers';
 
 export interface RedisArgs
   extends BaseArgs,
@@ -88,6 +89,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         staticIP: network?.staticIP,
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
         updateChannel: redis.UpdateChannel.Stable,
+        zones: zoneHelper.getDefaultZones(props.zones),
 
         identity: {
           type: defaultUAssignedId
@@ -134,7 +136,15 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
 
   private createMaintenance(rds: redis.Redis) {
     const { rsGroup, scheduleEntries } = this.args;
-    if (!scheduleEntries) return undefined;
+    
+    // Use provided scheduleEntries or default to Sunday maintenance
+    const schedule = scheduleEntries ?? [
+      {
+        dayOfWeek: redis.DayOfWeek.Sunday,
+        startHourUtc: 0,
+        maintenanceWindow: 'PT5H', // 5 hour maintenance window
+      },
+    ];
 
     return new redis.PatchSchedule(
       this.name,
@@ -142,7 +152,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         ...rsGroup,
         name: rds.name,
         default: 'default',
-        scheduleEntries,
+        scheduleEntries: schedule,
       },
       { dependsOn: rds, deletedWith: rds, parent: this },
     );

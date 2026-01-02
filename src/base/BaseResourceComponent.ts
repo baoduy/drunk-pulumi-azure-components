@@ -82,11 +82,19 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
 
     return pulumi.output(identity).apply((i) => {
       if (!i?.principalId) return;
-      return new azAd.GroupMember(`${this.name}-${type}-${i.principalId}`, {
-        groupObjectId: groupRoles[type].objectId,
-        memberObjectId: i.principalId,
-      });
+      return new azAd.GroupMember(
+        `${this.name}-${type}-${i.principalId}`,
+        {
+          groupObjectId: groupRoles[type].objectId,
+          memberObjectId: i.principalId,
+        },
+        { parent: this },
+      );
     });
+  }
+
+  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
+    return { vaultSecrets: this.vaultSecrets };
   }
 
   protected grantPermissionsToIdentity({ identity, resource, roleNames }: types.GrantIdentityRoles) {
@@ -139,9 +147,6 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     super.registerOutputs();
   }
 
-  public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
-    return { vaultSecrets: this.vaultSecrets };
-  }
   /**
    * Creates a new encryption key in the Azure Key Vault
    * @returns A new EncryptionKey instance if vaultInfo is provided, undefined otherwise

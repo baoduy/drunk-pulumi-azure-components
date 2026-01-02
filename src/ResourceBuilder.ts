@@ -17,7 +17,7 @@ import { Logs, LogsArgs } from './logs';
 import { RsGroup, RsGroupArgs } from './common';
 import { Vnet, VnetArgs } from './vnet';
 
-import { BaseComponent } from './base/BaseComponent';
+import { BaseComponent } from './base';
 import { getComponentResourceType } from './base/helpers';
 import { rsHelpers } from './helpers';
 
@@ -45,7 +45,7 @@ export interface ResourceBuilderArgs extends Omit<RsGroupArgs, types.CommonProps
    * Pre-created group role outputs or the `GroupRole` component itself to reuse instead of creating new ones.
    * When supplied, `groupRolesCreate` is ignored.
    */
-  groupRoles?: types.GroupRoleOutputTypes | GroupRole;
+  groupRoles?: types.GroupRoleInputTypes | GroupRole;
 
   /**
    * Definition to create a new set of Azure AD groups / roles (reader, contributor, etc.).
@@ -103,8 +103,8 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
   public readonly defaultUAssignedId?: UserAssignedIdentity;
   public readonly defaultAppIdentity?: AppRegistration;
   public readonly logs?: Logs;
-  private readonly diskEncryptionSet?: DiskEncryptionSet;
-  private readonly vnet: Vnet | undefined;
+  public readonly diskEncryptionSet?: DiskEncryptionSet;
+  public readonly vnet: Vnet | undefined;
 
   constructor(name: string, args: ResourceBuilderArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('ResourceBuilder'), name, args, opts);
@@ -149,16 +149,26 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     };
   }
 
-  private createGroupRoles() {
+  public grant(props: Omit<RoleAssignmentArgs, 'scope'>) {
+    new RoleAssignment(
+      `${this.name}-${props.roleName}`,
+      { ...props, scope: rsHelpers.getRsGroupIdFrom(this.rsGroup) },
+      { dependsOn: this, deletedWith: this, parent: this },
+    );
+    return this;
+  }
+
+  private createGroupRoles(): types.GroupRoleOutputTypes | undefined {
     const { groupRoles, groupRolesCreate } = this.args;
     if (groupRoles) {
-      return groupRoles instanceof GroupRole ? groupRoles.getOutputs() : groupRoles;
+      return groupRoles instanceof GroupRole ? groupRoles.getOutputs() : pulumi.output(groupRoles);
     }
 
     if (groupRolesCreate) {
       return new GroupRole(groupRolesCreate.name ?? this.name, groupRolesCreate, {
         dependsOn: this.opts?.dependsOn,
         parent: this,
+        deletedWith: this,
       }).getOutputs();
     }
   }
@@ -263,14 +273,5 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
       },
       { dependsOn: this.rsGroup, parent: this },
     );
-  }
-
-  public grant(props: Omit<RoleAssignmentArgs, 'scope'>) {
-    new RoleAssignment(
-      `${this.name}-${props.roleName}`,
-      { ...props, scope: rsHelpers.getRsGroupIdFrom(this.rsGroup) },
-      { dependsOn: this, deletedWith: this, parent: this },
-    );
-    return this;
   }
 }

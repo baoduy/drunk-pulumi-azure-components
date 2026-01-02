@@ -1,24 +1,28 @@
-import * as storage from '@pulumi/azure-native/storage';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as storage from '@pulumi/azure-native/storage';
 import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
 
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+
 export interface StorageAccountArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithUserAssignedIdentity,
-    Pick<
-      storage.StorageAccountArgs,
-      | 'accessTier'
-      | 'allowBlobPublicAccess'
-      | 'isHnsEnabled'
-      | 'allowSharedKeyAccess'
-      | 'isSftpEnabled'
-      | 'largeFileSharesState'
-      | 'routingPreference'
+    Partial<
+      Pick<
+        storage.StorageAccountArgs,
+        | 'accessTier'
+        | 'allowBlobPublicAccess'
+        | 'isHnsEnabled'
+        | 'allowSharedKeyAccess'
+        | 'isSftpEnabled'
+        | 'largeFileSharesState'
+        | 'routingPreference'
+      >
     > {
   sku?: storage.SkuName | string;
   network?: types.NetworkArgs & {
@@ -35,9 +39,7 @@ export interface StorageAccountArgs
      */
     sasExpirationPeriod?: pulumi.Input<string>;
     sasExpirationAction?: 'Log' | 'Block';
-
     blob?: Omit<storage.BlobServicePropertiesArgs, 'blobServicesName' | 'resourceGroupName' | 'accountName'>;
-
     defaultManagementPolicyRules?: pulumi.Input<pulumi.Input<inputs.storage.ManagementPolicyRuleArgs>[]>;
   };
 
@@ -138,7 +140,10 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
         networkRuleSet: {
           bypass: args.network?.bypass ?? 'None',
-          defaultAction: args.network?.defaultAction ?? storage.DefaultAction.Allow,
+          defaultAction:
+            args.network?.ipRules || args.network?.vnetRules
+              ? storage.DefaultAction.Deny
+              : (args.network?.defaultAction ?? storage.DefaultAction.Allow),
 
           ipRules: args.network?.ipRules
             ? pulumi.output(args.network.ipRules).apply((ips) =>
@@ -162,6 +167,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
       {
         ...opts,
         dependsOn: encryptionKey,
+        parent: this,
       },
     );
 
@@ -204,7 +210,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             type: 'storage',
             storageType: t,
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg, deletedWith: stg, parent: this },
         ),
     );
   }
@@ -221,7 +227,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
           blobServicesName: 'default',
           ...policies.blob,
         },
-        { dependsOn: stg, parent: this },
+        { dependsOn: stg, deletedWith: stg, parent: this },
       );
     }
 
@@ -237,7 +243,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             rules: policies.defaultManagementPolicyRules,
           },
         },
-        { dependsOn: stg, parent: this },
+        { dependsOn: stg, deletedWith: stg, parent: this },
       );
     }
   }
@@ -254,7 +260,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         indexDocument: 'index.html',
         error404Document: 'index.html',
       },
-      { dependsOn: stg, parent: this },
+      { dependsOn: stg, deletedWith: stg, parent: this },
     );
 
     if (policies.staticWebsite.endpoint) {
@@ -265,7 +271,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
           rsGroup: policies.staticWebsite.existingProfile?.rsGroup ?? this.args.rsGroup,
           existingProfile: policies.staticWebsite.existingProfile,
         },
-        { dependsOn: [stg, staticWeb], parent: this },
+        { dependsOn: [stg, staticWeb], deletedWith: stg, parent: this },
       );
     }
   }
@@ -298,7 +304,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
               vaultInfo,
               secrets,
             },
-            { dependsOn: stg, parent: this },
+            { dependsOn: stg, deletedWith: stg, parent: this },
           );
         });
     });
@@ -318,7 +324,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             accountName: stg.name,
             publicAccess: c.isPublic ? 'Blob' : 'None',
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg, deletedWith: stg, parent: this },
         ),
     );
 
@@ -332,7 +338,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             accountName: stg.name,
             ...rsGroup,
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg, deletedWith: stg, parent: this },
         ),
     );
 
@@ -346,7 +352,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
             accountName: stg.name,
             ...rsGroup,
           },
-          { dependsOn: stg, parent: this },
+          { dependsOn: stg, deletedWith: stg, parent: this },
         ),
     );
   }

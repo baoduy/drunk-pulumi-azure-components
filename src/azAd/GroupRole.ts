@@ -7,7 +7,8 @@ import * as types from '../types';
 import { AzRole, AzRoleArgs } from './AzRole';
 
 export interface GroupRoleArgs
-  extends Pick<AzRoleArgs, 'owners' | 'preventDuplicateNames'>,
+  extends
+    Partial<Pick<AzRoleArgs, 'owners' | 'preventDuplicateNames'>>,
     Partial<Record<types.GroupRoleTypes, Pick<AzRoleArgs, 'members'>>> {
   preventDuplicateNames?: pulumi.Input<boolean>;
 }
@@ -32,7 +33,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
             members: args[role]?.members,
             preventDuplicateNames: args.preventDuplicateNames,
           },
-          { parent: this },
+          { ...this.opts, parent: this, deletedWith: this },
         ),
       ]),
     );
@@ -66,7 +67,6 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
   }
 
   private configHierarchyRoles(roles: { [k: string]: AzRole }) {
-    const deps = Object.values(roles);
     if (this.admin && this.contributor) {
       new azAd.GroupMember(
         `${this.name}-admin2contributor`,
@@ -74,7 +74,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
           groupObjectId: this.contributor.objectId,
           memberObjectId: this.admin.objectId,
         },
-        { dependsOn: deps, parent: this, retainOnDelete: true },
+        { dependsOn: roles['admin'], parent: this, retainOnDelete: true },
       );
     }
 
@@ -85,7 +85,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
           groupObjectId: this.readOnly.objectId,
           memberObjectId: this.contributor.objectId,
         },
-        { dependsOn: deps, parent: this, retainOnDelete: true },
+        { dependsOn: roles['contributor'], parent: this, retainOnDelete: true },
       );
     }
   }

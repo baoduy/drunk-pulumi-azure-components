@@ -3,6 +3,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
+import { zoneHelper } from '../helpers';
 
 export type RulePolicyArgs = {
   priority: number;
@@ -15,19 +16,22 @@ export type RulePolicyArgs = {
 };
 
 export interface FirewallArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
-    Pick<
-      network.AzureFirewallArgs,
-      | 'autoscaleConfiguration'
-      | 'tags'
-      | 'virtualHub'
-      | 'zones'
-      | 'managementIpConfiguration'
-      | 'ipConfigurations'
-      | 'hubIPAddresses'
-      | 'threatIntelMode'
+    Partial<
+      Pick<
+        network.AzureFirewallArgs,
+        | 'autoscaleConfiguration'
+        | 'tags'
+        | 'virtualHub'
+        | 'zones'
+        | 'managementIpConfiguration'
+        | 'ipConfigurations'
+        | 'hubIPAddresses'
+        | 'threatIntelMode'
+      >
     > {
   sku: {
     name: network.AzureFirewallSkuName;
@@ -39,15 +43,17 @@ export interface FirewallArgs
     routeServerId?: pulumi.Input<string>;
   };
 
-  policy: Pick<
-    network.FirewallPolicyArgs,
-    | 'dnsSettings'
-    | 'explicitProxy'
-    | 'insights'
-    | 'intrusionDetection'
-    | 'sql'
-    | 'threatIntelMode'
-    | 'threatIntelWhitelist'
+  policy: Partial<
+    Pick<
+      network.FirewallPolicyArgs,
+      | 'dnsSettings'
+      | 'explicitProxy'
+      | 'insights'
+      | 'intrusionDetection'
+      | 'sql'
+      | 'threatIntelMode'
+      | 'threatIntelWhitelist'
+    >
   > & {
     basePolicy?: types.ResourceInputs;
     transportSecurityCA?: pulumi.Input<inputs.network.FirewallPolicyCertificateAuthorityArgs>;
@@ -60,6 +66,12 @@ export interface FirewallArgs
     regionalWorkspaces?: Array<{ id: pulumi.Input<string>; region: pulumi.Input<string> }>;
   };
 }
+
+export type FirewallOutputs = {
+  firewall: types.ResourceOutputs;
+  policy: types.ResourceOutputs;
+  privateIpAddress: pulumi.Output<string>;
+};
 
 export class Firewall extends BaseResourceComponent<FirewallArgs> {
   public readonly firewall: types.ResourceOutputs;
@@ -81,7 +93,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): FirewallOutputs {
     return { firewall: this.firewall, policy: this.policy, privateIpAddress: this.privateIpAddress };
   }
 
@@ -101,7 +113,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
         sku,
         basePolicy: basePolicy ? { id: basePolicy.id } : undefined,
         dnsSettings:
-          policy.dnsSettings ?? sku.tier !== network.FirewallPolicySkuTier.Basic
+          (policy.dnsSettings ?? sku.tier !== network.FirewallPolicySkuTier.Basic)
             ? {
                 enableProxy: true,
               }
@@ -114,7 +126,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
         },
 
         threatIntelMode:
-          policy.threatIntelMode ?? sku.tier !== network.FirewallPolicySkuTier.Basic
+          (policy.threatIntelMode ?? sku.tier !== network.FirewallPolicySkuTier.Basic)
             ? network.AzureFirewallThreatIntelMode.Deny
             : undefined,
         threatIntelWhitelist: policy.threatIntelWhitelist ?? {
@@ -164,14 +176,15 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
         ...props,
         ...rsGroup,
         sku,
+        zones: sku.tier == 'Basic' ? ['1'] : zoneHelper.getDefaultZones(props.zones),
         additionalProperties: properties,
         firewallPolicy: firewallPolicy ? { id: firewallPolicy.id } : undefined,
         threatIntelMode:
-          props.threatIntelMode ?? (sku.tier !== network.AzureFirewallSkuTier.Basic && sku.name !== 'AZFW_Hub')
+          (props.threatIntelMode ?? (sku.tier !== network.AzureFirewallSkuTier.Basic && sku.name !== 'AZFW_Hub'))
             ? network.AzureFirewallThreatIntelMode.Deny
             : undefined,
       },
-      { ...this.opts, dependsOn: firewallPolicy ? firewallPolicy : this.opts?.dependsOn, parent: this },
+      { ...this.opts, dependsOn: this.opts?.dependsOn, parent: this },
     );
   }
 
@@ -190,7 +203,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
               ...p,
               firewallPolicyName: firewallPolicy.name,
             },
-            { dependsOn: [firewallPolicy], parent: this },
+            { dependsOn: firewallPolicy, parent: this, deletedWith: firewallPolicy },
           ),
       );
   }

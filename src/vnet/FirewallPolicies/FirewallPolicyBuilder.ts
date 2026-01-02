@@ -1,5 +1,4 @@
 import * as inputs from '@pulumi/azure-native/types/input';
-import * as pulumi from '@pulumi/pulumi';
 import * as network from '@pulumi/azure-native/network';
 import { RulePolicyArgs } from '../Firewall';
 
@@ -49,21 +48,38 @@ export class FirewallPolicyBuilder {
 
   public build(): RulePolicyArgs {
     const natRules: inputs.network.FirewallPolicyNatRuleCollectionArgs = {
-      name: `${this.name}-nat-rules`,
+      name: `${this.name}-dNat-rules`.toLocaleLowerCase(),
       action: { type: network.FirewallPolicyNatRuleCollectionActionType.DNAT },
       ruleCollectionType: 'FirewallPolicyNatRuleCollection',
       priority: 300,
       rules: this._natRules,
     };
 
-    const rules: inputs.network.FirewallPolicyFilterRuleCollectionArgs = {
-      name: `${this.name}-${this.props.action}-rules`,
+    const netRules: inputs.network.FirewallPolicyFilterRuleCollectionArgs = {
+      name: `${this.name}-${this.props.action}-net-rules`.toLocaleLowerCase(),
       action: { type: this.props.action },
       ruleCollectionType: `FirewallPolicyFilterRuleCollection`,
       priority: 400,
-      rules: [...this._netRules, ...this._appRules],
+      rules: this._netRules,
     };
 
-    return { name: this.name, priority: this.props.priority, ruleCollections: [natRules, rules] };
+    const appRules: inputs.network.FirewallPolicyFilterRuleCollectionArgs = {
+      name: `${this.name}-${this.props.action}-app-rules`.toLocaleLowerCase(),
+      action: { type: this.props.action },
+      ruleCollectionType: `FirewallPolicyFilterRuleCollection`,
+      priority: 500,
+      rules: this._appRules,
+    };
+
+    const ruleCollections = [];
+    if (this._natRules.length > 0) ruleCollections.push(natRules);
+    if (this._netRules.length > 0) ruleCollections.push(netRules);
+    if (this._appRules.length > 0) ruleCollections.push(appRules);
+
+    return {
+      name: this.name,
+      priority: this.props.priority,
+      ruleCollections: ruleCollections,
+    };
   }
 }

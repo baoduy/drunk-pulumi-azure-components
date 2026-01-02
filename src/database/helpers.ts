@@ -6,11 +6,11 @@ export function getIpsRange(prefix: string) {
 
 /** Convert IP address and IP address group into range */
 export function convertToIpRange(ipAddress: string[]): Array<{ start: string; end: string }> {
-  return ipAddress.map((ip) => {
+  return ipAddress.flatMap((ip) => {
     if (ip.includes('/')) {
       const range = getIpsRange(ip);
-      return { start: range.base, end: range.broadcast };
+      return { start: range.base!, end: range.broadcast! };
     }
-    return { start: ip, end: ip };
+    return [{ start: ip!, end: ip! }];
   });
 }

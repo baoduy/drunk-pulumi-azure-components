@@ -33,12 +33,7 @@ const rsRoles = {
       'Key Vault Certificate User',
       'Key Vault Reader',
     ],
-    contributor: [
-      'Key Vault Certificates Officer',
-      'Key Vault Crypto Officer',
-      'Key Vault Secrets Officer',
-      'Key Vault Contributor',
-    ],
+    contributor: ['Key Vault Certificates Officer', 'Key Vault Crypto Officer', 'Key Vault Secrets Officer'],
     admin: ['Key Vault Administrator', 'Key Vault Data Access Administrator'],
   },
   storage: {

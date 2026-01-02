@@ -15,7 +15,7 @@ export type CommonProps =
   | 'resourceName'
   | 'tags';
 
-type AsInput<T> = {
+export type AsInput<T> = {
   [K in keyof T]: T[K] extends object
     ? T[K] extends Array<any>
       ? pulumi.Input<NonNullable<T[K]>>
@@ -23,7 +23,7 @@ type AsInput<T> = {
     : pulumi.Input<NonNullable<T[K]>>;
 };
 
-type AsOutput<T> = {
+export type AsOutput<T> = {
   [K in keyof T]: T[K] extends object
     ? T[K] extends Array<any>
       ? pulumi.Output<NonNullable<T[K]>>
@@ -85,6 +85,15 @@ export type WithMemberOfArgs = {
   memberof?: pulumi.Input<{ objectId: string }>[];
 };
 
+export type IdentityType = {
+  id: string;
+  clientId: string;
+  objectId: string;
+};
+
+export type IdentityInputs = AsInput<IdentityType>;
+export type IdentityOutputs = AsOutput<IdentityType>;
+
 export type UserAssignedIdentityType = {
   id: string;
   clientId: string;
@@ -122,6 +131,12 @@ export interface GroupRoleOutput {
   objectId: string;
   displayName: string;
 }
+
+export type GroupRoleInputTypes = {
+  admin: pulumi.Input<GroupRoleOutput>;
+  contributor: pulumi.Input<GroupRoleOutput>;
+  readOnly: pulumi.Input<GroupRoleOutput>;
+};
 
 export type GroupRoleOutputTypes = {
   admin: pulumi.Output<GroupRoleOutput>;

@@ -20,7 +20,9 @@
   },
   "exclude": [
     "node_modules",
-    "**/__tests__"
+    "**/__tests__",
+    "bin",
+    "pulumi-test"
   ],
   "files": [
     "src/ResourceBuilder.ts",
@@ -28,6 +30,8 @@
     "src/aks/ContainerRegistry.ts",
     "src/aks/helpers.ts",
     "src/aks/index.ts",
+    "src/aks/types.ts",
+    "src/apim/Apim.ts",
     "src/apim/ApimApi.ts",
     "src/apim/ApimApiSet.ts",
     "src/apim/ApimPolicyBuilder.ts",
@@ -37,6 +41,8 @@
     "src/apim/openApiHelper.ts",
     "src/app/AppCert.ts",
     "src/app/AppConfig.ts",
+    "src/app/AppContainer.ts",
+    "src/app/AppContainerEnv.ts",
     "src/app/AppService.ts",
     "src/app/IoTHub.ts",
     "src/app/LogicApp.ts",
@@ -44,6 +50,7 @@
     "src/app/index.ts",
     "src/azAd/AppRegistration.ts",
     "src/azAd/AzRole.ts",
+    "src/azAd/CloudflareAzIdentity.ts",
     "src/azAd/CustomRoles.ts",
     "src/azAd/GroupRole.ts",
     "src/azAd/RoleAssignment.ts",
@@ -79,6 +86,7 @@
     "src/helpers/index.ts",
     "src/helpers/rsHelpers.ts",
     "src/helpers/stackEnv.ts",
+    "src/helpers/zoneHelper.ts",
     "src/index.ts",
     "src/logs/Logs.ts",
     "src/logs/helpers.ts",

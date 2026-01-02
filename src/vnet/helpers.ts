@@ -1,5 +1,4 @@
-import * as inputs from '@pulumi/azure-native/types/input';
-import * as pulumi from '@pulumi/pulumi';
+import * as privateDns from '@pulumi/azure-native/privatedns';
 import { RouteArgs } from './RouteTable';
 
 export function getVnetIdFromSubnetId(subnetId: string) {
@@ -45,4 +44,8 @@ export const defaultRouteRules = {
     addressPrefix: '0.0.0.0/0',
     nextHopType: 'VirtualNetworkGateway',
   } as RouteArgs,
+};
+
+export const getPrivateRecordSetOutput = (args: privateDns.GetPrivateRecordSetOutputArgs) => {
+  return privateDns.getPrivateRecordSetOutput(args);
 };

@@ -6,9 +6,11 @@ import * as types from '../types';
 
 import { ApimProduct, ApimProductArgs } from './ApimProduct';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv, stackInfo } from '../helpers';
+import { azureEnv, stackInfo, zoneHelper } from '../helpers';
+
 import { AppRegistration } from '../azAd';
 import { PrivateEndpoint } from '../vnet';
+import { vaultHelpers } from '../vault';
 
 type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
 
@@ -37,9 +39,9 @@ export interface ApimArgs
   customProperties?: string[];
   hostnameConfigurations?: Array<{
     hostName: pulumi.Input<string>;
-    negotiateClientCertificate: boolean;
-    defaultSslBinding: boolean;
-    cert?: ApimCertType;
+    negotiateClientCertificate?: boolean;
+    defaultSslBinding?: boolean;
+    cert: { vaultCertName: pulumi.Input<string>; version?: pulumi.Input<string> | undefined };
   }>;
   additionalLocations?: inputs.apimanagement.AdditionalLocationArgs[] | undefined;
   certificates?: {
@@ -109,6 +111,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
   private createApim() {
     const {
       defaultUAssignedId,
+      vaultInfo,
       groupRoles,
       rsGroup,
       sku,
@@ -149,20 +152,21 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         },
         certificates: this.getCerts(),
 
-        hostnameConfigurations: hostnameConfigurations.map((d) => {
-          if (!d.cert)
-            return {
-              ...d,
-              type: 'Proxy',
-            };
+        hostnameConfigurations: hostnameConfigurations.map((config) => {
+          const { cert, ...props } = config;
 
-          const cert = certHelpers.getCertOutputs(d.cert, this.args.vaultInfo);
-          return cert.apply((c) => ({
-            ...d,
-            certificateSource: c.encodedCertificate,
-            certificatePassword: c.certificatePassword,
+          return {
+            ...props,
+            certificateSource: apim.CertificateSource.KeyVault,
+            identityClientId: defaultUAssignedId?.clientId,
+            keyVaultId: vaultHelpers.getVaultId({
+              name: cert.vaultCertName,
+              version: cert.version,
+              vaultInfo: vaultInfo!,
+              type: 'secrets',
+            }),
             type: 'Proxy',
-          }));
+          };
         }),
 
         //Only support when linking to a virtual network
@@ -177,14 +181,14 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             }
           : undefined,
 
-        zones,
+        zones: zoneHelper.getDefaultZones(zones),
         //Only available for Premium
         additionalLocations:
           sku.name === 'Premium'
             ? additionalLocations?.map((a) => ({
                 ...a,
                 sku,
-                zones,
+                zones: zoneHelper.getDefaultZones(zones),
               }))
             : undefined,
 

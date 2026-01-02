@@ -23,6 +23,12 @@ export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
   storage?: { enabled: boolean };
 }
 
+export type LogsOutputs = {
+  storage?: types.ResourceOutputs;
+  workspace?: types.WorkspaceOutputs;
+  appInsight?: types.AppInsightOutputs;
+};
+
 export class Logs extends BaseResourceComponent<LogsArgs> {
   public readonly storage?: types.ResourceOutputs;
   public readonly workspace?: types.WorkspaceOutputs;
@@ -46,7 +52,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
       this.workspace = {
         id: workspace.id,
         resourceName: workspace.name,
-        customerId: pulumi.secret(workspace.customerId),
+        customerId: workspace.customerId,
       };
 
       this.addSecret(`${name}-wp-customerId`, workspace.customerId);
@@ -56,7 +62,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
       this.appInsight = {
         id: appInsight.id,
         resourceName: appInsight.name,
-        instrumentationKey: pulumi.secret(appInsight.instrumentationKey),
+        instrumentationKey: appInsight.instrumentationKey,
       };
 
       this.addSecret(`${name}-appInsight-key`, appInsight.instrumentationKey);
@@ -65,7 +71,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): LogsOutputs {
     return {
       storage: this.storage,
       workspace: this.workspace,
@@ -93,7 +99,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
           enableDataExport: workspace.enableDataExport,
         },
         workspaceCapping: sku === az.operationalinsights.WorkspaceSkuNameEnum.Free ? undefined : { dailyQuotaGb },
-        retentionInDays: sku === az.operationalinsights.WorkspaceSkuNameEnum.Free ? 7 : retentionInDays ?? 30,
+        retentionInDays: sku === az.operationalinsights.WorkspaceSkuNameEnum.Free ? 7 : (retentionInDays ?? 30),
         sku: { name: sku },
       },
       { dependsOn: this.opts?.dependsOn, parent: this },

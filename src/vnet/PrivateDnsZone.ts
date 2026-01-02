@@ -1,6 +1,6 @@
 import * as privateDns from '@pulumi/azure-native/privatedns';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import { rsHelpers } from '../helpers';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
@@ -21,10 +21,9 @@ export interface PrivateDnsZoneArgs extends WithResourceGroupInputs {
 }
 
 export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
-  private _rsName: string;
-
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
+  private readonly _rsName: string;
 
   constructor(name: string, args: PrivateDnsZoneArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('PrivateDnsZone'), name, args, opts);
@@ -58,12 +57,6 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
     };
   }
 
-  private createARecord() {
-    const { aRecords } = this.args;
-    if (!aRecords) return;
-    this.addARecords(aRecords);
-  }
-
   public addARecords(
     aRecords: Array<{
       name: string;
@@ -93,6 +86,20 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
     );
   }
 
+  protected getRsGroupInfo() {
+    const group = this.args.rsGroup;
+    return {
+      resourceGroupName: group.resourceGroupName,
+      location: 'global',
+    };
+  }
+
+  private createARecord() {
+    const { aRecords } = this.args;
+    if (!aRecords) return;
+    this.addARecords(aRecords);
+  }
+
   private createVnetLinks(zone: privateDns.PrivateZone) {
     const group = this.getRsGroupInfo();
     pulumi.output(this.args.vnetLinks).apply((vids) =>
@@ -110,13 +117,5 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
         );
       }),
     );
-  }
-
-  protected getRsGroupInfo() {
-    const group = this.args.rsGroup;
-    return {
-      resourceGroupName: group.resourceGroupName,
-      location: 'global',
-    };
   }
 }

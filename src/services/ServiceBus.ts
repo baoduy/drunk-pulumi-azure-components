@@ -6,7 +6,7 @@ import * as vault from '../vault';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 import { PrivateEndpoint } from '../vnet';
-import { azureEnv } from '../helpers';
+import { azureEnv, zoneHelper } from '../helpers';
 
 const defaultQueueOptions: Partial<bus.QueueArgs> = {
   //duplicateDetectionHistoryTimeWindow: 'P10M',
@@ -115,6 +115,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
         ...rsGroup,
         minimumTlsVersion: '1.2',
         disableLocalAuth,
+        zoneRedundant: props.zoneRedundant ?? (zoneHelper.getDefaultZones(undefined) ? true : undefined),
         identity: {
           type: defaultUAssignedId
             ? bus.ManagedServiceIdentityType.SystemAssigned_UserAssigned

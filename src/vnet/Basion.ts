@@ -5,9 +5,11 @@ import * as types from '../types';
 import { BaseComponent } from '../base/BaseComponent';
 import { IpAddresses } from './IpAddresses';
 import { getComponentResourceType } from '../base/helpers';
+import { zoneHelper } from '../helpers';
 
 export interface BasionArgs
-  extends types.WithResourceGroupInputs,
+  extends
+    types.WithResourceGroupInputs,
     Partial<
       Pick<
         nw.BastionHostArgs,
@@ -48,6 +50,7 @@ export class Basion extends BaseComponent<BasionArgs> {
         ...props,
         ...rsGroup,
         sku: { name: sku },
+        zones: sku != 'Basic' && sku != 'Developer' ? zoneHelper.getDefaultZones(props.zones) : undefined,
         ipConfigurations: [
           {
             name: 'IpConfig',

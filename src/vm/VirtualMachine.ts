@@ -1,4 +1,5 @@
 import * as compute from '@pulumi/azure-native/compute';
+import * as mnc from '@pulumi/azure-native/maintenance';
 import * as devtestlab from '@pulumi/azure-native/devtestlab';
 import * as nw from '@pulumi/azure-native/network';
 import * as inputs from '@pulumi/azure-native/types/input';
@@ -13,13 +14,14 @@ export type VmScheduleType = {
   /** The format is ISO 8601 Standard ex: 2200 */
   autoShutdownTime: pulumi.Input<string>;
   /** The format is ISO 8601 Standard ex: 0900 */
-  //autoStartTime?: Input<string>;
+  autoStartTime?: pulumi.Input<string>;
   emailNotification?: string[];
   webHook?: pulumi.Input<string>;
 };
 
 export interface VirtualMachineArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
     types.WithDiskEncryptSet,
@@ -47,6 +49,7 @@ export interface VirtualMachineArgs
     }
   >;
   lock?: boolean;
+  maintenance?: Partial<Pick<mnc.MaintenanceConfigurationArgs, 'recurEvery' | 'maintenanceScope'>> | false;
 }
 
 export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
@@ -56,6 +59,27 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
   constructor(name: string, args: VirtualMachineArgs, opts?: pulumi.ComponentResourceOptions) {
     super('VirtualMachine', name, args, opts);
 
+    const vm = this.createVM();
+    this.createSchedule(vm);
+    this.createExtensions(vm);
+    this.createMaintenance(vm);
+
+    if (args.lock) this.lockFromDeleting(vm);
+
+    this.id = vm.id;
+    this.resourceName = vm.name;
+
+    this.registerOutputs();
+  }
+
+  public getOutputs() {
+    return {
+      id: this.id,
+      resourceName: this.resourceName,
+    };
+  }
+
+  private createVM() {
     const {
       rsGroup,
       defaultUAssignedId,
@@ -66,18 +90,21 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       diskEncryptionSet,
       lock,
       ...props
-    } = args;
+    } = this.args;
 
     const keyEncryption = enableEncryption && !diskEncryptionSet ? this.getEncryptionKey({ name: 'key' }) : undefined;
     const diskEncryption = enableEncryption && !diskEncryptionSet ? this.getEncryptionKey({ name: 'disk' }) : undefined;
     const nic = this.createNetworkInterface();
     const credential = this.createCredentials();
 
-    const vm = new compute.VirtualMachine(
+    return new compute.VirtualMachine(
       this.name,
       {
         ...props,
         ...rsGroup,
+
+        //VM is not supported in all zones
+        //zones: zoneHelper.getDefaultZones(props.zones),
 
         identity: {
           type: defaultUAssignedId
@@ -90,13 +117,41 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           networkInterfaces: [{ id: nic.id, primary: true }],
         },
         //az feature register --name EncryptionAtHost  --namespace Microsoft.Compute
-        securityProfile: props.securityProfile ?? {
-          encryptionAtHost: true,
-        },
+        securityProfile: enableEncryption
+          ? (props.securityProfile ?? {
+              encryptionAtHost: true,
+            })
+          : undefined,
         osProfile: {
           ...osProfile,
           adminUsername: credential.login,
           adminPassword: credential.pass,
+
+          windowsConfiguration: osProfile?.windowsConfiguration
+            ? {
+                enableAutomaticUpdates: true,
+                patchSettings: {
+                  assessmentMode: compute.WindowsPatchAssessmentMode.AutomaticByPlatform,
+                  enableHotpatching: true,
+                  automaticByPlatformSettings: {
+                    bypassPlatformSafetyChecksOnUserSchedule: false,
+                    rebootSetting: 'IfRequired',
+                  },
+                  patchMode: compute.WindowsVMGuestPatchMode.AutomaticByPlatform,
+                },
+                ...osProfile.windowsConfiguration,
+              }
+            : undefined,
+
+          linuxConfiguration: osProfile?.linuxConfiguration
+            ? {
+                patchSettings: {
+                  patchMode: compute.LinuxVMGuestPatchMode.AutomaticByPlatform,
+                  assessmentMode: compute.LinuxPatchAssessmentMode.AutomaticByPlatform,
+                },
+                ...osProfile.linuxConfiguration,
+              }
+            : undefined,
         },
         storageProfile: {
           ...storageProfile,
@@ -127,15 +182,16 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                 : undefined,
 
             managedDisk: {
-              diskEncryptionSet: diskEncryptionSet
-                ? {
-                    id: diskEncryptionSet.id,
-                  }
-                : undefined,
+              diskEncryptionSet:
+                enableEncryption && diskEncryptionSet
+                  ? {
+                      id: diskEncryptionSet.id,
+                    }
+                  : undefined,
 
               securityProfile: storageProfile.securityEncryptionType
                 ? {
-                    diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
+                    diskEncryptionSet: enableEncryption && diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
                     securityEncryptionType: storageProfile.securityEncryptionType,
                   }
                 : undefined,
@@ -147,14 +203,16 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
             ? storageProfile.dataDisks.map((d) => ({
                 ...d,
                 managedDisk: {
-                  diskEncryptionSet: diskEncryptionSet
-                    ? {
-                        id: diskEncryptionSet.id,
-                      }
-                    : undefined,
+                  diskEncryptionSet:
+                    enableEncryption && diskEncryptionSet
+                      ? {
+                          id: diskEncryptionSet.id,
+                        }
+                      : undefined,
                   securityProfile: storageProfile.securityEncryptionType
                     ? {
-                        diskEncryptionSet: diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
+                        diskEncryptionSet:
+                          enableEncryption && diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
                         securityEncryptionType: storageProfile.securityEncryptionType,
                       }
                     : undefined,
@@ -165,27 +223,11 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
         },
       },
       {
-        ...opts,
+        ...this.opts,
         protect: lock,
         parent: this,
       },
     );
-
-    this.createSchedule(vm);
-    this.createExtensions(vm);
-    if (lock) this.lockFromDeleting(vm);
-
-    this.id = vm.id;
-    this.resourceName = vm.name;
-
-    this.registerOutputs();
-  }
-
-  public getOutputs() {
-    return {
-      id: this.id,
-      resourceName: this.resourceName,
-    };
   }
 
   private createCredentials() {
@@ -218,10 +260,10 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
 
   private createSchedule(vm: compute.VirtualMachine) {
     const { rsGroup, schedule } = this.args;
-    if (!schedule) return undefined;
+    if (!schedule) return;
 
-    return vm.name.apply(
-      (n) =>
+    vm.name.apply((n) => {
+      if (schedule.autoShutdownTime) {
         new devtestlab.GlobalSchedule(
           `shutdown-computevm-${n}`,
           {
@@ -243,8 +285,34 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
             },
           },
           { dependsOn: vm, parent: this, deleteBeforeReplace: true, deletedWith: vm },
-        ),
-    );
+        );
+      }
+
+      if (schedule.autoStartTime) {
+        new devtestlab.GlobalSchedule(
+          `startup-computevm-${n}`,
+          {
+            ...rsGroup,
+            name: `startup-computevm-${n}`,
+            dailyRecurrence: { time: schedule.autoStartTime },
+
+            timeZoneId: schedule.timeZone,
+            status: 'Enabled',
+            targetResourceId: vm.id,
+            taskType: 'ComputeVmStartupTask',
+
+            notificationSettings: {
+              status: schedule.webHook || schedule.emailNotification ? 'Enabled' : 'Disabled',
+              emailRecipient: schedule.emailNotification?.join(';'),
+              notificationLocale: 'en',
+              timeInMinutes: 30,
+              webhookUrl: schedule.webHook,
+            },
+          },
+          { dependsOn: vm, parent: this, deleteBeforeReplace: true, deletedWith: vm },
+        );
+      }
+    });
   }
 
   private createExtensions(vm: compute.VirtualMachine) {
@@ -262,6 +330,78 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           },
           { dependsOn: vm, parent: this },
         ),
+    );
+  }
+
+  private createMaintenance(vm: compute.VirtualMachine) {
+    const { rsGroup, maintenance, osProfile, schedule } = this.args;
+    if (maintenance === false) return;
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const startDate = tomorrow.toISOString().split('T')[0];
+
+    const scope = maintenance?.maintenanceScope ?? mnc.MaintenanceScope.OSImage;
+
+    let duration = '04:00';
+    if (scope === mnc.MaintenanceScope.InGuestPatch) {
+      duration = '04:00';
+    } else if (scope === mnc.MaintenanceScope.OSImage) {
+      duration = '08:00';
+    } else if (scope === mnc.MaintenanceScope.Resource) {
+      duration = '05:00';
+    }
+
+    const config = new mnc.MaintenanceConfiguration(
+      `${this.name}-maintenance`,
+      {
+        ...rsGroup,
+        maintenanceScope: scope,
+        installPatches:
+          scope == mnc.MaintenanceScope.InGuestPatch
+            ? {
+                windowsParameters: osProfile?.windowsConfiguration
+                  ? {
+                      classificationsToInclude: ['Critical', 'Security', 'UpdateRollup', 'FeaturePack', 'ServicePack'],
+                      excludeKbsRequiringReboot: false,
+                    }
+                  : undefined,
+                linuxParameters: osProfile?.linuxConfiguration
+                  ? {
+                      classificationsToInclude: ['Critical', 'Security', 'UpdateRollup', 'FeaturePack', 'ServicePack'],
+                    }
+                  : undefined,
+              }
+            : undefined,
+        timeZone: schedule?.timeZone ?? 'Singapore Standard Time',
+        visibility: 'Custom',
+        startDateTime: `${startDate} 00:00`,
+        duration,
+        recurEvery: maintenance?.recurEvery ?? '1Week Saturday,Sunday',
+        extensionProperties: {
+          InGuestPatchMode: 'User',
+        },
+      },
+      {
+        dependsOn: vm,
+        parent: this,
+        deletedWith: vm,
+        deleteBeforeReplace: true,
+        replaceOnChanges: ['maintenanceScope'],
+      },
+    );
+
+    return new mnc.ConfigurationAssignment(
+      `${this.name}-maintenance-assignment`,
+      {
+        ...rsGroup,
+        resourceName: vm.name,
+        maintenanceConfigurationId: config.id,
+        resourceId: vm.id,
+        resourceType: 'virtualMachines',
+        providerName: 'Microsoft.Compute',
+      },
+      { dependsOn: [vm, config], parent: this, deletedWith: config, deleteBeforeReplace: true },
     );
   }
 }

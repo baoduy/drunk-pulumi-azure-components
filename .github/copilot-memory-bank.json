@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "description": "Curated static memory bank for GitHub Copilot – high-signal facts to bias suggestions toward project architecture & standards.",
+  "project": {
+    "name": "drunk-pulumi-azure-components",
+    "domain": "Infrastructure as Code for Azure using Pulumi + TypeScript",
+    "primaryEntry": "ResourceBuilder",
+    "language": "TypeScript"
+  },
+  "codingPrinciples": [
+    "Prefer existing component abstractions over raw provider usage",
+    "Deterministic resource naming (kebab-case)",
+    "All secrets via Key Vault or pulumi config secrets",
+    "Strong typing – avoid 'any'",
+    "Public classes must register outputs",
+    "Constructor: validate -> provision -> registerOutputs",
+    "Update docs & tests for every public API change"
+  ],
+  "testCommands": ["pnpm run test", "npx tsc --noEmit"],
+  "buildCommands": ["pnpm run build"],
+  "resourceCategories": ["aks", "app", "azAd", "base", "common", "database", "helpers", "logs", "services", "storage", "vault", "vm", "vnet"],
+  "naming": {
+    "pulumiComponentKey": "ClassName without suffix",
+    "resourceNameStyle": "kebab-case stable deterministic"
+  },
+  "glossary": {
+    "ResourceBuilder": "Top-level orchestrator for composing Azure infrastructure sets.",
+    "ComponentResource": "Pulumi higher-level resource wrapper encapsulating multiple lower-level resources.",
+    "UAssignId": "User Assigned Identity used for access control.",
+    "Deterministic Naming": "Same logical inputs produce identical resource names across runs.",
+    "Idempotent": "Repeated application yields no unintended change."
+  },
+  "qualityGate": ["TypeScript passes (npx tsc --noEmit)", "Jest tests pass (pnpm run test)", "Build succeeds (pnpm run build)", "No secrets hardcoded", "Documentation updated"],
+  "promptPatterns": [
+    {
+      "goal": "Add new Azure service component",
+      "steps": ["Create Args interface", "Add class extends BaseResourceComponent", "Validate inputs early", "Provision azure-native resources", "Expose essential outputs", "Register outputs", "Add Jest test", "Update docs"]
+    },
+    {
+      "goal": "Extend ResourceBuilder with optional feature",
+      "steps": ["Add new arg to builder options type", "Provide default value or undefined handling", "Conditional create inside constructor", "Attach outputs", "Update getOutputs", "Add doc section", "Add tests"]
+    }
+  ],
+  "categoryPatterns": {
+    "aks": {
+      "primaryComponent": "AzKubernetes",
+      "argsMixins": ["CommonBaseArgs", "WithEncryptionEnabler", "WithGroupRolesArgs", "WithUserAssignedIdentity", "WithDiskEncryptSet"],
+      "keySteps": ["Create identity (AppRegistration) with Reader role on RG", "Generate SSH + admin username via SshGenerator and Random helpers", "Optional DiskEncryptionSet when encryption enabled", "Normalize agent pool profiles with zoneHelper", "Provision ManagedCluster with AAD, addons, network & autoscaler defaults", "Create extra agent pools post cluster", "Create maintenance configurations (default/autoUpgrade/nodeOS)", "Assign permissions (RoleAssignment for kubelet identity + ACR pull)", "Create namespaces retained on delete", "Expose private DNS zone outputs for private cluster"],
+      "outputShape": ["id", "resourceName", "namespaces{ id, resourceName }", "privateDnsZone?"],
+      "patterns": ["Use zoneHelper.getDefaultZones", "Mapping addon flags to addonProfiles", "Pulumi interpolate for dynamic node RG"]
+    },
+    "storage": {
+      "primaryComponent": "StorageAccount",
+      "argsMixins": ["CommonBaseArgs", "WithEncryptionEnabler", "WithUserAssignedIdentity"],
+      "keySteps": ["Optional getEncryptionKey when enableEncryption", "Provision StorageAccount with secure defaults (HTTPS only, TLS1_2)", "Configure identity (SystemAssigned or System+UserAssigned)", "Set encryption block with keyVaultProperties when CMK", "Configure network rules & private link", "Add blob service / lifecycle policies", "Enable static website & optional CDN", "Fetch keys then create VaultSecrets", "Create containers, queues, shares from arrays"],
+      "outputShape": ["resourceName", "id", "rsGroup"],
+      "patterns": ["Lowercase sub-resource names", "Network ruleSet defaultAction Deny if rules present", "Use listStorageAccountKeysOutput + reduce for secrets"]
+    },
+    "vnet": {
+      "primaryComponent": "Vnet",
+      "argsMixins": ["CommonBaseArgs"],
+      "supportingComponents": ["NetworkSecurityGroup", "RouteTable", "NatGateway", "Firewall", "Basion", "VpnGateway", "Subnet"],
+      "keySteps": ["Create NSG with optional bastion rules", "Create RouteTable (insert Internet route if firewall)", "Create or reuse Public IPs then NatGateway", "Augment subnet list with feature-specific subnets", "Provision VirtualNetwork (ignoreChanges for subnets & peerings)", "Create Subnet resources with links to NSG/Route/Nat", "Create Firewall/Bastion/VpnGateway referencing subnets", "Establish peering via NetworkPeering", "Link private DNS zones using VirtualNetworkLink"],
+      "outputShape": ["securityGroup?", "routeTable", "natGateway?", "vpnGateway?", "firewall?", "vnet", "subnets{ id, resourceName }"],
+      "patterns": ["helpers.AzureSubnetNames for reserved names", "Disable outbound by default", "AddressSpace from explicit prefixes or subnet prefixes", "dictReduce for outputs"]
+    }
+  },
+  "commitMessageFormat": "<type>(<scope>): <summary>",
+  "commitTypes": ["feat", "fix", "refactor", "docs", "test", "chore", "perf", "ci"],
+  "scopes": ["aks", "app", "azAd", "vault", "vnet", "builder", "types"],
+  "security": {
+    "secretPolicy": "Never inline secrets; use Key Vault or pulumi.config.requireSecret.",
+    "logging": "Do not log secret outputs or credentials.",
+    "encryption": "Use PGPGenerator and vault helpers for encryption needs."
+  },
+  "futureEnhancements": ["Pulumi mocks for isolated component unit tests", "Automated TSDoc generation", "Stricter ESLint TS parser configuration"]
+}

@@ -30,10 +30,14 @@ export const stack = process.env.PULUMI_NODEJS_STACK ?? pulumi.getStack().toLowe
  * Gets stack outputs from a specified project
  * @template TOutput - The type of the stack outputs
  * @param {string} [name=projectName] - The name of the project to get outputs from. Defaults to current project
+ * @param org
  * @returns {pulumi.Output<TOutput>} The stack outputs
  */
-export const getStackOutputs = <TOutput>(name: string = projectName): pulumi.Output<Required<TOutput>> => {
-  const stackRef = new pulumi.StackReference(`${organization}/${name}/${stack}`);
+export const getStackOutputs = <TOutput>(
+  name: string = projectName,
+  org: string = organization,
+): pulumi.Output<Required<TOutput>> => {
+  const stackRef = new pulumi.StackReference(`${org}/${name}/${stack}`);
   return stackRef.outputs.apply((s) => s.default ?? s) as pulumi.Output<Required<TOutput>>;
 };
 

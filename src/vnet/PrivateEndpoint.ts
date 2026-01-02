@@ -13,6 +13,7 @@ export type PrivateEndpointServices =
   | 'azSearch'
   | 'azConfig'
   | 'azurecr'
+  | 'containerapp'
   | 'keyVault'
   | 'mysql'
   | 'postgres'
@@ -154,6 +155,11 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
         return {
           privateDnsZoneName: 'privatelink.azurecr.io',
           linkServiceGroupIds: ['azurecr'],
+        };
+      case 'containerapp':
+        return {
+          privateDnsZoneName: 'privatelink.azurecontainerapps.io',
+          linkServiceGroupIds: ['containerApps'],
         };
       case 'keyVault':
         return {

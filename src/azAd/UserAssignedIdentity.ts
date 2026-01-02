@@ -7,9 +7,7 @@ import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
 import { azureEnv, rsHelpers } from '../helpers';
 
 export interface UserAssignedIdentityArgs
-  extends Omit<BaseArgs, 'groupRoles'>,
-    WithMemberOfArgs,
-    WithResourceGroupInputs {
+  extends Omit<BaseArgs, 'groupRoles'>, WithMemberOfArgs, WithResourceGroupInputs {
   federations?: Record<
     string,
     Partial<Pick<mid.FederatedIdentityCredentialArgs, 'issuer'>> & Pick<mid.FederatedIdentityCredentialArgs, 'subject'>
@@ -39,7 +37,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     this.clientId = managedIdentity.clientId;
     this.principalId = managedIdentity.principalId;
 
-    this.addMemberOf();
+    this.addMemberOf(managedIdentity);
     this.registerOutputs();
   }
 
@@ -72,18 +70,18 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     );
   }
 
-  private addMemberOf() {
+  private addMemberOf(uid: mid.UserAssignedIdentity) {
     if (!this.args.memberof) return;
-    this.args.memberof.map((group) =>
+    return this.args.memberof.map((group) =>
       pulumi.output(group).apply(
         (id) =>
           new azAd.GroupMember(
             `${this.name}-${id.objectId}`,
             {
               groupObjectId: id.objectId,
-              memberObjectId: this.principalId,
+              memberObjectId: uid.principalId,
             },
-            { parent: this, deletedWith: this },
+            { dependsOn: uid, parent: this, retainOnDelete: true },
           ),
       ),
     );

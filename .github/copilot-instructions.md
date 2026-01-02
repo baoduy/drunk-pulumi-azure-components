@@ -1,195 +1,190 @@
-# Drunk Pulumi Azure Components
+# Drunk Pulumi Azure Components – GitHub Copilot Instructions
 
-A modular, reusable TypeScript library of Pulumi components for rapidly building and managing Azure infrastructure. This project provides high-level abstractions for common Azure resources, enabling you to compose complex cloud environments with minimal boilerplate.
+> Purpose: Provide Copilot (chat + inline) with high–signal, authoritative guidance so suggestions align with project architecture, naming, safety, test discipline, and Pulumi best practices. Treat this file as the FIRST source of truth before searching or generating speculative code.
 
-**CRITICAL: Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
+## 1. Project Essence (30‑second mental model)
 
-## Working Effectively
+Infrastructure as Code (IaC) TypeScript component library layering higher‑level Azure abstractions over Pulumi providers. Consumers compose environments chiefly through `ResourceBuilder` + category components (`aks/`, `app/`, `azAd/`, `vault/`, `vnet/`, etc.) to reduce boilerplate.
 
-### Initial Setup
-**Install dependencies and build the library:**
-- Install pnpm globally: `npm install -g pnpm`
-- Install dependencies: `pnpm install` -- takes 2+ minutes. **NEVER CANCEL.** Set timeout to 180+ seconds.
-- Build the library: `pnpm run build` -- takes under 2 minutes. **NEVER CANCEL.** Set timeout to 180+ seconds.
+## 2. Golden Rules for Copilot
 
-### Development Commands
-- **Build**: `pnpm run build` -- Compiles TypeScript, updates tsconfig.json, copies files to bin/
-- **Fast Build**: `pnpm run fastBuild` -- TypeScript compilation only, faster for development
-- **Test**: `pnpm run test` -- Runs Jest test suite, takes 30+ seconds. **NEVER CANCEL.** Set timeout to 60+ seconds.
-- **TypeScript Check**: `npx tsc --noEmit` -- Validates TypeScript without generating output, very fast
-- **Update Dependencies**: `pnpm run update` -- Updates all package dependencies
+1. Prefer existing helpers/components; do not reimplement provider logic directly unless missing.
+2. Enforce strong typing – extend or refine `types.ts` rather than using `any`.
+3. Never suggest storing secrets in source; always refer to Key Vault or Pulumi config/secret values.
+4. Resource names: stable, deterministic, kebab-case without random suffix unless explicitly required.
+5. Side effects belong inside component constructors; pure helpers return plain values or typed objects.
+6. Provide doc comments (TSDoc) for new public classes/props.
+7. Keep component constructors thin: validate args → create resources → register outputs.
+8. Always show follow‑up validation steps (`npx tsc --noEmit`, `pnpm run test`, `pnpm run build`).
+9. Suggest incremental refactors (small PRs) – never a sweeping reformat.
+10. For prompts asking “add X resource”, first check if a component exists; if not, scaffold new one under correct category.
 
-### Code Quality
-- **TypeScript Validation**: Always run `npx tsc --noEmit` before committing changes
-- **ESLint**: The project has ESLint configured but requires additional TypeScript parser setup to work properly. Use TypeScript compiler for code validation instead.
-- **Testing**: Always run `pnpm run test` after making changes to ensure no regressions
+## 3. Directory Cheat Sheet
 
-## Project Structure
-
-### Source Code Organization
 ```
 src/
-  aks/           # Azure Kubernetes Service components
-  app/           # App-related Azure resources (App Service, IoT Hub, etc.)
-  azAd/          # Azure Active Directory (roles, identities, etc.)
-  base/          # Base classes and helpers for components
-  common/        # Common utilities and resource helpers
-  database/      # Database resources (SQL, MySQL, Postgres, Redis)
-  helpers/       # Utility functions and configuration helpers
-  logs/          # Logging and monitoring components
-  services/      # Azure services (Automation, Search, Service Bus)
-  storage/       # Storage account components
-  vault/         # Key Vault and encryption helpers
-  vm/            # Virtual machine and disk encryption components
-  vnet/          # Networking (VNet, Firewall, CDN, etc.)
-  types.ts       # Shared TypeScript types
-  ResourceBuilder.ts # Main builder for composing resources
-  index.ts       # Main library entry point
+  base/        Core inheritance: BaseComponent, BaseResourceComponent
+  types.ts     Shared types + interfaces; extend here first
+  *category*/  Domain components (aks, app, azAd, vault, vnet, etc.)
+ResourceBuilder.ts  Orchestrates cross‑cutting resource composition
+__tests__/     Jest unit tests (fast, deterministic)
+pulumi-test/   Example consumption + integration sanity (tsc only by default)
+doc/           Human‑readable deep dives per category
 ```
 
-### Key Entry Points
-- **ResourceBuilder**: Main component for composing Azure resources (resource groups, roles, vault, logs, etc.)
-- **Component Categories**: Each directory under `src/` represents a category of Azure services with related components
+## 4. Component Scaffold Pattern
 
-### Important Files
-- **package.json**: Defines scripts, dependencies, and project metadata
-- **tsconfig.json**: TypeScript configuration (dynamically updated by build process)
-- **jest.config.js**: Jest testing configuration
-- **PulumiPlugin.yaml**: Pulumi plugin metadata
-- **.eslintrc.json**: ESLint configuration (needs TypeScript parser setup for full functionality)
-
-## Testing and Examples
-
-### Running Tests
-- **Unit Tests**: `pnpm run test` in the root directory
-- **Example Validation**: Use the `pulumi-test/` directory for testing component usage
-
-### Pulumi Test Directory
-Navigate to `pulumi-test/` for working examples:
-- **Install dependencies**: `npm install` (takes 1+ minute)
-- **Validate TypeScript**: `npx tsc --noEmit` to ensure examples compile
-- **Example files**: `index.ts` and `samples/` directory contain usage examples
-- **Pulumi commands**: Scripts in package.json for stack management (requires Azure credentials)
-
-### Manual Validation
-After making changes to components:
-1. **Build the library**: `pnpm run build`
-2. **Run tests**: `pnpm run test`
-3. **Validate examples**: Navigate to `pulumi-test/` and run `npx tsc --noEmit`
-4. **Check specific components**: Create test files in `pulumi-test/samples/` to validate new functionality
-
-## Component Usage Patterns
-
-### Common Component Types
-- **Resource Groups**: Base organizational unit for Azure resources
-- **Key Vaults**: Secure storage for secrets, keys, and certificates
-- **Networking**: Virtual networks, subnets, firewalls, and peering
-- **Identity**: Azure AD roles, user-assigned identities, and role assignments
-- **Compute**: Virtual machines, AKS clusters, and associated resources
-- **Storage**: Storage accounts and related services
-- **Databases**: SQL, MySQL, PostgreSQL, and Redis instances
-
-### Typical Usage Flow
 ```typescript
-import { ResourceBuilder } from '@drunk-pulumi/azure-components';
-
-const builder = new ResourceBuilder('stack-name', {
-  groupRoles: { createWithName: 'my-rg-roles' },
-  vault: { sku: 'standard' },
-  logs: { /* logs config */ },
-  enableDefaultUAssignId: true,
-});
-
-export const outputs = builder.getOutputs();
-```
-
-## Build System Details
-
-### Build Process
-The `pnpm run build` command performs these steps:
-1. **Update tsconfig.json**: Automatically adds all TypeScript files to the files array
-2. **Compile TypeScript**: Generates JavaScript and declaration files in `bin/` directory
-3. **Copy package files**: Copies package.json (without devDependencies), README.md, and PulumiPlugin.yaml to `bin/`
-
-### Output Directory
-- **bin/**: Contains compiled JavaScript, TypeScript declarations, and package files
-- **Ignore bin/**: The `bin/` directory is git-ignored as it contains build artifacts
-
-### Dependencies
-- **Runtime**: Pulumi Azure providers, lodash, netmask, openpgp
-- **Development**: TypeScript, Jest, ts-jest, cross-env, cpy-cli
-- **Package Manager**: pnpm (preferred) or npm
-
-## Validation Scenarios
-
-### Code Changes Validation
-1. **Component Development**: After modifying any component, always build and test
-2. **Type Safety**: Run `npx tsc --noEmit` to catch TypeScript errors
-3. **Regression Testing**: Run `pnpm run test` to ensure existing functionality works
-4. **Example Integration**: Test changes using examples in `pulumi-test/` directory
-
-### CI/CD Considerations
-- **GitHub Workflow**: Located at `.github/workflows/build-publish-drunk.yml`
-- **Build Requirements**: Node.js 20, pnpm 8, proper npm authentication for publishing
-- **Versioning**: Automatic patch version increment on main branch pushes
-
-## Common Tasks Reference
-
-### Repository Root Files
-```
-.devcontainer/     # VS Code development container setup
-.github/           # GitHub workflows and configuration
-.tasks/            # Build helper scripts
-__tests__/         # Jest test files
-pulumi-test/       # Example Pulumi stacks and usage samples
-src/               # Main source code
-.eslintrc.json     # ESLint configuration
-.gitignore         # Git ignore patterns
-jest.config.js     # Jest configuration
-package.json       # Package configuration and scripts
-pnpm-lock.yaml     # pnpm lockfile
-PulumiPlugin.yaml  # Pulumi plugin metadata
-README.md          # Project documentation
-tsconfig.json      # TypeScript configuration
-```
-
-### Package.json Scripts
-```json
-{
-  "build": "pnpm run update-tsconfig && pnpm run fastBuild && npm run copy-pkg",
-  "fastBuild": "cross-env NODE_ENV=production && NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc",
-  "test": "jest",
-  "update": "npx npm-check-updates -u && pnpm install"
+export interface FooArgs {
+  /* validated input */
+}
+export class Foo extends BaseResourceComponent<FooArgs> {
+  public readonly id: pulumi.Output<string>;
+  constructor(name: string, args: FooArgs, opts?: pulumi.ComponentResourceOptions) {
+    super('Foo', name, args, opts);
+    // 1. Normalize + validate args
+    // 2. Create Azure Native / provider resources
+    // 3. Assign outputs (this.id = resource.id;)
+    this.registerOutputs({ id: this.id });
+  }
 }
 ```
 
-### Dependencies Overview
-- **@drunk-pulumi/azure-providers**: Core Azure provider abstractions
-- **@pulumi/azure-native**: Official Azure Native Pulumi provider
-- **@pulumi/azuread**: Azure Active Directory provider
-- **@pulumi/pulumi**: Core Pulumi SDK
-- **lodash**: Utility functions
-- **netmask**: Network address manipulation
-- **openpgp**: PGP encryption functionality
+Mandatory: `super(componentKey, name, args, opts)` + `registerOutputs`. Keep external surface minimal.
 
-## Troubleshooting
+## 5. Naming & Conventions
 
-### Common Issues
-- **Build Errors**: Ensure all dependencies are installed with `pnpm install`
-- **TypeScript Errors**: Use `npx tsc --noEmit` to check for compilation issues
-- **Test Failures**: Run tests individually to isolate issues
-- **ESLint Issues**: ESLint configuration needs TypeScript parser setup for full functionality
+- Class names: PascalCase; file names: PascalCase.ts or index.ts for barrels.
+- Pulumi resource names: `group-name` style; compose with stack or env only when stable.
+- Avoid dynamic randomness except where Azure requires uniqueness (e.g., storage accounts) – funnel through a helper for reproducibility.
+- Secrets: Use `pulumi.secret(...)` wrapping or Key Vault references.
 
-### Performance Notes
-- **Build Time**: Under 2 minutes for full build
-- **Install Time**: Approximately 2 minutes for dependency installation
-- **Test Time**: Approximately 11 seconds for full test suite
-- **Memory Usage**: Build process uses up to 8GB memory allocation for large projects
+## 6. Types & Extensibility Strategy
 
-### Environment Requirements
-- **Node.js**: Version 16+ (tested with Node.js 20)
-- **Package Manager**: pnpm (preferred) or npm
-- **Pulumi CLI**: Required for running examples (already available in this environment)
-- **TypeScript**: Managed through project dependencies
+When adding fields: update `types.ts` or create a category‑specific `types` module if cohesion demands. Prefer discriminated unions over boolean flag clusters. Provide JSDoc for complex fields.
 
-**Remember: Always validate changes with build, test, and TypeScript compilation before committing.**
+## 7. Testing Strategy
+
+| Level       | Tool                    | Purpose                                        |
+| ----------- | ----------------------- | ---------------------------------------------- |
+| Unit        | Jest (`pnpm run test`)  | Validate helper logic & component output shape |
+| Type        | `npx tsc --noEmit`      | Enforce strict typing & regressions            |
+| Integration | `pulumi-test/` examples | Compile-only safety for composed usage         |
+
+Copilot should generate tests that:
+
+- Use deterministic inputs
+- Assert essential output fields (e.g., ids, names)
+- Avoid live Azure calls – rely on Pulumi mocks if deeper testing needed (future enhancement)
+
+## 8. Build & Release Flow (Copilot awareness)
+
+`pnpm run build`:
+
+1. Refresh `tsconfig.json` file list
+2. Compile TS → `bin/`
+3. Copy pruned `package.json`, README, PulumiPlugin.yaml
+   Auto‑publish workflow increments patch on main. Copilot must not suggest manual version bumps.
+
+## 9. Security & Secrets
+
+- Use Key Vault components for secrets; never inline sensitive strings.
+- For encryption tasks use `PGPGenerator` or Vault helpers.
+- Do not log secret outputs.
+- Encourage principle of least privilege through `azAd` role components.
+
+## 10. Prompt Recipes (Examples for Better Suggestions)
+
+Ask: “Generate a new component for Azure Cognitive Search with args, validation, and tests.”
+Follow: Component scaffold → types additions → minimal Jest test asserting outputs → update docs.
+
+Ask: “Extend ResourceBuilder to optionally create an Azure Firewall.”
+Follow: Add args to builder interface → conditional instantiation in constructor → register outputs → docs + tests.
+
+Ask: “Refactor FooArgs booleans into a discriminated union.”
+Follow: Propose new type + migration note + update usage in component.
+
+## 11. Glossary (High‑Signal Terms)
+
+- ResourceBuilder: Orchestrator for composite infra sets.
+- ComponentResource: Pulumi higher‑level resource wrapper.
+- Deterministic Naming: Same inputs → identical names across runs.
+- Idempotent: Safe to reapply without unintended drift.
+- Vault: Key Vault or secret management constructs.
+- UAssignId: User Assigned Identity.
+
+## 12. Copilot Do / Don’t Table
+
+Do: Tight, typed helpers | Minimal public surface | Reuse categories | Add docs/tests.
+Don’t: Introduce `any` | Skip `registerOutputs` | Hardcode secrets | Randomize names arbitrarily | Large unreviewed rewrites.
+
+## 13. Commit Message Guidance (for generation)
+
+Format: `feat(category): concise summary`
+Types: feat, fix, refactor, docs, test, chore, perf, ci.
+Scope examples: aks, app, azAd, vault, vnet, builder, types.
+
+## 14. Performance Considerations
+
+- Keep constructor logic O(number of created resources) – avoid heavy synchronous computation.
+- Defer large derived calculations to helpers.
+- Minimize repeated provider instantiation; reuse config where possible.
+
+## 15. Extending ResourceBuilder
+
+Checklist:
+
+1. Add arg interface field (typed & documented)
+2. Defaulting logic (safe fallbacks)
+3. Conditional resource instantiation
+4. Expose output through `.getOutputs()`
+5. Update docs + tests
+
+## 16. Error Handling Guidance
+
+- Fail fast on invalid args with `throw new Error('Reason – expected X, got Y')` inside constructor before provisioning.
+- Validate required relationships (e.g., vNet needed before subnet components) early.
+
+## 17. When Unsure
+
+Copilot: Prefer searching existing directory for similar pattern (e.g., see `AppService` when adding another app component). Use the most analogous implementation as blueprint.
+
+## 18. Minimal Example
+
+```typescript
+import { ResourceBuilder } from '@drunk-pulumi/azure-components';
+const builder = new ResourceBuilder('stack-core', {
+  vault: { sku: 'standard' },
+  enableDefaultUAssignId: true,
+});
+export const outputs = builder.getOutputs();
+```
+
+## 19. Quality Gate
+
+Before merge (Copilot suggestions should include this list):
+
+- ✅ Types compile (`npx tsc --noEmit`)
+- ✅ Unit tests pass (`pnpm run test`)
+- ✅ Build succeeds (`pnpm run build`)
+- ✅ No secrets added / leaked
+- ✅ Docs updated when public API changes
+
+## 20. Future Enhancements (Reference)
+
+- Pulumi Mocks for deeper component unit isolation
+- Additional lint config for stricter style
+- Automated doc generation from TSDoc
+
+## 21. Quick Commands (Do NOT remove)
+
+```sh
+pnpm install
+pnpm run build
+pnpm run test
+npx tsc --noEmit
+```
+
+---
+
+Copilot: Adhere strictly to this document. If user requests contradictory action, propose compliant alternative or ask for explicit confirmation to diverge.

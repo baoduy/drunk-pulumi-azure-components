@@ -519,12 +519,7 @@ export function allowsAksPolicies({
       destinationPorts: ['443'],
     });
 
-  builder
-    //App
-    .addAppRule('acrs', {
-      description: 'Allows pods to access AzureKubernetesService',
-      sourceAddresses: subnetAddressSpaces,
-      targetFqdns: [
+  const targetFqdns = [
         `*.hcp.${azureEnv.currentRegionCode}.azmk8s.io`,
         'mcr.microsoft.com',
         '*.data.mcr.microsoft.com',
@@ -547,7 +542,18 @@ export function allowsAksPolicies({
         //Key Vault
         'vault.azure.net',
         '*.vault.usgovcloudapi.net',
-      ],
+      ];
+
+  if(allowsAcrs){
+    allowsAcrs.map(acr=>targetFqdns.push(pulumi.interpolate`${acr}.azurecr.io`));
+  }
+  
+  builder
+    //App
+    .addAppRule('acrs', {
+      description: 'Allows pods to access AzureKubernetesService',
+      sourceAddresses: subnetAddressSpaces,
+      targetFqdns,
       protocols: [{ protocolType: 'Https', port: 443 }],
     });
 

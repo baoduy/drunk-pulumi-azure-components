@@ -467,6 +467,7 @@ export function allowsAksPolicies({
   priority,
   subnetAddressSpaces,
   privateCluster,
+  allowsAcrs,
 }: {
   name?: string;
   priority: number;
@@ -519,7 +520,7 @@ export function allowsAksPolicies({
       destinationPorts: ['443'],
     });
 
-  const targetFqdns = [
+  const targetFqdns:pulumi.Input<string>[] = [
         `*.hcp.${azureEnv.currentRegionCode}.azmk8s.io`,
         'mcr.microsoft.com',
         '*.data.mcr.microsoft.com',
@@ -542,6 +543,8 @@ export function allowsAksPolicies({
         //Key Vault
         'vault.azure.net',
         '*.vault.usgovcloudapi.net',
+        //Storage for container
+        '*.blob.core.windows.net',
       ];
 
   if(allowsAcrs){

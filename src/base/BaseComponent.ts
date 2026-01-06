@@ -23,7 +23,7 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
    * @param args - Configuration arguments for this component
    * @param opts - Optional Pulumi resource options to control component behavior
    */
-  constructor(
+  protected constructor(
     type: string,
     public readonly name: string,
     protected readonly args: TArgs,

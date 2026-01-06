@@ -525,11 +525,21 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     if (attachToAcr && this.kubeletIdentity) {
       pulumi.output(this.kubeletIdentity!).apply((p) => {
         new RoleAssignment(
-          `${this.name}-aks-acr`,
+          `${this.name}-aks-acr-pull`,
           {
             principalId: p!.objectId!,
             principalType: 'ServicePrincipal',
             roleName: 'AcrPull',
+            scope: attachToAcr.id,
+          },
+          { dependsOn: aks, deletedWith: aks, parent: this },
+        );
+        new RoleAssignment(
+          `${this.name}-aks-acr-read`,
+          {
+            principalId: p!.objectId!,
+            principalType: 'ServicePrincipal',
+            roleName: 'Container Registry Repository Reader',
             scope: attachToAcr.id,
           },
           { dependsOn: aks, deletedWith: aks, parent: this },

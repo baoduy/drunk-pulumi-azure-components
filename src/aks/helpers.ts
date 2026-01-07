@@ -55,30 +55,30 @@ export const getAksClusterOutput = ({
   });
 };
 
-export type ArgoCDExtensionArgs = types.WithResourceGroupInputs & {
-  allowInsecureAccess?: boolean;
-  argoCdDomain: pulumi.Input<string>;
-  workloadIdentityClientId: pulumi.Input<string>;
-  aks: azure.containerservice.ManagedCluster;
-  identity: AppRegistration;
-  releaseTrain?: 'preview' | pulumi.Input<string>;
-  allowedNameSpaces?: pulumi.Input<string>[];
-  configs?: {
-    [key: string]: pulumi.Input<string>;
+export type ArgoCDExtensionArgs = types.WithResourceGroupInputs &
+  Required<types.WithUserAssignedIdentity> & {
+    allowInsecureAccess?: boolean;
+    argoCdDomain: pulumi.Input<string>;
+    aks: azure.containerservice.ManagedCluster;
+    identity: AppRegistration;
+    releaseTrain?: 'preview' | pulumi.Input<string>;
+    allowedNameSpaces?: pulumi.Input<string>[];
+    configs?: {
+      [key: string]: pulumi.Input<string>;
+    };
+    permission: {
+      syncGroupObjectId?: pulumi.Input<string>;
+      readonlyGroupObjectId?: pulumi.Input<string>;
+      adminGroupObjectId?: pulumi.Input<string>;
+    };
   };
-  permission: {
-    syncGroupObjectId?: pulumi.Input<string>;
-    readonlyGroupObjectId?: pulumi.Input<string>;
-    adminGroupObjectId?: pulumi.Input<string>;
-  };
-};
 
 export const createArgoCDExtension = (
   name: string,
   {
     allowInsecureAccess,
     argoCdDomain,
-    workloadIdentityClientId,
+    defaultUAssignedId,
     aks,
     identity,
     permission,
@@ -143,7 +143,7 @@ g, ${permission.readonlyGroupObjectId ?? '00000000-0000-0000-0000-000000000000'}
         deployWithHighAvailability: 'false',
         namespaceInstall: 'true',
         'workloadIdentity.enable': 'true',
-        'workloadIdentity.clientId': workloadIdentityClientId,
+        'workloadIdentity.clientId': defaultUAssignedId.clientId,
         'workloadIdentity.entraSSOClientId': identity.clientId,
         'config-maps.argocd-cm.data.admin.\\enabled': 'false',
         'config-maps.argocd-cm.data.oidc\\.config': oidcConfig,

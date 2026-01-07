@@ -98,6 +98,8 @@ export type UserAssignedIdentityType = {
   id: string;
   clientId: string;
   principalId: string;
+  resourceName: string;
+  resourceGroupName: string;
 };
 
 export type UserAssignedIdentityInputs = AsInput<UserAssignedIdentityType>;

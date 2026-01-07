@@ -2,6 +2,7 @@ import * as ccs from '@pulumi/azure-native/containerservice';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
+import * as mid from '@pulumi/azure-native/managedidentity';
 
 import { AppRegistration, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
@@ -532,10 +533,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private createExtensions(aks: ccs.ManagedCluster, identity: AppRegistration) {
     const { extensions, rsGroup, groupRoles } = this.args;
     if (extensions?.argoCd && groupRoles) {
+      const { argoCd } = extensions;
       const ext = createArgoCDExtension(
         `${this.name}-argocd`,
         {
-          ...extensions.argoCd,
+          ...argoCd,
           aks,
           rsGroup,
           identity,
@@ -544,7 +546,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       );
 
       const issuer = aks.oidcIssuerProfile.apply((i) => i?.issuerURL!);
-      ['argocd-server', 'argocd-repo-server', 'argocd-application-controller'].map(
+      //ArgoCD Service Accounts Federated Identity Credentials will be created into the AzureAD Identity
+      ['argocd-server'].map(
         (f) =>
           new azAd.ApplicationFederatedIdentityCredential(
             `${this.name}-federated-${f}`,
@@ -552,6 +555,26 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
               applicationId: identity.applicationId,
               displayName: f,
               description: f,
+              issuer: issuer,
+              subject: `system:serviceaccount:argocd:${f}`,
+              audiences: ['api://AzureADTokenExchange'],
+            },
+            {
+              dependsOn: ext,
+              deletedWith: ext,
+              parent: this,
+            },
+          ),
+      );
+      //Other ArgoCD Service Accounts Federated Identity Credentials will be created into the User Assigned Identity
+      ['argocd-repo-server', 'argocd-application-controller'].map(
+        (f) =>
+          new mid.FederatedIdentityCredential(
+            `${this.name}-federated-${f}`,
+            {
+              resourceName: argoCd?.defaultUAssignedId.resourceName!,
+              resourceGroupName: argoCd?.defaultUAssignedId.resourceGroupName!,
+              federatedIdentityCredentialResourceName: f,
               issuer: issuer,
               subject: `system:serviceaccount:argocd:${f}`,
               audiences: ['api://AzureADTokenExchange'],

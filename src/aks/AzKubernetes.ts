@@ -51,7 +51,8 @@ const getNodeOSWindow = (maintenance: MaintenanceArgs | undefined): AutoUpgradeS
 };
 
 export interface AzKubernetesArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
@@ -112,6 +113,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   public readonly keyVaultSecretProviderIdentity?: types.IdentityOutputs;
   public readonly kubeletIdentity?: types.IdentityOutputs;
   public readonly systemIdentityId?: pulumi.Output<string>;
+  public readonly oidcIssuerUrl?: pulumi.Output<string>;
 
   constructor(name: string, args: AzKubernetesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzKubernetes', name, args, opts);
@@ -144,6 +146,9 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         }))
       : undefined;
     this.kubeletIdentity = this.getExtraAksOutputs(cluster);
+    this.oidcIssuerUrl = args.features?.enableWorkloadIdentity
+      ? cluster.oidcIssuerProfile.apply((o) => o?.issuerURL!)
+      : undefined;
 
     this.assignPermission(cluster);
     this.registerOutputs();
@@ -160,6 +165,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       keyVaultSecretProviderIdentity: this.keyVaultSecretProviderIdentity,
       kubeletIdentity: this.kubeletIdentity,
       systemIdentityId: this.systemIdentityId,
+      oidcIssuerUrl: this.oidcIssuerUrl,
     };
   }
 

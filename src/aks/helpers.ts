@@ -57,6 +57,7 @@ export const getAksClusterOutput = ({
 
 export type ArgoCDExtensionArgs = Required<types.WithGroupRolesArgs> &
   types.WithResourceGroupInputs & {
+    allowInsecureAccess?: boolean;
     argoCdDomain: pulumi.Input<string>;
     workloadIdentityClientId: pulumi.Input<string>;
     aks: azure.containerservice.ManagedCluster;
@@ -68,6 +69,7 @@ export type ArgoCDExtensionArgs = Required<types.WithGroupRolesArgs> &
 export const createArgoCDExtension = (
   name: string,
   {
+    allowInsecureAccess,
     argoCdDomain,
     workloadIdentityClientId,
     aks,
@@ -122,6 +124,7 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
         'workloadIdentity.enable': 'true',
         'workloadIdentity.clientId': workloadIdentityClientId,
         'workloadIdentity.entraSSOClientId': identity.clientId,
+        'config-maps.argocd-params.server.insecure': allowInsecureAccess ? 'true' : 'false',
         'config-maps.argocd-cm.data.oidc\\.config': oidcConfig,
         'config-maps.argocd-cm.data.url': pulumi.interpolate`https://${argoCdDomain}/`,
         'config-maps.argocd-rbac-cm.data.policy\\.default': defaultPolicy,
@@ -131,6 +134,6 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
           : 'argocd',
       },
     },
-    { ...opts, dependsOn: [aks, identity] },
+    { ...opts, dependsOn: [aks, identity], },
   );
 };

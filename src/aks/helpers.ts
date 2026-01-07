@@ -134,6 +134,6 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
           : 'argocd',
       },
     },
-    { ...opts, dependsOn: [aks, identity] },
+    { ...opts, dependsOn: [aks, identity], },
   );
 };

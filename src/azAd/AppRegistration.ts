@@ -42,10 +42,13 @@ export interface AppRegistrationArgs
   identifierUris?: pulumi.Input<pulumi.Input<string>[]>;
   servicePrincipal?: Pick<
     azAd.ServicePrincipalArgs,
-    'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn' | 'appRoleAssignmentRequired'
-  >;
+    'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn'
+  >&{
+    appRoleAssignmentRequired?: pulumi.Input<boolean>;
+    assignedGroupIds?: pulumi.Input<string>[];
+  };
   appType?: 'web' | 'singlePageApplication' | 'native';
-  /** This is require when the appType is 'web' or 'singlePageApplication' */
+  /** This is required when the appType is 'web' or 'singlePageApplication' */
   redirectUris?: pulumi.Input<pulumi.Input<string>[]>;
   /** This option is for the appType is 'web' */
   homepageUrl?: pulumi.Input<string>;
@@ -56,6 +59,8 @@ export interface AppRegistrationArgs
     accessTokenIssuanceEnabled?: pulumi.Input<boolean>;
     idTokenIssuanceEnabled?: pulumi.Input<boolean>;
   }>;
+
+  /** Role assignments to be created for the Service Principal */
   roleAssignments?: Array<Omit<RoleAssignmentArgs, 'roleAssignmentName' | 'principalId' | 'principalType'>>;
 }
 
@@ -141,11 +146,12 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   }
 
   private createServicePrincipal(app: azAd.Application) {
+    const{servicePrincipal}=this.args;
     //Service Principal
     const sp = new azAd.ServicePrincipal(
       `${this.name}-sp`,
       {
-        ...this.args.servicePrincipal,
+        ...servicePrincipal,
         description: this.name,
         clientId: app.clientId,
         owners: this.args.owners,
@@ -161,6 +167,23 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       },
       { dependsOn: sp, deletedWith: app, parent: this },
     );
+
+    if (servicePrincipal?.assignedGroupIds) {
+      pulumi.output(servicePrincipal?.assignedGroupIds).apply((ids) =>
+        ids.map(
+          (id) =>
+            new azAd.AppRoleAssignment(
+              `${this.name}-sp-appRole-${id}`,
+              {
+                appRoleId: '00000000-0000-0000-0000-000000000000',
+                resourceObjectId: sp.objectId,
+                principalObjectId: id,
+              },
+              { dependsOn: sp, retainOnDelete: true, parent: this },
+            ),
+        ),
+      );
+    }
 
     this.addRoleAssignments(sp);
     this.addMemberOf(sp);

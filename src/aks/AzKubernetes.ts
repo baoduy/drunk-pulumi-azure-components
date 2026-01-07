@@ -9,7 +9,7 @@ import { azureEnv, rsHelpers, zoneHelper } from '../helpers';
 
 import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
-import { getAksClusterOutput } from './helpers';
+import { ArgoCDExtensionArgs, createArgoCDExtension, getAksClusterOutput } from './helpers';
 import { getPrivateRecordSetOutput } from '../vnet/helpers';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
@@ -70,6 +70,9 @@ export interface AzKubernetesArgs
   agentPoolProfiles: AgentPoolProfile[];
   extraAgentPoolProfiles?: AgentPoolProfile[];
   attachToAcr?: types.ResourceInputs;
+  extensions?: {
+    argoCd?: Omit<ArgoCDExtensionArgs, 'aks' | 'groupRoles' | 'identity' | 'rsGroup'>;
+  };
   features: {
     enablePrivateCluster: boolean;
     enablePrivateClusterPublicFQDN?: boolean;
@@ -122,6 +125,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     const cluster = this.createCluster(app);
     this.createExtraAgentPoolProfiles(cluster);
     this.createMaintenance(cluster);
+    this.createExtensions(cluster, app);
 
     const nss = this.createNameSpaces(cluster);
     this.namespaces = rsHelpers.dictReduce(nss, (n, ns) => ({
@@ -176,7 +180,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       `${this.name}-identity`,
       {
         vaultInfo,
-        memberof: groupRoles ? [groupRoles.readOnly] : undefined,
+        //memberof: groupRoles ? [groupRoles.readOnly] : undefined,
+        servicePrincipal: {
+          appRoleAssignmentRequired: true,
+          assignedGroupIds: groupRoles ? [groupRoles.readOnly.objectId] : undefined,
+        },
         roleAssignments: [
           {
             scope: rsHelpers.getRsGroupIdFrom(rsGroup),
@@ -515,6 +523,23 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return { default: defaultMaintenance, autoUpgrade: autoUpgradeMaintenance, nodeOS: nodeOSMaintenance };
   }
 
+  private createExtensions(aks: ccs.ManagedCluster, identity: AppRegistration) {
+    const { extensions, rsGroup, groupRoles } = this.args;
+    if (extensions?.argoCd && groupRoles) {
+      createArgoCDExtension(
+        `${this.name}-argocd`,
+        {
+          ...extensions.argoCd,
+          aks,
+          rsGroup,
+          groupRoles,
+          identity,
+        },
+        { parent: this, retainOnDelete: true },
+      );
+    }
+  }
+
   private getExtraAksOutputs(aks: ccs.ManagedCluster) {
     const { rsGroup } = this.args;
     const aksInfo = getAksClusterOutput({ resourceGroupName: rsGroup.resourceGroupName, resourceName: aks.name });
@@ -526,7 +551,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private assignPermission(aks: ccs.ManagedCluster) {
-    const { rsGroup, attachToAcr } = this.args;
+    const { attachToAcr } = this.args;
 
     if (attachToAcr && this.kubeletIdentity) {
       pulumi.output(this.kubeletIdentity!).apply((p) => {
@@ -552,21 +577,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         );
       });
     }
-
-    //Allows AKS to have Contributor role on the resource group
-    aks.identity.apply(
-      (id) =>
-        new RoleAssignment(
-          `${this.name}-aks-identity`,
-          {
-            principalId: id!.principalId!,
-            principalType: 'ServicePrincipal',
-            roleName: 'Contributor',
-            scope: rsHelpers.getRsGroupIdFrom(rsGroup),
-          },
-          { dependsOn: aks, deletedWith: aks, parent: this },
-        ),
-    );
   }
 
   private getPrivateDNSZone(aks: ccs.ManagedCluster) {

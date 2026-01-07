@@ -57,7 +57,6 @@ export const getAksClusterOutput = ({
 
 export type ArgoCDExtensionArgs = Required<types.WithGroupRolesArgs> &
   types.WithResourceGroupInputs & {
-    namespace: pulumi.Input<string>;
     argoCdDomain: pulumi.Input<string>;
     workloadIdentityClientId: pulumi.Input<string>;
     aks: azure.containerservice.ManagedCluster;
@@ -67,16 +66,7 @@ export type ArgoCDExtensionArgs = Required<types.WithGroupRolesArgs> &
 
 export const createArgoCDExtension = (
   name: string,
-  {
-    argoCdDomain,
-    namespace,
-    workloadIdentityClientId,
-    aks,
-    identity,
-    groupRoles,
-    rsGroup,
-    releaseTrain,
-  }: ArgoCDExtensionArgs,
+  { argoCdDomain, workloadIdentityClientId, aks, identity, groupRoles, rsGroup, releaseTrain }: ArgoCDExtensionArgs,
   opts?: pulumi.ComponentResourceOptions,
 ) => {
   const oidcConfig = pulumi.interpolate`
@@ -95,7 +85,7 @@ requestedScopes:
   `;
 
   const defaultPolicy = 'role:readonly';
-  const policy = `
+  const policy = pulumi.interpolate`
 p, role:org-admin, applications, *, */*, allow
 p, role:org-admin, clusters, get, *, allow
 p, role:org-admin, repositories, get, *, allow
@@ -126,7 +116,6 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
         'config-maps.argocd-cm.data.url': pulumi.interpolate`https://${argoCdDomain}/`,
         'config-maps.argocd-rbac-cm.data.policy\\.default': defaultPolicy,
         'config-maps.argocd-rbac-cm.data.policy\\.csv': policy,
-        'config-maps.argocd-cmd-params-cm.data.application\\.namespaces': namespace,
       },
     },
     { ...opts, dependsOn: [aks, identity] },

@@ -57,25 +57,25 @@ export const getAksClusterOutput = ({
 
 export type ArgoCDExtensionArgs = Required<types.WithGroupRolesArgs> &
   types.WithResourceGroupInputs & {
-    namespace: pulumi.Input<string>;
     argoCdDomain: pulumi.Input<string>;
     workloadIdentityClientId: pulumi.Input<string>;
     aks: azure.containerservice.ManagedCluster;
     identity: AppRegistration;
     releaseTrain?: 'preview' | pulumi.Input<string>;
+    allowedNameSpaces?: pulumi.Input<string>[];
   };
 
 export const createArgoCDExtension = (
   name: string,
   {
     argoCdDomain,
-    namespace,
     workloadIdentityClientId,
     aks,
     identity,
     groupRoles,
     rsGroup,
     releaseTrain,
+    allowedNameSpaces,
   }: ArgoCDExtensionArgs,
   opts?: pulumi.ComponentResourceOptions,
 ) => {
@@ -95,7 +95,7 @@ requestedScopes:
   `;
 
   const defaultPolicy = 'role:readonly';
-  const policy = `
+  const policy = pulumi.interpolate`
 p, role:org-admin, applications, *, */*, allow
 p, role:org-admin, clusters, get, *, allow
 p, role:org-admin, repositories, get, *, allow
@@ -126,7 +126,9 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
         'config-maps.argocd-cm.data.url': pulumi.interpolate`https://${argoCdDomain}/`,
         'config-maps.argocd-rbac-cm.data.policy\\.default': defaultPolicy,
         'config-maps.argocd-rbac-cm.data.policy\\.csv': policy,
-        'config-maps.argocd-cmd-params-cm.data.application\\.namespaces': namespace,
+        'config-maps.argocd-cmd-params-cm.data.application\\.namespaces': allowedNameSpaces
+          ? pulumi.output(allowedNameSpaces).apply((ns) => ns.join(','))
+          : 'argocd',
       },
     },
     { ...opts, dependsOn: [aks, identity] },

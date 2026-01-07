@@ -187,18 +187,18 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
         appType: 'web',
         vaultInfo,
-        memberof: groupRoles ? [groupRoles.readOnly] : undefined,
+        //memberof: groupRoles ? [groupRoles.readOnly] : undefined,
         servicePrincipal: {
           appRoleAssignmentRequired: true,
           assignedGroupIds: groupRoles ? [groupRoles.readOnly.objectId] : undefined,
         },
-        // roleAssignments: [
-        //   {
-        //     scope: rsHelpers.getRsGroupIdFrom(rsGroup),
-        //     roleName: 'Reader',
-        //     description: 'Allows AKS have read access to the resource group',
-        //   },
-        // ],
+        roleAssignments: [
+          {
+            scope: rsHelpers.getRsGroupIdFrom(rsGroup),
+            roleName: 'Reader',
+            description: 'Allows AKS have read access to the resource group',
+          },
+        ],
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );

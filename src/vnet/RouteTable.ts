@@ -1,19 +1,18 @@
 import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import * as types from '../types';
 
 export type RouteArgs = Omit<
   network.RouteArgs,
-  'id' | 'resourceGroupName' | 'routeTableName' | 'name' | 'nextHopType' | 'routeTableName' | 'routeName' | 'type'
+  'id' | 'resourceGroupName' | 'routeTableName' | 'name' | 'nextHopType' | 'routeName' | 'type'
 > & {
   nextHopType: network.RouteNextHopType;
 };
 
 export interface RouteTableArgs
-  extends types.WithResourceGroupInputs,
-    Partial<Pick<network.RouteTableArgs, 'disableBgpRoutePropagation'>> {
+  extends types.WithResourceGroupInputs, Partial<Pick<network.RouteTableArgs, 'disableBgpRoutePropagation'>> {
   routes?: Array<
     RouteArgs & {
       name: string;

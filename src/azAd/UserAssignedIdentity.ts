@@ -3,7 +3,7 @@ import * as mid from '@pulumi/azure-native/managedidentity';
 import * as pulumi from '@pulumi/pulumi';
 
 import { BaseArgs, BaseResourceComponent } from '../base';
-import { WithMemberOfArgs, WithResourceGroupInputs } from '../types';
+import { UserAssignedIdentityOutputs, WithMemberOfArgs, WithResourceGroupInputs } from '../types';
 import { azureEnv, rsHelpers } from '../helpers';
 
 export interface UserAssignedIdentityArgs
@@ -15,6 +15,8 @@ export interface UserAssignedIdentityArgs
 }
 
 export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIdentityArgs> {
+  public readonly resourceName: pulumi.Output<string>;
+  public readonly resourceGroupName: pulumi.Output<string>;
   public readonly id: pulumi.Output<string>;
   public readonly clientId: pulumi.Output<string>;
   public readonly principalId: pulumi.Output<string>;
@@ -34,6 +36,8 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     });
 
     this.id = managedIdentity.id;
+    this.resourceName = managedIdentity.name;
+    this.resourceGroupName = pulumi.output(args.rsGroup.resourceGroupName);
     this.clientId = managedIdentity.clientId;
     this.principalId = managedIdentity.principalId;
 
@@ -41,9 +45,11 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): UserAssignedIdentityOutputs {
     return {
       id: this.id,
+      resourceName: this.resourceName,
+      resourceGroupName: this.resourceGroupName,
       clientId: this.clientId,
       principalId: this.principalId,
     };

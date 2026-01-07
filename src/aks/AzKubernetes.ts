@@ -2,6 +2,7 @@ import * as ccs from '@pulumi/azure-native/containerservice';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
+import * as mid from '@pulumi/azure-native/managedidentity';
 
 import { AppRegistration, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
@@ -11,6 +12,7 @@ import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
 import { ArgoCDExtensionArgs, createArgoCDExtension, getAksClusterOutput } from './helpers';
 import { getPrivateRecordSetOutput } from '../vnet/helpers';
+import * as azAd from '@pulumi/azuread';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
   vmSize: pulumi.Input<string>;
@@ -71,7 +73,7 @@ export interface AzKubernetesArgs
   extraAgentPoolProfiles?: AgentPoolProfile[];
   attachToAcr?: types.ResourceInputs;
   extensions?: {
-    argoCd?: Omit<ArgoCDExtensionArgs, 'aks' | 'groupRoles' | 'identity' | 'rsGroup'>;
+    argoCd?: Omit<ArgoCDExtensionArgs, 'aks' | 'identity' | 'rsGroup'>;
   };
   features: {
     enablePrivateCluster: boolean;
@@ -174,11 +176,16 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private createIdentity() {
-    const { rsGroup, vaultInfo, groupRoles } = this.args;
+    const { rsGroup, vaultInfo, groupRoles, extensions } = this.args;
 
     return new AppRegistration(
       `${this.name}-identity`,
       {
+        redirectUris: extensions?.argoCd
+          ? [pulumi.interpolate`https://${extensions?.argoCd.argoCdDomain}/auth/callback`]
+          : undefined,
+
+        appType: 'web',
         vaultInfo,
         //memberof: groupRoles ? [groupRoles.readOnly] : undefined,
         servicePrincipal: {
@@ -241,6 +248,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       groupRoles,
       defaultUAssignedId,
       enableEncryption,
+      enableResourceIdentity,
       nodeResourceGroup,
       features,
       network,
@@ -355,11 +363,13 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
         enableRBAC: true,
 
-        identity: {
-          type: ccs.ResourceIdentityType.SystemAssigned,
-          //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
-          //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: ccs.ResourceIdentityType.SystemAssigned,
+              //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
+              //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         // identityProfile: defaultUAssignedId
         //   ? pulumi.output(defaultUAssignedId).apply((uID) => ({ [uID.id]: uID }))
@@ -526,16 +536,58 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private createExtensions(aks: ccs.ManagedCluster, identity: AppRegistration) {
     const { extensions, rsGroup, groupRoles } = this.args;
     if (extensions?.argoCd && groupRoles) {
-      createArgoCDExtension(
+      const { argoCd } = extensions;
+      const ext = createArgoCDExtension(
         `${this.name}-argocd`,
         {
-          ...extensions.argoCd,
+          ...argoCd,
           aks,
           rsGroup,
-          groupRoles,
           identity,
         },
         { parent: this, retainOnDelete: true },
+      );
+
+      const issuer = aks.oidcIssuerProfile.apply((i) => i?.issuerURL!);
+      //ArgoCD Service Accounts Federated Identity Credentials will be created into the AzureAD Identity
+      ['argocd-server'].map(
+        (f) =>
+          new azAd.ApplicationFederatedIdentityCredential(
+            `${this.name}-federated-${f}`,
+            {
+              applicationId: identity.applicationId,
+              displayName: f,
+              description: f,
+              issuer: issuer,
+              subject: `system:serviceaccount:argocd:${f}`,
+              audiences: ['api://AzureADTokenExchange'],
+            },
+            {
+              dependsOn: ext,
+              deletedWith: ext,
+              parent: this,
+            },
+          ),
+      );
+      //Other ArgoCD Service Accounts Federated Identity Credentials will be created into the User Assigned Identity
+      ['argocd-repo-server', 'argocd-application-controller'].map(
+        (f) =>
+          new mid.FederatedIdentityCredential(
+            `${this.name}-federated-${f}`,
+            {
+              resourceName: argoCd?.defaultUAssignedId.resourceName!,
+              resourceGroupName: argoCd?.defaultUAssignedId.resourceGroupName!,
+              federatedIdentityCredentialResourceName: f,
+              issuer: issuer,
+              subject: `system:serviceaccount:argocd:${f}`,
+              audiences: ['api://AzureADTokenExchange'],
+            },
+            {
+              dependsOn: ext,
+              deletedWith: ext,
+              parent: this,
+            },
+          ),
       );
     }
   }

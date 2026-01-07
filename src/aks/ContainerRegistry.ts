@@ -4,7 +4,7 @@ import * as types from '../types';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+import { PrivateEndpoint } from '../vnet';
 
 export interface ContainerRegistryArgs
   extends
@@ -41,7 +41,16 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
   }
 
   private createAcr() {
-    const { rsGroup, enableEncryption, defaultUAssignedId, retentionDaysPolicy, sku, network, ...props } = this.args;
+    const {
+      rsGroup,
+      enableEncryption,
+      enableResourceIdentity,
+      defaultUAssignedId,
+      retentionDaysPolicy,
+      sku,
+      network,
+      ...props
+    } = this.args;
     const encryptionKey = sku === 'Premium' && enableEncryption ? this.getEncryptionKey() : undefined;
     const alphanumericString = (this.name.match(/[a-zA-Z0-9]+/g) || []).join('');
 
@@ -56,15 +65,17 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
         anonymousPullEnabled: false,
         zoneRedundancy: sku != 'Basic' && props.zoneRedundancy ? 'Enabled' : 'Disabled',
 
-        identity: {
-          type: defaultUAssignedId
-            ? registry.ResourceIdentityType.SystemAssigned_UserAssigned
-            : registry.ResourceIdentityType.SystemAssigned,
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? registry.ResourceIdentityType.SystemAssigned_UserAssigned
+                : registry.ResourceIdentityType.SystemAssigned,
 
-          userAssignedIdentities: defaultUAssignedId
-            ? pulumi.output(defaultUAssignedId).apply((id) => ({ [id.id]: {} }))
-            : undefined,
-        },
+              userAssignedIdentities: defaultUAssignedId
+                ? pulumi.output(defaultUAssignedId).apply((id) => ({ [id.id]: {} }))
+                : undefined,
+            }
+          : undefined,
 
         encryption:
           encryptionKey && defaultUAssignedId

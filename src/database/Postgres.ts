@@ -1,18 +1,16 @@
 import * as postgresql from '@pulumi/azure-native/dbforpostgresql';
 import * as pulumi from '@pulumi/pulumi';
 import { UserAssignedIdentity } from '../azAd';
-import { BaseArgs, BaseResourceComponent } from '../base';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { azureEnv } from '../helpers';
 import * as types from '../types';
 import * as vnet from '../vnet';
 import { convertToIpRange } from './helpers';
 
 export interface PostgresArgs
-  extends BaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
-    types.WithResourceGroupInputs,
-    types.WithGroupRolesArgs,
-    types.WithUserAssignedIdentity,
     types.WithNetworkArgs,
     Pick<postgresql.ServerArgs, 'administratorLogin'>,
     Partial<
@@ -61,7 +59,15 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
   }
 
   private createPostgres() {
-    const { rsGroup, enableEncryption, administratorLogin, enableAzureADAdmin, enablePasswordAuth, lock } = this.args;
+    const {
+      rsGroup,
+      enableResourceIdentity,
+      enableEncryption,
+      administratorLogin,
+      enableAzureADAdmin,
+      enablePasswordAuth,
+      lock,
+    } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
@@ -78,10 +84,13 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         storage: this.args.storage ?? { storageSizeGB: 32 },
-        identity: {
-          type: postgresql.IdentityType.UserAssigned,
-          userAssignedIdentities: pulumi.output(uAssignedId.id).apply((id) => ({ [id]: {} })),
-        },
+
+        identity: enableResourceIdentity
+          ? {
+              type: postgresql.IdentityType.UserAssigned,
+              userAssignedIdentities: pulumi.output(uAssignedId.id).apply((id) => ({ [id]: {} })),
+            }
+          : undefined,
 
         dataEncryption: encryptionKey?.id
           ? {
@@ -111,17 +120,17 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
 
         highAvailability:
           this.args.sku?.tier !== 'Burstable'
-            ? this.args.highAvailability ?? {
+            ? (this.args.highAvailability ?? {
                 mode: azureEnv.isPrd ? 'ZoneRedundant' : 'SameZone',
                 standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
-              }
+              })
             : undefined,
 
-        availabilityZone: this.args.availabilityZone ?? azureEnv.isPrd ? '3' : '1',
+        availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
 
         network: {
           publicNetworkAccess:
-            this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink ? 'Disabled' : 'Enabled',
+            (this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink) ? 'Disabled' : 'Enabled',
         },
       },
       {

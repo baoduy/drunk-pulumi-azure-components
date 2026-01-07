@@ -5,7 +5,8 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 
 export interface AutomationArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
     Partial<Pick<automation.AutomationAccountArgs, 'sku'>>,
@@ -20,7 +21,7 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
   constructor(name: string, args: AutomationArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Automation', name, args, opts);
 
-    const { rsGroup, enableEncryption, defaultUAssignedId, sku } = args;
+    const { rsGroup, enableEncryption, enableResourceIdentity, defaultUAssignedId, sku } = args;
     const uAssignedId = this.createUAssignedId();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
 
@@ -32,10 +33,12 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
         publicNetworkAccess: false,
         disableLocalAuth: true,
 
-        identity: {
-          type: automation.ResourceIdentityType.UserAssigned,
-          userAssignedIdentities: [uAssignedId.id],
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: automation.ResourceIdentityType.UserAssigned,
+              userAssignedIdentities: [uAssignedId.id],
+            }
+          : undefined,
 
         encryption: {
           keySource: encryptionKey ? 'Microsoft.Keyvault' : 'Microsoft.Automation',

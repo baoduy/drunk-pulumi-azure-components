@@ -4,7 +4,7 @@ import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
 
-import { BaseArgs, BaseResourceComponent } from '../base/BaseResourceComponent';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 import { RandomPassword } from '../common';
 import { azureEnv } from '../helpers';
@@ -50,11 +50,9 @@ export type AzSqlDbType = Omit<
   sku?: AzSqlSkuType;
 };
 export interface AzSqlArgs
-  extends BaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
-    types.WithResourceGroupInputs,
-    types.WithGroupRolesArgs,
-    types.WithUserAssignedIdentity,
     Partial<
       Pick<
         sql.ServerArgs,
@@ -120,6 +118,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   private createSql() {
     const {
       rsGroup,
+      enableResourceIdentity,
       enableEncryption,
       defaultUAssignedId,
       administrators,
@@ -143,10 +142,12 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         version: this.args.version ?? '12.0',
         minimalTlsVersion: '1.2',
 
-        identity: {
-          type: defaultUAssignedId ? sql.IdentityType.SystemAssigned_UserAssigned : sql.IdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId ? sql.IdentityType.SystemAssigned_UserAssigned : sql.IdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         primaryUserAssignedIdentityId: defaultUAssignedId?.id,
         administratorLogin: adminLogin,

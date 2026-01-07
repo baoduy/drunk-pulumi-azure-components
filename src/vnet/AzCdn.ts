@@ -9,7 +9,7 @@ import * as types from '../types';
 type ProfileResourceType = { resourceName: pulumi.Input<string> };
 type ResourceType = { resourceName: string; id: string };
 
-export interface AzCdnArgs extends BaseArgs, types.WithResourceGroupInputs {
+export interface AzCdnArgs extends BaseArgs, types.WithResourceGroupInputs, types.WithResourceIdentityFlag {
   /** If not provided the new Cdn profile will be created */
   existingProfile?: ProfileResourceType;
   sku?: pulumi.Input<cdn.SkuName | string>;
@@ -123,15 +123,16 @@ export class AzCdn extends BaseResourceComponent<AzCdnArgs> {
   }
 
   private createProfile(): ProfileResourceType {
-    if (this.args.existingProfile) return this.args.existingProfile;
+    const { existingProfile, enableResourceIdentity, rsGroup, sku } = this.args;
+    if (existingProfile) return existingProfile;
 
     const profile = new cdn.Profile(
       `${this.name}-pfl`,
       {
-        resourceGroupName: this.args.rsGroup.resourceGroupName,
+        resourceGroupName: rsGroup.resourceGroupName,
         location: 'global',
-        identity: { type: cdn.ManagedServiceIdentityType.SystemAssigned },
-        sku: { name: this.args.sku ?? cdn.SkuName.Standard_Microsoft },
+        identity: enableResourceIdentity ? { type: cdn.ManagedServiceIdentityType.SystemAssigned } : undefined,
+        sku: { name: sku ?? cdn.SkuName.Standard_Microsoft },
       },
       { parent: this },
     );

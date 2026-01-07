@@ -1,12 +1,13 @@
 import * as nw from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import { azureEnv } from '../helpers';
 import * as types from '../types';
 
 export interface VpnGatewayArgs
-  extends types.WithResourceGroupInputs,
+  extends
+    types.WithResourceGroupInputs,
     Omit<
       nw.VirtualNetworkGatewayArgs,
       'id' | 'location' | 'ipConfigurations' | 'resourceGroupName' | 'sku' | 'virtualNetworkGatewayName'

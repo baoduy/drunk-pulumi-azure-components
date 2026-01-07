@@ -3,12 +3,12 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 import * as vault from '../vault';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+import { PrivateEndpoint } from '../vnet';
 
 export interface AppConfigArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
-    types.WithUserAssignedIdentity,
     Pick<
       appConfig.ConfigurationStoreArgs,
       'dataPlaneProxy' | 'disableLocalAuth' | 'enablePurgeProtection' | 'softDeleteRetentionInDays'
@@ -23,7 +23,16 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
   constructor(name: string, args: AppConfigArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AppConfig', name, args, opts);
 
-    const { rsGroup, groupRoles, defaultUAssignedId, enableEncryption, vaultInfo, network, ...props } = args;
+    const {
+      rsGroup,
+      groupRoles,
+      defaultUAssignedId,
+      enableResourceIdentity,
+      enableEncryption,
+      vaultInfo,
+      network,
+      ...props
+    } = args;
     const encryptionKey = args.enableEncryption ? this.getEncryptionKey() : undefined;
     const azConfig = new appConfig.ConfigurationStore(
       name,
@@ -35,15 +44,17 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
         publicNetworkAccess: !network?.publicNetworkAccess
           ? appConfig.PublicNetworkAccess.Enabled
           : network.privateLink
-          ? appConfig.PublicNetworkAccess.Disabled
-          : appConfig.PublicNetworkAccess.Enabled,
+            ? appConfig.PublicNetworkAccess.Disabled
+            : appConfig.PublicNetworkAccess.Enabled,
 
-        identity: {
-          type: defaultUAssignedId
-            ? appConfig.IdentityType.SystemAssigned_UserAssigned
-            : appConfig.IdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? appConfig.IdentityType.SystemAssigned_UserAssigned
+                : appConfig.IdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         encryption:
           encryptionKey && defaultUAssignedId

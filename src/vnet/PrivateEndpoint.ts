@@ -3,7 +3,7 @@ import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
 
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { PrivateDnsZone } from './PrivateDnsZone';
 import { getComponentResourceType } from '../base/helpers';
 import { rsHelpers } from '../helpers';

@@ -28,7 +28,6 @@ interface ScheduledEntryArgs {
 export interface AppContainerEnvArgs
   extends
     CommonBaseArgs,
-    types.WithUserAssignedIdentity,
     Partial<
       Pick<
         app.ManagedEnvironmentArgs,
@@ -107,6 +106,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
   private createManagedEnvironment() {
     const {
       rsGroup,
+      enableResourceIdentity,
       defaultUAssignedId,
       vnetConfiguration,
       logAnalyticsWorkspace,
@@ -141,12 +141,15 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
             workloadProfileType: 'Consumption',
           },
         ],
-        identity: {
-          type: defaultUAssignedId
-            ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
-            : app.ManagedServiceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
+                : app.ManagedServiceIdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         // VNet integration
         vnetConfiguration: vnetConfiguration

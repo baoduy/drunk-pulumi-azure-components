@@ -55,6 +55,8 @@ export type WithResourceGroupOutputs = {
   rsGroup: ResourceGroupOutputs;
 };
 
+export type WithResourceIdentityFlag = { enableResourceIdentity?: boolean };
+
 export type ResourceType = {
   resourceName: string;
   id: string;
@@ -98,6 +100,8 @@ export type UserAssignedIdentityType = {
   id: string;
   clientId: string;
   principalId: string;
+  resourceName: string;
+  resourceGroupName: string;
 };
 
 export type UserAssignedIdentityInputs = AsInput<UserAssignedIdentityType>;

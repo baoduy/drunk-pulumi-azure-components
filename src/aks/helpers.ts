@@ -128,11 +128,11 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
         'workloadIdentity.enable': 'true',
         'workloadIdentity.clientId': workloadIdentityClientId,
         'workloadIdentity.entraSSOClientId': identity.clientId,
-        'config-maps.argocd-cmd-params-cm.server.insecure': allowInsecureAccess ? 'true' : 'false',
         'config-maps.argocd-cm.data.oidc\\.config': oidcConfig,
         'config-maps.argocd-cm.data.url': pulumi.interpolate`https://${argoCdDomain}/`,
         'config-maps.argocd-rbac-cm.data.policy\\.default': defaultPolicy,
         'config-maps.argocd-rbac-cm.data.policy\\.csv': policy,
+        'config-maps.argocd-cmd-params-cm.data.server.insecure': allowInsecureAccess ? 'true' : 'false',
         'config-maps.argocd-cmd-params-cm.data.application\\.namespaces': allowedNameSpaces
           ? pulumi.output(allowedNameSpaces).apply((ns) => ns.join(','))
           : 'argocd',

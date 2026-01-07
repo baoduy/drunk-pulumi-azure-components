@@ -1,7 +1,6 @@
 import * as app from '@pulumi/azure-native/app';
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
-import * as types from '../types';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
@@ -10,10 +9,7 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
  * with auto-scaling, ingress, and managed environment integration.
  */
 export interface AppContainerArgs
-  extends
-    CommonBaseArgs,
-    types.WithUserAssignedIdentity,
-    Partial<Pick<app.ContainerAppArgs, 'workloadProfileName' | 'extendedLocation'>> {
+  extends CommonBaseArgs, Partial<Pick<app.ContainerAppArgs, 'workloadProfileName' | 'extendedLocation'>> {
   /** Resource ID of the Container Apps Managed Environment */
   managedEnvironmentId: pulumi.Input<string>;
 
@@ -150,7 +146,15 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
   }
 
   private createContainerApp() {
-    const { rsGroup, defaultUAssignedId, managedEnvironmentId, template, configuration, ...props } = this.args;
+    const {
+      rsGroup,
+      enableResourceIdentity,
+      defaultUAssignedId,
+      managedEnvironmentId,
+      template,
+      configuration,
+      ...props
+    } = this.args;
 
     return new app.ContainerApp(
       this.name,
@@ -159,12 +163,14 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
         ...rsGroup,
         managedEnvironmentId,
 
-        identity: {
-          type: defaultUAssignedId
-            ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
-            : app.ManagedServiceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
+                : app.ManagedServiceIdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         configuration: configuration
           ? {

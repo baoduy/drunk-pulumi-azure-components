@@ -1,18 +1,16 @@
 import * as mysql from '@pulumi/azure-native/dbformysql';
 import * as pulumi from '@pulumi/pulumi';
 import { UserAssignedIdentity } from '../azAd';
-import { BaseArgs, BaseResourceComponent } from '../base';
-import { azureEnv, stackInfo } from '../helpers';
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { azureEnv } from '../helpers';
 import * as types from '../types';
 import * as vnet from '../vnet';
 import { convertToIpRange } from './helpers';
 
 export interface MySqlArgs
-  extends BaseArgs,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
-    types.WithResourceGroupInputs,
-    types.WithGroupRolesArgs,
-    types.WithUserAssignedIdentity,
     types.WithNetworkArgs,
     Pick<mysql.ServerArgs, 'administratorLogin'>,
     Partial<
@@ -65,7 +63,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   }
 
   private createMySql(uid: types.UserAssignedIdentityInputs) {
-    const { rsGroup, enableEncryption, administratorLogin, lock } = this.args;
+    const { rsGroup, enableResourceIdentity, enableEncryption, administratorLogin, lock } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
@@ -82,10 +80,12 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
         storage: this.args.storage ?? { storageSizeGB: 30 },
 
-        identity: {
-          type: mysql.ManagedServiceIdentityType.UserAssigned,
-          userAssignedIdentities: [uid.id],
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: mysql.ManagedServiceIdentityType.UserAssigned,
+              userAssignedIdentities: [uid.id],
+            }
+          : undefined,
 
         dataEncryption: encryptionKey
           ? {
@@ -97,12 +97,12 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
 
         maintenanceWindow:
           this.args.sku.tier !== 'Burstable'
-            ? this.args.maintenanceWindow ?? {
+            ? (this.args.maintenanceWindow ?? {
                 customWindow: 'Enabled',
                 dayOfWeek: 0, //0 is Sunday
                 startHour: 0,
                 startMinute: 0,
-              }
+              })
             : undefined,
 
         backup: this.args.backup ?? {
@@ -112,16 +112,16 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
 
         highAvailability:
           this.args.sku.tier !== 'Burstable'
-            ? this.args.highAvailability ?? {
+            ? (this.args.highAvailability ?? {
                 mode: azureEnv.isPrd ? 'ZoneRedundant' : 'SameZone',
                 standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
-              }
+              })
             : undefined,
-        availabilityZone: this.args.availabilityZone ?? azureEnv.isPrd ? '3' : '1',
+        availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
 
         network: {
           publicNetworkAccess:
-            this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink ? 'Disabled' : 'Enabled',
+            (this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink) ? 'Disabled' : 'Enabled',
         },
       },
       {

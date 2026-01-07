@@ -3,11 +3,11 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 import * as vault from '../vault';
-import { PrivateEndpoint } from '../vnet/PrivateEndpoint';
+import { PrivateEndpoint } from '../vnet';
 
 export interface AzSearchArgs
-  extends CommonBaseArgs,
-    types.WithUserAssignedIdentity,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
     Pick<search.ServiceArgs, 'authOptions' | 'hostingMode' | 'partitionCount' | 'replicaCount' | 'semanticSearch'> {
   sku: search.SkuName;
@@ -22,7 +22,7 @@ export class AzSearch extends BaseResourceComponent<AzSearchArgs> {
   constructor(name: string, args: AzSearchArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzSearch', name, args, opts);
 
-    const { rsGroup, enableEncryption, network, ...props } = args;
+    const { rsGroup, enableResourceIdentity, enableEncryption, network, ...props } = args;
 
     const service = new search.Service(
       name,
@@ -36,9 +36,12 @@ export class AzSearch extends BaseResourceComponent<AzSearchArgs> {
               enforcement: search.SearchEncryptionWithCmk.Enabled,
             }
           : undefined,
-        identity: {
-          type: props.sku === search.SkuName.Free ? search.IdentityType.None : search.IdentityType.SystemAssigned,
-        },
+
+        identity: enableResourceIdentity
+          ? {
+              type: props.sku === search.SkuName.Free ? search.IdentityType.None : search.IdentityType.SystemAssigned,
+            }
+          : undefined,
 
         publicNetworkAccess: network?.publicNetworkAccess ? 'enabled' : network?.privateLink ? 'disabled' : 'enabled',
         networkRuleSet: network?.ipRules

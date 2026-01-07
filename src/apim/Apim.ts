@@ -15,8 +15,8 @@ import { vaultHelpers } from '../vault';
 type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
 
 export interface ApimArgs
-  extends CommonBaseArgs,
-    types.WithUserAssignedIdentity,
+  extends
+    CommonBaseArgs,
     types.WithNetworkArgs,
     types.WithLogs,
     Omit<
@@ -111,6 +111,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
   private createApim() {
     const {
       defaultUAssignedId,
+      enableResourceIdentity,
       vaultInfo,
       groupRoles,
       rsGroup,
@@ -136,15 +137,18 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         publisherEmail: publisherEmail ?? 'apimgmt-noreply@mail.windowsazure.com',
         notificationSenderEmail: notificationSenderEmail ?? 'apimgmt-noreply@mail.windowsazure.com',
 
-        identity: {
-          type: defaultUAssignedId
-            ? apim.ApimIdentityType.SystemAssigned_UserAssigned
-            : apim.ApimIdentityType.SystemAssigned,
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? apim.ApimIdentityType.SystemAssigned_UserAssigned
+                : apim.ApimIdentityType.SystemAssigned,
 
-          userAssignedIdentities: defaultUAssignedId
-            ? pulumi.output(defaultUAssignedId).apply((d) => ({ [d.id]: {} }))
-            : undefined,
-        },
+              userAssignedIdentities: defaultUAssignedId
+                ? pulumi.output(defaultUAssignedId).apply((d) => ({ [d.id]: {} }))
+                : undefined,
+            }
+          : undefined,
+
         sku: sku ?? { name: 'Consumption', capacity: 0 },
 
         apiVersionConstraint: apiVersionConstraint ?? {

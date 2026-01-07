@@ -55,6 +55,8 @@ export type WithResourceGroupOutputs = {
   rsGroup: ResourceGroupOutputs;
 };
 
+export type WithResourceIdentityFlag = { enableResourceIdentity?: boolean };
+
 export type ResourceType = {
   resourceName: string;
   id: string;

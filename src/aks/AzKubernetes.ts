@@ -248,6 +248,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       groupRoles,
       defaultUAssignedId,
       enableEncryption,
+      enableResourceIdentity,
       nodeResourceGroup,
       features,
       network,
@@ -362,11 +363,13 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
         enableRBAC: true,
 
-        identity: {
-          type: ccs.ResourceIdentityType.SystemAssigned,
-          //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
-          //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: ccs.ResourceIdentityType.SystemAssigned,
+              //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
+              //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         // identityProfile: defaultUAssignedId
         //   ? pulumi.output(defaultUAssignedId).apply((uID) => ({ [uID.id]: uID }))

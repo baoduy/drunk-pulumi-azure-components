@@ -22,7 +22,6 @@ export type VmScheduleType = {
 export interface VirtualMachineArgs
   extends
     CommonBaseArgs,
-    types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
     types.WithDiskEncryptSet,
     Omit<
@@ -83,6 +82,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     const {
       rsGroup,
       defaultUAssignedId,
+      enableResourceIdentity,
       enableEncryption,
       osProfile,
       storageProfile,
@@ -106,12 +106,14 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
         //VM is not supported in all zones
         //zones: zoneHelper.getDefaultZones(props.zones),
 
-        identity: {
-          type: defaultUAssignedId
-            ? compute.ResourceIdentityType.SystemAssigned_UserAssigned
-            : compute.ResourceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? compute.ResourceIdentityType.SystemAssigned_UserAssigned
+                : compute.ResourceIdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         networkProfile: {
           networkInterfaces: [{ id: nic.id, primary: true }],

@@ -48,8 +48,8 @@ type SubscriptionsType = Record<
 >;
 
 export interface ServiceBusArgs
-  extends CommonBaseArgs,
-    types.WithUserAssignedIdentity,
+  extends
+    CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithNetworkArgs,
     Partial<Pick<bus.NamespaceArgs, 'sku' | 'zoneRedundant' | 'alternateName' | 'premiumMessagingPartitions'>> {
@@ -105,7 +105,16 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
   }
 
   private createBusNamespace() {
-    const { rsGroup, defaultUAssignedId, vaultInfo, enableEncryption, network, disableLocalAuth, ...props } = this.args;
+    const {
+      rsGroup,
+      enableResourceIdentity,
+      defaultUAssignedId,
+      vaultInfo,
+      enableEncryption,
+      network,
+      disableLocalAuth,
+      ...props
+    } = this.args;
     const encryptionKey = enableEncryption && props.sku.name === 'Premium' ? this.getEncryptionKey() : undefined;
 
     const service = new bus.Namespace(
@@ -116,13 +125,16 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
         minimumTlsVersion: '1.2',
         disableLocalAuth,
         zoneRedundant: props.zoneRedundant ?? (zoneHelper.getDefaultZones(undefined) ? true : undefined),
-        identity: {
-          type: defaultUAssignedId
-            ? bus.ManagedServiceIdentityType.SystemAssigned_UserAssigned
-            : bus.ManagedServiceIdentityType.SystemAssigned,
-          //all uuid must assign here before use
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? bus.ManagedServiceIdentityType.SystemAssigned_UserAssigned
+                : bus.ManagedServiceIdentityType.SystemAssigned,
+              //all uuid must assign here before use
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         encryption: encryptionKey
           ? {

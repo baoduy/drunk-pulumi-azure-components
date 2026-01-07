@@ -11,7 +11,6 @@ export interface StorageAccountArgs
   extends
     CommonBaseArgs,
     types.WithEncryptionEnabler,
-    types.WithUserAssignedIdentity,
     Partial<
       Pick<
         storage.StorageAccountArgs,
@@ -57,8 +56,18 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
 
   constructor(name: string, args: StorageAccountArgs, opts?: pulumi.ComponentResourceOptions) {
     super('StorageAccount', name, args, opts);
-    const { rsGroup, sku, vaultInfo, defaultUAssignedId, policies, enableEncryption, network, containers, ...props } =
-      args;
+    const {
+      rsGroup,
+      enableResourceIdentity,
+      sku,
+      vaultInfo,
+      defaultUAssignedId,
+      policies,
+      enableEncryption,
+      network,
+      containers,
+      ...props
+    } = args;
 
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
 
@@ -78,12 +87,14 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         minimumTlsVersion: 'TLS1_2',
         defaultToOAuthAuthentication: !props.allowSharedKeyAccess,
 
-        identity: {
-          type: defaultUAssignedId
-            ? storage.IdentityType.SystemAssigned_UserAssigned
-            : storage.IdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? storage.IdentityType.SystemAssigned_UserAssigned
+                : storage.IdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
 
         keyPolicy: {
           keyExpirationPeriodInDays: policies?.keyExpirationPeriodInDays ?? 365,

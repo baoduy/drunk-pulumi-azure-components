@@ -28,7 +28,8 @@ export interface BaseArgs extends types.WithVaultInfo, types.WithGroupRolesArgs 
  * Extended interface that includes resource group input parameters
  * alongside base vault and role requirements
  */
-export interface CommonBaseArgs extends BaseArgs, types.WithResourceGroupInputs {}
+export interface CommonBaseArgs
+  extends BaseArgs, types.WithResourceGroupInputs, types.WithResourceIdentityFlag, types.WithUserAssignedIdentity {}
 
 /**
  * BaseResourceComponent serves as a foundational abstract class for Azure resource management
@@ -96,6 +97,40 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
 
   public getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs> {
     return { vaultSecrets: this.vaultSecrets };
+  }
+
+  /** Assigns a role to a principal at the scope of this resource.
+   * @param roleName The name of the role to assign (e.g., "Contributor", "Reader").
+   * @param principalType The type of the principal (e.g., "User", "Group", "ServicePrincipal").
+   * @param principalId The ID of the principal to whom the role is assigned.
+   * @returns A RoleAssignment resource representing the role assignment.
+   * */
+  public roleAssignment({
+    roleName,
+    principalType,
+    principalId,
+  }: {
+    roleName: pulumi.Input<string>;
+    principalId: pulumi.Input<string>;
+    principalType: enums.authorization.PrincipalType;
+  }) {
+    const resourceId = this.getOutputs()?.id;
+    if (!resourceId) {
+      throw new Error(`Resource ID is not available for role assignment in component "${this.type}:${this.name}"`);
+    }
+    return pulumi.output([roleName, principalId]).apply(
+      ([role, id]) =>
+        new RoleAssignment(
+          `${this.name}-${role}-${id}`,
+          {
+            principalId: id,
+            principalType,
+            roleName: role,
+            scope: resourceId,
+          },
+          { parent: this, deletedWith: this },
+        ),
+    );
   }
 
   protected grantPermissionsToIdentity({ identity, resource, roleNames }: types.GrantIdentityRoles) {
@@ -221,31 +256,5 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     );
 
     this.vaultSecrets = rs.results;
-  }
-
-  /** Assigns a role to a principal at the scope of this resource.
-   * @param roleName The name of the role to assign (e.g., "Contributor", "Reader").
-   * @param principalType The type of the principal (e.g., "User", "Group", "ServicePrincipal").
-   * @param principalId The ID of the principal to whom the role is assigned.
-   * @returns A RoleAssignment resource representing the role assignment.
-   * */
-  public roleAssignment({roleName,principalType,principalId}:{roleName:pulumi.Input<string>,principalId:pulumi.Input<string>,principalType:enums.authorization.PrincipalType}){
-    const resourceId = this.getOutputs()?.id;
-    if(!resourceId){
-      throw new Error(`Resource ID is not available for role assignment in component "${this.type}:${this.name}"`);
-    }
-    return pulumi.output([roleName, principalId]).apply(
-      ([role, id]) =>
-        new RoleAssignment(
-          `${this.name}-${role}-${id}`,
-          {
-            principalId: id,
-            principalType,
-            roleName: role,
-            scope: resourceId,
-          },
-          { parent: this, deletedWith: this },
-        ),
-    );
   }
 }

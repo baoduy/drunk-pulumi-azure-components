@@ -25,6 +25,7 @@
     "pulumi-test"
   ],
   "files": [
+    "src/AppResources.ts",
     "src/ResourceBuilder.ts",
     "src/aks/AzKubernetes.ts",
     "src/aks/ContainerRegistry.ts",

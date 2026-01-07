@@ -2,7 +2,7 @@ import * as nw from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
 
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { IpAddresses } from './IpAddresses';
 import { getComponentResourceType } from '../base/helpers';
 import { zoneHelper } from '../helpers';

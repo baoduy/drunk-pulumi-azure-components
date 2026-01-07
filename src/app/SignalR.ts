@@ -3,15 +3,13 @@ import * as ss from '@pulumi/azure-native/signalrservice';
 import * as types from '../types';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { VaultSecretResult, VaultSecrets } from '../vault/VaultSecrets';
+import { VaultSecrets } from '../vault';
 
 import { PrivateEndpoint } from '../vnet';
 import { SecretItemArgs } from 'vault';
 
 export interface SignalRArgs
-  extends CommonBaseArgs,
-    types.WithUserAssignedIdentity,
-    Partial<Pick<ss.SignalRArgs, 'kind' | 'cors' | 'features' | 'tls' | 'identity'>> {
+  extends CommonBaseArgs, Partial<Pick<ss.SignalRArgs, 'kind' | 'cors' | 'features' | 'tls' | 'identity'>> {
   sku: {
     /**
      * Optional, integer. The unit count of the resource.

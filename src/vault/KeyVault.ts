@@ -2,7 +2,7 @@ import * as keyvault from '@pulumi/azure-native/keyvault';
 import * as pulumi from '@pulumi/pulumi';
 
 import { BaseArgs, BaseResourceComponent } from '../base';
-import { WithNetworkArgs, WithResourceGroupInputs } from '../types';
+import * as types from '../types';
 
 import { PrivateEndpoint } from '../vnet';
 import { SecretItemArgs } from './VaultSecret';
@@ -10,10 +10,7 @@ import { VaultSecrets } from './VaultSecrets';
 import { azureEnv } from '../helpers';
 
 export interface KeyVaultArgs
-  extends BaseArgs,
-    WithResourceGroupInputs,
-    WithNetworkArgs,
-    Partial<Pick<keyvault.VaultArgs, 'tags'>> {
+  extends BaseArgs, types.WithResourceGroupInputs, types.WithNetworkArgs, Partial<Pick<keyvault.VaultArgs, 'tags'>> {
   sku?: 'standard' | 'premium';
 
   properties?: {

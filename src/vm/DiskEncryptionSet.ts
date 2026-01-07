@@ -1,10 +1,8 @@
 import * as compute from '@pulumi/azure-native/compute';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import * as types from '../types';
 
-export interface DiskEncryptionSetArgs
-  extends CommonBaseArgs, types.WithUserAssignedIdentity, types.WithGroupRolesArgs {
+export interface DiskEncryptionSetArgs extends CommonBaseArgs {
   encryptionType: compute.DiskEncryptionSetType;
 }
 
@@ -15,7 +13,7 @@ export class DiskEncryptionSet extends BaseResourceComponent<DiskEncryptionSetAr
   constructor(name: string, args: DiskEncryptionSetArgs, opts?: pulumi.ComponentResourceOptions) {
     super('DiskEncryptionSet', name, args, opts);
 
-    const { rsGroup, encryptionType, defaultUAssignedId } = args;
+    const { rsGroup, enableResourceIdentity, encryptionType, defaultUAssignedId } = args;
 
     const encryptionKey = this.getEncryptionKey();
     const diskEncrypt = new compute.DiskEncryptionSet(
@@ -25,12 +23,16 @@ export class DiskEncryptionSet extends BaseResourceComponent<DiskEncryptionSetAr
         rotationToLatestKeyVersionEnabled:
           encryptionType !== compute.DiskEncryptionSetType.ConfidentialVmEncryptedWithCustomerKey,
         encryptionType: encryptionType ?? compute.DiskEncryptionSetType.EncryptionAtRestWithPlatformAndCustomerKeys,
-        identity: {
-          type: defaultUAssignedId
-            ? compute.ResourceIdentityType.SystemAssigned_UserAssigned
-            : compute.ResourceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? compute.ResourceIdentityType.SystemAssigned_UserAssigned
+                : compute.ResourceIdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
+
         activeKey: { keyUrl: encryptionKey.id },
       },
       {

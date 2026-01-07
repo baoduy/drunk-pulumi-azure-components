@@ -1,9 +1,8 @@
 import * as logic from '@pulumi/azure-native/logic';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import * as types from '../types';
 
-export interface LogicAppArgs extends CommonBaseArgs, types.WithUserAssignedIdentity {
+export interface LogicAppArgs extends CommonBaseArgs {
   integrationAccount: Pick<logic.IntegrationAccountArgs, 'integrationServiceEnvironment'> & {
     sku: logic.IntegrationAccountSkuName;
   };
@@ -21,7 +20,7 @@ export class LogicApp extends BaseResourceComponent<LogicAppArgs> {
   constructor(name: string, args: LogicAppArgs, opts?: pulumi.ComponentResourceOptions) {
     super('LogicApp', name, args, opts);
 
-    const { rsGroup, defaultUAssignedId, integrationAccount, workflow } = args;
+    const { rsGroup, enableResourceIdentity, defaultUAssignedId, integrationAccount, workflow } = args;
     const account = new logic.IntegrationAccount(
       name,
       {
@@ -37,13 +36,16 @@ export class LogicApp extends BaseResourceComponent<LogicAppArgs> {
       {
         ...rsGroup,
         ...workflow,
-        identity: {
-          type: defaultUAssignedId?.id
-            ? logic.ManagedServiceIdentityType.UserAssigned
-            : logic.ManagedServiceIdentityType.SystemAssigned,
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId?.id
+                ? logic.ManagedServiceIdentityType.UserAssigned
+                : logic.ManagedServiceIdentityType.SystemAssigned,
 
-          userAssignedIdentities: defaultUAssignedId?.id ? [defaultUAssignedId.id] : undefined,
-        },
+              userAssignedIdentities: defaultUAssignedId?.id ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
+
         integrationAccount: { id: account.id },
       },
       {

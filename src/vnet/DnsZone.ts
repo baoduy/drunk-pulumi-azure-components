@@ -3,7 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import { getDnsRecordName } from './helpers';
 
@@ -22,10 +22,9 @@ export interface DnsZoneArgs extends WithResourceGroupInputs, DnsZoneProps {
 }
 
 export class DnsZone extends BaseComponent<DnsZoneArgs> {
-  private _rsName: string;
-
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
+  private _rsName: string;
 
   constructor(name: string, args: DnsZoneArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('DnsZone'), name, args, opts);
@@ -50,36 +49,6 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
       id: this.id,
       resourceName: this.resourceName,
     };
-  }
-
-  private createZone({ name, records }: DnsZoneProps, parent?: dns.Zone) {
-    const group = this.getRsGroupInfo();
-
-    const zone = new dns.Zone(
-      name,
-      {
-        resourceGroupName: group.resourceGroupName,
-        location: group.location,
-        zoneName: this.name,
-      },
-      { ...this.opts, dependsOn: parent ? parent : this.opts?.dependsOn, parent: this },
-    );
-
-    if (records) {
-      records.map((record) => {
-        this.addRecordSet(zone, `${name}-${record.name}`, record);
-      });
-    }
-
-    if (parent) {
-      zone.nameServers.apply((ns) => {
-        this.addRecordSet(parent, `${this.name}-${name}-ns`, {
-          recordType: 'NS',
-          nsRecords: ns.map((s) => ({ nsdname: s })),
-        });
-      });
-    }
-    return zone;
   }
 
   public addARecords(
@@ -122,5 +91,35 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
       resourceGroupName: group.resourceGroupName,
       location: 'global',
     };
+  }
+
+  private createZone({ name, records }: DnsZoneProps, parent?: dns.Zone) {
+    const group = this.getRsGroupInfo();
+
+    const zone = new dns.Zone(
+      name,
+      {
+        resourceGroupName: group.resourceGroupName,
+        location: group.location,
+        zoneName: this.name,
+      },
+      { ...this.opts, dependsOn: parent ? parent : this.opts?.dependsOn, parent: this },
+    );
+
+    if (records) {
+      records.map((record) => {
+        this.addRecordSet(zone, `${name}-${record.name}`, record);
+      });
+    }
+
+    if (parent) {
+      zone.nameServers.apply((ns) => {
+        this.addRecordSet(parent, `${this.name}-${name}-ns`, {
+          recordType: 'NS',
+          nsRecords: ns.map((s) => ({ nsdname: s })),
+        });
+      });
+    }
+    return zone;
   }
 }

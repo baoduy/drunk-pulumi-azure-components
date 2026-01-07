@@ -1,19 +1,16 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as redis from '@pulumi/azure-native/redis';
-import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
-
-import { BaseArgs, BaseResourceComponent } from '../base';
-
 import { PrivateEndpointType } from '../vnet';
+
+import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { convertToIpRange } from './helpers';
 import { zoneHelper } from '../helpers';
 
 export interface RedisArgs
-  extends BaseArgs,
-    types.WithResourceGroupInputs,
-    types.WithUserAssignedIdentity,
+  extends
+    CommonBaseArgs,
     Partial<
       Pick<
         redis.RedisArgs,
@@ -74,7 +71,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   }
 
   private createRedis() {
-    const { rsGroup, network, lock, defaultUAssignedId, ...props } = this.args;
+    const { rsGroup, enableResourceIdentity, network, lock, defaultUAssignedId, ...props } = this.args;
 
     return new redis.Redis(
       this.name,
@@ -91,12 +88,14 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         updateChannel: redis.UpdateChannel.Stable,
         zones: zoneHelper.getDefaultZones(props.zones),
 
-        identity: {
-          type: defaultUAssignedId
-            ? redis.ManagedServiceIdentityType.UserAssigned
-            : redis.ManagedServiceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? redis.ManagedServiceIdentityType.UserAssigned
+                : redis.ManagedServiceIdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
       },
       { ...this.opts, protect: lock ?? this.opts?.protect, parent: this, ignoreChanges: ['name'] },
     );
@@ -136,7 +135,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
 
   private createMaintenance(rds: redis.Redis) {
     const { rsGroup, scheduleEntries } = this.args;
-    
+
     // Use provided scheduleEntries or default to Sunday maintenance
     const schedule = scheduleEntries ?? [
       {

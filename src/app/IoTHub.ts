@@ -1,12 +1,8 @@
 import * as devices from '@pulumi/azure-native/iothub';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import * as types from '../types';
 
-export interface IoTHubArgs
-  extends CommonBaseArgs,
-    types.WithUserAssignedIdentity,
-    Pick<devices.IotHubResourceArgs, 'properties' | 'sku'> {}
+export interface IoTHubArgs extends CommonBaseArgs, Pick<devices.IotHubResourceArgs, 'properties' | 'sku'> {}
 
 export class IoTHub extends BaseResourceComponent<IoTHubArgs> {
   public readonly id: pulumi.Output<string>;
@@ -15,7 +11,7 @@ export class IoTHub extends BaseResourceComponent<IoTHubArgs> {
   constructor(name: string, args: IoTHubArgs, opts?: pulumi.ComponentResourceOptions) {
     super('IoTHub', name, args, opts);
 
-    const { rsGroup, defaultUAssignedId, ...props } = args;
+    const { rsGroup, enableResourceIdentity, defaultUAssignedId, ...props } = args;
 
     const iot = new devices.IotHubResource(
       name,
@@ -23,12 +19,15 @@ export class IoTHub extends BaseResourceComponent<IoTHubArgs> {
         ...props,
         ...rsGroup,
 
-        identity: {
-          type: defaultUAssignedId
-            ? devices.ResourceIdentityType.SystemAssigned_UserAssigned
-            : devices.ResourceIdentityType.SystemAssigned,
-          userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-        },
+        identity: enableResourceIdentity
+          ? {
+              type: defaultUAssignedId
+                ? devices.ResourceIdentityType.SystemAssigned_UserAssigned
+                : devices.ResourceIdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+            }
+          : undefined,
+
         properties: {
           enableFileUploadNotifications: false,
           features: devices.Capabilities.None,

@@ -40,10 +40,16 @@ export interface AppRegistrationArgs
   >;
   groupMembershipClaims?: pulumi.Input<GroupMembershipClaimsTypes[]>;
   identifierUris?: pulumi.Input<pulumi.Input<string>[]>;
+  federatedCredentials?: Array<{
+    name: string;
+    issuer: pulumi.Input<string>;
+    subject: pulumi.Input<string>;
+    audiences?: pulumi.Input<pulumi.Input<string>[]>;
+  }>;
   servicePrincipal?: Pick<
     azAd.ServicePrincipalArgs,
     'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn'
-  >&{
+  > & {
     appRoleAssignmentRequired?: pulumi.Input<boolean>;
     assignedGroupIds?: pulumi.Input<string>[];
   };
@@ -70,6 +76,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   public readonly clientSecret: pulumi.Output<string>;
   public readonly servicePrincipalId: pulumi.Output<string>;
   public readonly servicePrincipalPassword: pulumi.Output<string>;
+  public readonly applicationId: pulumi.Output<string>;
   private vaultSecrets: ReturnType<VaultSecrets['getOutputs']> = {};
 
   constructor(name: string, args: AppRegistrationArgs = { appType: 'native' }, opts?: pulumi.ComponentResourceOptions) {
@@ -84,6 +91,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     this.clientId = app.clientId;
     this.clientSecret = clientSecret;
     this.tenantId = azureEnv.tenantId;
+    this.applicationId = app.id;
 
     this.addSecrets({
       clientId: app.clientId,
@@ -101,11 +109,12 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       clientId: this.clientId,
       servicePrincipalId: this.servicePrincipalId,
       vaultSecrets: this.vaultSecrets,
+      applicationId: this.applicationId,
     };
   }
 
   private createAppRegistration() {
-    const { info } = this.args;
+    const { info, federatedCredentials } = this.args;
 
     const app = new azAd.Application(
       `${stackInfo.stack}-${this.name}`,
@@ -142,11 +151,32 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
       { dependsOn: app, parent: this },
     );
 
+    if (federatedCredentials) {
+      federatedCredentials.map(
+        (f) =>
+          new azAd.ApplicationFederatedIdentityCredential(
+            `${this.name}-federated-${f.name}`,
+            {
+              applicationId: app.id,
+              displayName: f.name,
+              description: f.name,
+              issuer: f.issuer,
+              subject: f.subject,
+              audiences: f.audiences ?? ['api://AzureADTokenExchange'],
+            },
+            {
+              dependsOn: app,
+              retainOnDelete: true,
+              parent: this,
+            },
+          ),
+      );
+    }
     return { app, clientSecret: clientSecret.value };
   }
 
   private createServicePrincipal(app: azAd.Application) {
-    const{servicePrincipal}=this.args;
+    const { servicePrincipal } = this.args;
     //Service Principal
     const sp = new azAd.ServicePrincipal(
       `${this.name}-sp`,

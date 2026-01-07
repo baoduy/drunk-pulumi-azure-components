@@ -145,6 +145,7 @@ g, ${permission.readonlyGroupObjectId ?? '00000000-0000-0000-0000-000000000000'}
         'workloadIdentity.enable': 'true',
         'workloadIdentity.clientId': workloadIdentityClientId,
         'workloadIdentity.entraSSOClientId': identity.clientId,
+        'config-maps.argocd-cm.data.admin.\\enabled': 'false',
         'config-maps.argocd-cm.data.oidc\\.config': oidcConfig,
         'config-maps.argocd-cm.data.url': pulumi.interpolate`https://${argoCdDomain}/`,
         'config-maps.argocd-rbac-cm.data.policy\\.default': defaultPolicy,

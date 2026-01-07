@@ -11,6 +11,7 @@ import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
 import { ArgoCDExtensionArgs, createArgoCDExtension, getAksClusterOutput } from './helpers';
 import { getPrivateRecordSetOutput } from '../vnet/helpers';
+import * as azAd from '@pulumi/azuread';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
   vmSize: pulumi.Input<string>;
@@ -174,24 +175,29 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private createIdentity() {
-    const { rsGroup, vaultInfo, groupRoles } = this.args;
+    const { rsGroup, vaultInfo, groupRoles, extensions } = this.args;
 
     return new AppRegistration(
       `${this.name}-identity`,
       {
+        redirectUris: extensions?.argoCd
+          ? [pulumi.interpolate`https://${extensions?.argoCd.argoCdDomain}/auth/callback`]
+          : undefined,
+
+        appType: 'web',
         vaultInfo,
-        //memberof: groupRoles ? [groupRoles.readOnly] : undefined,
+        memberof: groupRoles ? [groupRoles.readOnly] : undefined,
         servicePrincipal: {
           appRoleAssignmentRequired: true,
           assignedGroupIds: groupRoles ? [groupRoles.readOnly.objectId] : undefined,
         },
-        roleAssignments: [
-          {
-            scope: rsHelpers.getRsGroupIdFrom(rsGroup),
-            roleName: 'Reader',
-            description: 'Allows AKS have read access to the resource group',
-          },
-        ],
+        // roleAssignments: [
+        //   {
+        //     scope: rsHelpers.getRsGroupIdFrom(rsGroup),
+        //     roleName: 'Reader',
+        //     description: 'Allows AKS have read access to the resource group',
+        //   },
+        // ],
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
@@ -526,7 +532,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private createExtensions(aks: ccs.ManagedCluster, identity: AppRegistration) {
     const { extensions, rsGroup, groupRoles } = this.args;
     if (extensions?.argoCd && groupRoles) {
-      createArgoCDExtension(
+      const ext = createArgoCDExtension(
         `${this.name}-argocd`,
         {
           ...extensions.argoCd,
@@ -535,6 +541,27 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           identity,
         },
         { parent: this, retainOnDelete: true },
+      );
+
+      const issuer = aks.oidcIssuerProfile.apply((i) => i?.issuerURL!);
+      ['argocd-server', 'argocd-repo-server', 'argocd-application-controller'].map(
+        (f) =>
+          new azAd.ApplicationFederatedIdentityCredential(
+            `${this.name}-federated-${f}`,
+            {
+              applicationId: identity.applicationId,
+              displayName: f,
+              description: f,
+              issuer: issuer,
+              subject: `system:serviceaccount:argocd:${f}`,
+              audiences: ['api://AzureADTokenExchange'],
+            },
+            {
+              dependsOn: ext,
+              deletedWith: ext,
+              parent: this,
+            },
+          ),
       );
     }
   }

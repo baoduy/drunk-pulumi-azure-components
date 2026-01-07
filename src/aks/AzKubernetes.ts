@@ -71,7 +71,7 @@ export interface AzKubernetesArgs
   extraAgentPoolProfiles?: AgentPoolProfile[];
   attachToAcr?: types.ResourceInputs;
   extensions?: {
-    argoCd?: Omit<ArgoCDExtensionArgs, 'aks' | 'groupRoles' | 'identity' | 'rsGroup'>;
+    argoCd?: Omit<ArgoCDExtensionArgs, 'aks' | 'identity' | 'rsGroup'>;
   };
   features: {
     enablePrivateCluster: boolean;
@@ -532,7 +532,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           ...extensions.argoCd,
           aks,
           rsGroup,
-          groupRoles,
           identity,
         },
         { parent: this, retainOnDelete: true },

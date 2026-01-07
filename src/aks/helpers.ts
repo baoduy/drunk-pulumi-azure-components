@@ -55,19 +55,23 @@ export const getAksClusterOutput = ({
   });
 };
 
-export type ArgoCDExtensionArgs = Required<types.WithGroupRolesArgs> &
-  types.WithResourceGroupInputs & {
-    allowInsecureAccess?: boolean;
-    argoCdDomain: pulumi.Input<string>;
-    workloadIdentityClientId: pulumi.Input<string>;
-    aks: azure.containerservice.ManagedCluster;
-    identity: AppRegistration;
-    releaseTrain?: 'preview' | pulumi.Input<string>;
-    allowedNameSpaces?: pulumi.Input<string>[];
-    configs?: {
-      [key: string]: pulumi.Input<string>;
-    };
+export type ArgoCDExtensionArgs = types.WithResourceGroupInputs & {
+  allowInsecureAccess?: boolean;
+  argoCdDomain: pulumi.Input<string>;
+  workloadIdentityClientId: pulumi.Input<string>;
+  aks: azure.containerservice.ManagedCluster;
+  identity: AppRegistration;
+  releaseTrain?: 'preview' | pulumi.Input<string>;
+  allowedNameSpaces?: pulumi.Input<string>[];
+  configs?: {
+    [key: string]: pulumi.Input<string>;
   };
+  permission: {
+    syncGroupObjectId?: pulumi.Input<string>;
+    readonlyGroupObjectId?: pulumi.Input<string>;
+    adminGroupObjectId?: pulumi.Input<string>;
+  };
+};
 
 export const createArgoCDExtension = (
   name: string,
@@ -77,7 +81,7 @@ export const createArgoCDExtension = (
     workloadIdentityClientId,
     aks,
     identity,
-    groupRoles,
+    permission,
     rsGroup,
     releaseTrain,
     allowedNameSpaces,
@@ -101,15 +105,28 @@ requestedScopes:
   `;
 
   const defaultPolicy = 'role:readonly';
+
   const policy = pulumi.interpolate`
+# Admin role
 p, role:org-admin, applications, *, */*, allow
 p, role:org-admin, clusters, get, *, allow
 p, role:org-admin, repositories, get, *, allow
 p, role:org-admin, repositories, create, *, allow
 p, role:org-admin, repositories, update, *, allow
 p, role:org-admin, repositories, delete, *, allow
-g, ${groupRoles.admin.objectId}, role:org-admin
-g, ${groupRoles.readOnly.objectId}, role:readonly
+
+# Read-all + manual application sync custom role
+p, role:app-sync, applications, get, */*, allow
+p, role:app-sync, applications, sync, */*, allow
+p, role:app-sync, projects, get, *, allow
+p, role:app-sync, clusters, get, *, allow
+p, role:app-sync, repositories, get, *, allow
+p, role:app-sync, logs, get, *, allow
+
+# Group role mappings
+g, ${permission.adminGroupObjectId ?? '00000000-0000-0000-0000-000000000000'}, role:org-admin
+g, ${permission.syncGroupObjectId ?? '00000000-0000-0000-0000-000000000000'}, role:app-sync
+g, ${permission.readonlyGroupObjectId ?? '00000000-0000-0000-0000-000000000000'}, role:readonly
   `;
 
   return new azure.kubernetesconfiguration.Extension(
@@ -132,7 +149,7 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
         'config-maps.argocd-cm.data.url': pulumi.interpolate`https://${argoCdDomain}/`,
         'config-maps.argocd-rbac-cm.data.policy\\.default': defaultPolicy,
         'config-maps.argocd-rbac-cm.data.policy\\.csv': policy,
-        'config-maps.argocd-cmd-params-cm.data.server.insecure': allowInsecureAccess ? 'true' : 'false',
+        'config-maps.argocd-cmd-params-cm.data.server\\.insecure': allowInsecureAccess ? 'true' : 'false',
         'config-maps.argocd-cmd-params-cm.data.application\\.namespaces': allowedNameSpaces
           ? pulumi.output(allowedNameSpaces).apply((ns) => ns.join(','))
           : 'argocd',

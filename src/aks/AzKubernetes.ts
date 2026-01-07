@@ -51,8 +51,7 @@ const getNodeOSWindow = (maintenance: MaintenanceArgs | undefined): AutoUpgradeS
 };
 
 export interface AzKubernetesArgs
-  extends
-    CommonBaseArgs,
+  extends CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithGroupRolesArgs,
     types.WithUserAssignedIdentity,
@@ -76,6 +75,7 @@ export interface AzKubernetesArgs
     enableVerticalPodAutoscaler?: boolean;
     /** KEDA (Kubernetes Event-driven Autoscaling) settings for the workload auto-scaler profile. */
     enableKeda?: boolean;
+    /** Enable workload identity and OIDC issuer for the AKS cluster */
     enableWorkloadIdentity?: boolean;
     enablePodIdentity?: boolean;
     enableAzurePolicy?: boolean;

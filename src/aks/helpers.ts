@@ -64,6 +64,9 @@ export type ArgoCDExtensionArgs = Required<types.WithGroupRolesArgs> &
     identity: AppRegistration;
     releaseTrain?: 'preview' | pulumi.Input<string>;
     allowedNameSpaces?: pulumi.Input<string>[];
+    configs?: {
+      [key: string]: pulumi.Input<string>;
+    };
   };
 
 export const createArgoCDExtension = (
@@ -78,6 +81,7 @@ export const createArgoCDExtension = (
     rsGroup,
     releaseTrain,
     allowedNameSpaces,
+    configs,
   }: ArgoCDExtensionArgs,
   opts?: pulumi.ComponentResourceOptions,
 ) => {
@@ -132,8 +136,9 @@ g, ${groupRoles.readOnly.objectId}, role:readonly
         'config-maps.argocd-cmd-params-cm.data.application\\.namespaces': allowedNameSpaces
           ? pulumi.output(allowedNameSpaces).apply((ns) => ns.join(','))
           : 'argocd',
+        ...configs,
       },
     },
-    { ...opts, dependsOn: [aks, identity], },
+    { ...opts, dependsOn: [aks, identity] },
   );
 };

@@ -18,7 +18,7 @@ const defaultQueueOptions: Partial<bus.QueueArgs> = {
   maxSizeInMegabytes: azureEnv.isPrd ? 10 * 1024 : 1024,
   //Default is 'PT1M' (1 minute) and max is 5 minutes.
   lockDuration: 'PT1M',
-  defaultMessageTimeToLive: azureEnv.isPrd ? 'P90D' : 'P5D',
+  defaultMessageTimeToLive: azureEnv.isPrd ? 'P14D' : 'P5D',
   deadLetteringOnMessageExpiration: true,
 };
 
@@ -26,7 +26,7 @@ const defaultTopicOptions: Partial<bus.TopicArgs> = {
   //duplicateDetectionHistoryTimeWindow: 'P10M',
   //maxMessageSizeInKilobytes: 1024,
   //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
-  defaultMessageTimeToLive: azureEnv.isPrd ? 'P30D' : 'P5D',
+  defaultMessageTimeToLive: azureEnv.isPrd ? 'P14D' : 'P5D',
   enablePartitioning: false,
   maxSizeInMegabytes: azureEnv.isPrd ? 10 * 1024 : 1024,
   enableBatchedOperations: true,
@@ -35,7 +35,7 @@ const defaultTopicOptions: Partial<bus.TopicArgs> = {
 const defaultSubOptions: Partial<bus.SubscriptionArgs> = {
   duplicateDetectionHistoryTimeWindow: 'P10M',
   //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
-  defaultMessageTimeToLive: azureEnv.isPrd ? 'P90D' : 'P5D',
+  defaultMessageTimeToLive: azureEnv.isPrd ? 'P14D' : 'P5D',
   enableBatchedOperations: true,
   deadLetteringOnMessageExpiration: true,
   lockDuration: 'PT1M',

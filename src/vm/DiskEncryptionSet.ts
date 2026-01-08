@@ -43,7 +43,7 @@ export class DiskEncryptionSet extends BaseResourceComponent<DiskEncryptionSetAr
       },
     );
 
-    this.addIdentityToRole('readOnly', diskEncrypt.identity);
+    if (enableResourceIdentity) this.addIdentityToRole('readOnly', diskEncrypt.identity);
 
     this.id = diskEncrypt.id;
     this.resourceName = diskEncrypt.name;

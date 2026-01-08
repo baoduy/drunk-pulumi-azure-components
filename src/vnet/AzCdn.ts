@@ -137,7 +137,7 @@ export class AzCdn extends BaseResourceComponent<AzCdnArgs> {
       { parent: this },
     );
 
-    this.addIdentityToRole('readOnly', profile.identity);
+    if (enableResourceIdentity) this.addIdentityToRole('readOnly', profile.identity);
 
     this.profile = pulumi.output({
       resourceName: profile.name,

@@ -181,13 +181,13 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         parent: this,
       },
     );
+    if (enableResourceIdentity) this.addIdentityToRole('readOnly', stg.identity);
 
     this.createPrivateLink(stg);
     this.createLifeCycleManagement(stg);
     this.enableStaticWebsite(stg);
     this.createContainers(stg);
 
-    this.addIdentityToRole('readOnly', stg.identity);
     this.addSecretsToVault(stg);
 
     this.id = stg.id;

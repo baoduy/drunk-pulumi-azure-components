@@ -59,10 +59,11 @@ export interface AzSqlArgs
         'administratorLogin' | 'federatedClientId' | 'isIPv6Enabled' | 'restrictOutboundNetworkAccess' | 'version'
       >
     > {
-  administrators?: {
+  administrators: {
     azureAdOnlyAuthentication: boolean;
     useDefaultUAssignedIdForConnection?: boolean;
-    additionalUAssigneds?: Record<string, pulumi.Input<string>>;
+    /**additionalUAssignedClientIds exable: {'abc':identity.clientId}*/
+    additionalUAssignedClientIds?: Record<string, pulumi.Input<string>>;
     adminGroup: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
   };
 
@@ -185,7 +186,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     );
 
     this.createEncryptionProtector(server, encryptionKey);
-    this.addIdentityToRole('readOnly', server.identity);
+    if (enableResourceIdentity) this.addIdentityToRole('readOnly', server.identity);
 
     return { server, password };
   }
@@ -312,10 +313,11 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createVulnerabilityAssessment(server: sql.Server) {
-    const { rsGroup, vulnerabilityAssessment, vaultInfo } = this.args;
+    const { enableResourceIdentity, rsGroup, vulnerabilityAssessment, vaultInfo } = this.args;
     if (!vulnerabilityAssessment) return undefined;
     //this will allows sql server to able to write log into the storage account
-    this.addIdentityToRole('contributor', server.identity);
+
+    if (enableResourceIdentity) this.addIdentityToRole('contributor', server.identity);
 
     const stgEndpoints = storageHelpers.getStorageEndpointsOutputs(vulnerabilityAssessment.logStorage);
     const storageKey = getStorageAccessKeyOutputs(vulnerabilityAssessment.logStorage, vaultInfo);
@@ -413,16 +415,16 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         [`${name}-sql-default-sysid-conn`]: pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; MultipleActiveResultSets=False;Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`,
       };
 
-      if (defaultUAssignedId && administrators?.useDefaultUAssignedIdForConnection)
+      if (defaultUAssignedId && administrators.useDefaultUAssignedIdForConnection)
         secrets[`${name}-sql-default-uid-conn`] =
           pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${defaultUAssignedId?.principalId}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
 
-      if (!administrators?.azureAdOnlyAuthentication) {
+      if (!administrators.azureAdOnlyAuthentication) {
         secrets[`${name}-sql-password-conn`] =
           pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; User Id=${server.administratorLogin}; Password=${password.value}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
       }
 
-      const adds = administrators?.additionalUAssigneds;
+      const adds = administrators.additionalUAssignedClientIds;
       if (adds) {
         Object.keys(adds).forEach((k) => {
           const conn = pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${adds[k]}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;

@@ -211,7 +211,7 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
 
     return new KeyVault(
       vaultCreate.name ?? this.name,
-      { ...vaultCreate, rsGroup: rsGroup, groupRoles: groupRoles, network },
+      { network, ...vaultCreate, rsGroup: rsGroup, groupRoles: groupRoles },
       {
         ...this.opts,
         parent: this,

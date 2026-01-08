@@ -22,7 +22,8 @@ import {
 import { AzSql, AzSqlArgs, MySql, MySqlArgs, Postgres, PostgresArgs, Redis, RedisArgs } from './database';
 import { KeyVault, KeyVaultArgs } from './vault';
 
-export interface AppResourcesArgs extends CommonBaseArgs, types.WithNetworkArgs {
+export interface AppResourcesArgs
+  extends CommonBaseArgs, types.WithNetworkArgs, types.WithEncryptionEnabler, types.WithDiskEncryptSet {
   vaultCreate?: types.WithName & Partial<KeyVaultArgs>;
   storageAccount?: types.WithName & Partial<StorageAccountArgs>;
   serviceBus?: types.WithName & Partial<ServiceBusArgs> & Pick<ServiceBusArgs, 'sku'>;

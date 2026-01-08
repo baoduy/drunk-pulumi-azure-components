@@ -185,7 +185,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             }
           : undefined,
 
-        zones: zoneHelper.getDefaultZones(zones),
+        zones: sku.name == 'Basic' || sku.name == 'Consumption' ? undefined : zoneHelper.getDefaultZones(zones),
         //Only available for Premium
         additionalLocations:
           sku.name === 'Premium'

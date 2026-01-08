@@ -113,7 +113,7 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
             registrationEnabled: false,
             virtualNetwork: { id: v.vnetId },
           },
-          { dependsOn: zone, deletedWith: zone, parent: this },
+          { dependsOn: zone, deletedWith: zone, deleteBeforeReplace: true, parent: this },
         );
       }),
     );

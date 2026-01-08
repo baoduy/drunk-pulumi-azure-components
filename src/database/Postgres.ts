@@ -27,7 +27,7 @@ export interface PostgresArgs
      */
     tier: postgresql.SkuTier;
   };
-  enableAzureADAdmin?: boolean;
+  enableAzureADAdmin: boolean;
   enablePasswordAuth?: boolean;
   databases?: Array<{ name: string }>;
   lock?: boolean;

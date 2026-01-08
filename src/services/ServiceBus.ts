@@ -53,7 +53,7 @@ export interface ServiceBusArgs
     types.WithEncryptionEnabler,
     types.WithNetworkArgs,
     Partial<Pick<bus.NamespaceArgs, 'sku' | 'zoneRedundant' | 'alternateName' | 'premiumMessagingPartitions'>> {
-  disableLocalAuth?: boolean;
+  disableLocalAuth: boolean;
   sku: {
     /**
      * Messaging units for your service bus premium namespace. Valid capacities are {1, 2, 4, 8, 16} multiples of your properties.premiumMessagingPartitions setting. For example, If properties.premiumMessagingPartitions is 1 then possible capacity values are 1, 2, 4, 8, and 16. If properties.premiumMessagingPartitions is 4 then possible capacity values are 4, 8, 16, 32 and 64

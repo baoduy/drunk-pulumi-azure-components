@@ -52,7 +52,7 @@ export interface ApimArgs
     capacity: pulumi.Input<number>;
     name: apim.SkuType;
   };
-  disableSignIn?: boolean;
+  disableSignIn: boolean;
   permissions?: Array<Omit<types.GrantIdentityRoles, 'identity'>>;
   products?: Array<
     Omit<ApimProductArgs, 'rsGroup' | 'serviceName' | 'vaultInfo' | 'groupRoles' | 'enableDiagnostic'> & {
@@ -219,6 +219,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
       `${this.name}-apim`,
       {
         vaultInfo,
+        enableClientSecret: true,
       },
       { dependsOn: service, deletedWith: service, parent: this },
     );
@@ -230,7 +231,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         serviceName: service.name,
         clientId: identity.clientId,
         clientSecret: identity.clientSecret!,
-        authority: pulumi.interpolate`https://login.microsoftonline.com/${azureEnv.tenantId}/`,
+        authority: azureEnv.entraIdAuthorityUrl,
         type: 'aad',
         identityProviderName: 'aad',
         allowedTenants: [azureEnv.tenantId],

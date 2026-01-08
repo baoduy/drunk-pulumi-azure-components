@@ -91,7 +91,7 @@ export const createArgoCDExtension = (
 ) => {
   const oidcConfig = pulumi.interpolate`
 name: Azure
-issuer: https://login.microsoftonline.com/${azureEnv.tenantId}/v2.0
+issuer: ${azureEnv.entraIdAuthorityUrl}
 clientID: ${identity.clientId}
 azure:
   useWorkloadIdentity: true

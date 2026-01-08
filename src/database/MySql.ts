@@ -29,7 +29,7 @@ export interface MySqlArgs
      */
     tier: mysql.ServerSkuTier;
   };
-  enableAzureADAdmin?: boolean;
+  enableAzureADAdmin: boolean;
   databases?: Array<{ name: string }>;
   lock?: boolean;
 }

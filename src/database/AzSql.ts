@@ -60,7 +60,7 @@ export interface AzSqlArgs
       >
     > {
   administrators?: {
-    azureAdOnlyAuthentication?: boolean;
+    azureAdOnlyAuthentication: boolean;
     useDefaultUAssignedIdForConnection?: boolean;
     additionalUAssigneds?: Record<string, pulumi.Input<string>>;
     adminGroup: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };

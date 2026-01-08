@@ -158,7 +158,6 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
 
         hostnameConfigurations: hostnameConfigurations.map((config) => {
           const { cert, ...props } = config;
-
           return {
             ...props,
             certificateSource: apim.CertificateSource.KeyVault,

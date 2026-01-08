@@ -14,17 +14,25 @@ export interface RedisArgs
     Partial<
       Pick<
         redis.RedisArgs,
-        | 'sku'
-        | 'zones'
-        | 'redisVersion'
-        | 'replicasPerMaster'
-        | 'replicasPerPrimary'
-        | 'tenantSettings'
-        | 'redisConfiguration'
+        'zones' | 'redisVersion' | 'replicasPerMaster' | 'replicasPerPrimary' | 'tenantSettings' | 'redisConfiguration'
       >
     >,
     Partial<Pick<redis.PatchScheduleArgs, 'scheduleEntries'>> {
-  disableAccessKeyAuthentication?: boolean;
+  sku: {
+    /**
+     * The size of the Redis cache to deploy. Valid values: for C (Basic/Standard) family (0, 1, 2, 3, 4, 5, 6), for P (Premium) family (1, 2, 3, 4).
+     */
+    capacity: pulumi.Input<number>;
+    /**
+     * The SKU family to use. Valid values: (C, P). (C = Basic/Standard, P = Premium).
+     */
+    family: 'C' | 'P';
+    /**
+     * The type of Redis cache to deploy. Valid values: (Basic, Standard, Premium)
+     */
+    name: 'Basic' | 'Standard' | 'Premium';
+  };
+  disableAccessKeyAuthentication: boolean;
   additionalUserAssignedIds?: Array<{
     name: string;
     accessPolicy: 'Data Owner' | 'Data Contributor' | 'Data Reader';
@@ -73,12 +81,14 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   private createRedis() {
     const { rsGroup, enableResourceIdentity, network, lock, defaultUAssignedId, ...props } = this.args;
 
+    const sku = props.sku ?? { name: 'Basic', family: 'C', capacity: 0 };
+
     return new redis.Redis(
       this.name,
       {
         ...props,
         ...rsGroup,
-        sku: props.sku ?? { name: 'Basic', family: 'C', capacity: 0 },
+        sku,
         redisVersion: props.redisVersion ?? '6.0',
         minimumTlsVersion: '1.2',
         enableNonSslPort: false,
@@ -86,7 +96,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         staticIP: network?.staticIP,
         publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
         updateChannel: redis.UpdateChannel.Stable,
-        zones: zoneHelper.getDefaultZones(props.zones),
+        zones: sku.name === 'Premium' ? zoneHelper.getDefaultZones(props.zones) : undefined,
 
         identity: enableResourceIdentity
           ? {

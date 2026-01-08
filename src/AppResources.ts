@@ -26,7 +26,7 @@ export interface AppResourcesArgs
   extends CommonBaseArgs, types.WithNetworkArgs, types.WithEncryptionEnabler, types.WithDiskEncryptSet {
   vaultCreate?: types.WithName & Partial<KeyVaultArgs>;
   storageAccount?: types.WithName & Partial<StorageAccountArgs>;
-  serviceBus?: types.WithName & Partial<ServiceBusArgs> & Pick<ServiceBusArgs, 'sku'>;
+  serviceBus?: types.WithName & Partial<ServiceBusArgs> & Pick<ServiceBusArgs, 'sku' | 'disableLocalAuth'>;
   automation?: types.WithName & Partial<AutomationArgs>;
   azSearch?: types.WithName & Partial<AzSearchArgs> & Pick<AzSearchArgs, 'sku'>;
   apim?: types.WithName & Partial<ApimArgs> & Pick<ApimArgs, 'sku' | 'disableSignIn'>;
@@ -37,9 +37,11 @@ export interface AppResourcesArgs
   logicApp?: types.WithName & Partial<LogicAppArgs> & Pick<LogicAppArgs, 'integrationAccount' | 'workflow'>;
   signalR?: types.WithName & Partial<SignalRArgs> & Pick<SignalRArgs, 'sku'>;
   azSql?: types.WithName & Partial<AzSqlArgs>;
-  mySql?: types.WithName & Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin'>;
-  postgres?: types.WithName & Partial<PostgresArgs> & Pick<PostgresArgs, 'sku' | 'administratorLogin'>;
-  redis?: types.WithName & Partial<RedisArgs>;
+  mySql?: types.WithName & Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'>;
+  postgres?: types.WithName &
+    Partial<PostgresArgs> &
+    Pick<PostgresArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'>;
+  redis?: types.WithName & Partial<RedisArgs> & Pick<RedisArgs, 'sku' | 'disableAccessKeyAuthentication'>;
 }
 
 export class AppResources extends BaseComponent<AppResourcesArgs> {

@@ -10,7 +10,6 @@ import {
   AppCertArgs,
   AppConfig,
   AppConfigArgs,
-  AppContainer,
   AppContainerEnv,
   AppContainerEnvArgs,
   IoTHub,
@@ -21,23 +20,26 @@ import {
   SignalRArgs,
 } from './app';
 import { AzSql, AzSqlArgs, MySql, MySqlArgs, Postgres, PostgresArgs, Redis, RedisArgs } from './database';
+import { KeyVault, KeyVaultArgs } from './vault';
 
-export interface AppResourcesArgs extends CommonBaseArgs, types.WithNetworkArgs {
-  storageAccount?: Partial<StorageAccountArgs>;
-  serviceBus?: Partial<ServiceBusArgs> & Pick<ServiceBusArgs, 'sku'>;
-  automation?: Partial<AutomationArgs>;
-  azSearch?: Partial<AzSearchArgs> & Pick<AzSearchArgs, 'sku'>;
-  apim?: Partial<ApimArgs> & Pick<ApimArgs, 'sku'>;
-  appCert?: Partial<AppCertArgs> & Pick<AppCertArgs, 'domain' | 'productType'>;
-  appConfig?: Partial<AppConfigArgs>;
-  appContainerEnv?: Partial<AppContainerEnvArgs>;
-  iotHub?: Partial<IoTHubArgs> & Pick<IoTHubArgs, 'sku'>;
-  logicApp?: Partial<LogicAppArgs> & Pick<LogicAppArgs, 'integrationAccount' | 'workflow'>;
-  signalR?: Partial<SignalRArgs> & Pick<SignalRArgs, 'sku'>;
-  azSql?: Partial<AzSqlArgs>;
-  mySql?: Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin'>;
-  postgres?: Partial<PostgresArgs> & Pick<PostgresArgs, 'sku' | 'administratorLogin'>;
-  redis?: Partial<RedisArgs>;
+export interface AppResourcesArgs
+  extends CommonBaseArgs, types.WithNetworkArgs, types.WithEncryptionEnabler, types.WithDiskEncryptSet {
+  vaultCreate?: types.WithName & Partial<KeyVaultArgs>;
+  storageAccount?: types.WithName & Partial<StorageAccountArgs>;
+  serviceBus?: types.WithName & Partial<ServiceBusArgs> & Pick<ServiceBusArgs, 'sku'>;
+  automation?: types.WithName & Partial<AutomationArgs>;
+  azSearch?: types.WithName & Partial<AzSearchArgs> & Pick<AzSearchArgs, 'sku'>;
+  apim?: types.WithName & Partial<ApimArgs> & Pick<ApimArgs, 'sku'>;
+  appCert?: types.WithName & Partial<AppCertArgs> & Pick<AppCertArgs, 'domain' | 'productType'>;
+  appConfig?: types.WithName & Partial<AppConfigArgs>;
+  appContainerEnv?: types.WithName & Partial<AppContainerEnvArgs>;
+  iotHub?: types.WithName & Partial<IoTHubArgs> & Pick<IoTHubArgs, 'sku'>;
+  logicApp?: types.WithName & Partial<LogicAppArgs> & Pick<LogicAppArgs, 'integrationAccount' | 'workflow'>;
+  signalR?: types.WithName & Partial<SignalRArgs> & Pick<SignalRArgs, 'sku'>;
+  azSql?: types.WithName & Partial<AzSqlArgs>;
+  mySql?: types.WithName & Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin'>;
+  postgres?: types.WithName & Partial<PostgresArgs> & Pick<PostgresArgs, 'sku' | 'administratorLogin'>;
+  redis?: types.WithName & Partial<RedisArgs>;
 }
 
 export class AppResources extends BaseComponent<AppResourcesArgs> {
@@ -46,7 +48,6 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
   public readonly azSearch?: AzSearch;
   public readonly appCert?: AppCert;
   public readonly appConfig?: AppConfig;
-  public readonly appContainer?: AppContainer;
   public readonly appContainerEnv?: AppContainerEnv;
   public readonly iotHub?: IoTHub;
   public readonly logicApp?: LogicApp;
@@ -55,8 +56,9 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
   public readonly mySql?: MySql;
   public readonly postgres?: Postgres;
   public readonly redis?: Redis;
-  private serviceBus?: ServiceBus;
-  private apim?: Apim;
+  public serviceBus?: ServiceBus;
+  public apim?: Apim;
+  public vaultInfo?: types.ResourceOutputs;
 
   constructor(name: string, args: AppResourcesArgs, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('AppResources'), name, args, opts);
@@ -79,49 +81,111 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ...others
     } = args;
 
-    this.apim = apim ? new Apim(name, { ...others, ...apim }, { ...opts, parent: this }) : undefined;
+    this.vaultInfo = this.createVault();
+    this.apim = apim
+      ? new Apim(apim.name ?? name, { ...others, ...apim, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      : undefined;
 
     this.storage = storageAccount
-      ? new StorageAccount(name, { ...others, ...storageAccount }, { ...opts, parent: this })
+      ? new StorageAccount(
+          storageAccount.name ?? name,
+          { ...others, ...storageAccount, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
       : undefined;
 
     this.serviceBus = serviceBus
-      ? new ServiceBus(name, { ...others, ...serviceBus }, { ...opts, parent: this })
+      ? new ServiceBus(
+          serviceBus.name ?? name,
+          { ...others, ...serviceBus, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
       : undefined;
 
     this.automation = automation
-      ? new Automation(name, { ...others, ...automation }, { ...opts, parent: this })
+      ? new Automation(
+          automation.name ?? name,
+          { ...others, ...automation, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
       : undefined;
 
-    this.azSearch = azSearch ? new AzSearch(name, { ...others, ...azSearch }, { ...opts, parent: this }) : undefined;
+    this.azSearch = azSearch
+      ? new AzSearch(
+          azSearch.name ?? name,
+          { ...others, ...azSearch, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
+      : undefined;
 
-    this.appCert = appCert ? new AppCert(name, { ...others, ...appCert }, { ...opts, parent: this }) : undefined;
+    this.appCert = appCert
+      ? new AppCert(
+          appCert.name ?? name,
+          { ...others, ...appCert, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
+      : undefined;
 
     this.appConfig = appConfig
-      ? new AppConfig(name, { ...others, ...appConfig }, { ...opts, parent: this })
+      ? new AppConfig(
+          appConfig.name ?? name,
+          { ...others, ...appConfig, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
       : undefined;
 
     this.appContainerEnv = appContainerEnv
-      ? new AppContainerEnv(name, { ...others, ...appContainerEnv }, { ...opts, parent: this })
+      ? new AppContainerEnv(
+          appContainerEnv.name ?? name,
+          { ...others, ...appContainerEnv, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
       : undefined;
 
-    this.iotHub = iotHub ? new IoTHub(name, { ...others, ...iotHub }, { ...opts, parent: this }) : undefined;
+    this.iotHub = iotHub
+      ? new IoTHub(iotHub.name ?? name, { ...others, ...iotHub, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      : undefined;
 
-    this.logicApp = logicApp ? new LogicApp(name, { ...others, ...logicApp }, { ...opts, parent: this }) : undefined;
+    this.logicApp = logicApp
+      ? new LogicApp(
+          logicApp.name ?? name,
+          { ...others, ...logicApp, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
+      : undefined;
 
-    this.signalR = signalR ? new SignalR(name, { ...others, ...signalR }, { ...opts, parent: this }) : undefined;
+    this.signalR = signalR
+      ? new SignalR(
+          signalR.name ?? name,
+          { ...others, ...signalR, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
+      : undefined;
 
-    this.azSql = azSql ? new AzSql(name, { ...others, ...azSql }, { ...opts, parent: this }) : undefined;
+    this.azSql = azSql
+      ? new AzSql(azSql.name ?? name, { ...others, ...azSql, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      : undefined;
 
-    this.mySql = mySql ? new MySql(name, { ...others, ...mySql }, { ...opts, parent: this }) : undefined;
+    this.mySql = mySql
+      ? new MySql(mySql.name ?? name, { ...others, ...mySql, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      : undefined;
 
-    this.postgres = postgres ? new Postgres(name, { ...others, ...postgres }, { ...opts, parent: this }) : undefined;
+    this.postgres = postgres
+      ? new Postgres(
+          postgres.name ?? name,
+          { ...others, ...postgres, vaultInfo: this.vaultInfo },
+          { ...opts, parent: this },
+        )
+      : undefined;
 
-    this.redis = redis ? new Redis(name, { ...others, ...redis }, { ...opts, parent: this }) : undefined;
+    this.redis = redis
+      ? new Redis(redis.name ?? name, { ...others, ...redis, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      : undefined;
   }
 
   getOutputs() {
     return {
+      vaultInfo: this.vaultInfo,
       apim: this.apim?.getOutputs(),
       storage: this.storage?.getOutputs(),
       serviceBus: this.serviceBus?.getOutputs(),
@@ -138,5 +202,20 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       postgres: this.postgres?.getOutputs(),
       redis: this.redis?.getOutputs(),
     };
+  }
+
+  private createVault(): types.ResourceOutputs | undefined {
+    const { rsGroup, groupRoles, vaultInfo, vaultCreate, network } = this.args;
+    if (vaultInfo) return { resourceName: pulumi.output(vaultInfo.resourceName), id: pulumi.output(vaultInfo.id) };
+    if (!vaultCreate) return undefined;
+
+    return new KeyVault(
+      vaultCreate.name ?? this.name,
+      { ...vaultCreate, rsGroup: rsGroup, groupRoles: groupRoles, network },
+      {
+        ...this.opts,
+        parent: this,
+      },
+    ).getOutputs();
   }
 }

@@ -237,6 +237,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         vaultInfo,
         defaultUAssignedId,
         groupRoles,
+        enableResourceIdentity: true,
         encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
       },
       { dependsOn: this.opts?.dependsOn, parent: this },

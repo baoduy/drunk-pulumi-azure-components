@@ -36,7 +36,7 @@ export interface AppResourcesArgs
   iotHub?: types.WithName & Partial<IoTHubArgs> & Pick<IoTHubArgs, 'sku'>;
   logicApp?: types.WithName & Partial<LogicAppArgs> & Pick<LogicAppArgs, 'integrationAccount' | 'workflow'>;
   signalR?: types.WithName & Partial<SignalRArgs> & Pick<SignalRArgs, 'sku'>;
-  azSql?: types.WithName & Partial<AzSqlArgs>;
+  azSql?: types.WithName & Partial<AzSqlArgs> & Pick<AzSqlArgs, 'administrators'>;
   mySql?: types.WithName & Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'>;
   postgres?: types.WithName &
     Partial<PostgresArgs> &

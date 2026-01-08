@@ -136,6 +136,8 @@ pulumi.all([subscriptionId, tenantId, currentPrincipal]).apply(([s, t, p]) => {
   });
 });
 
+export const entraIdAuthorityUrl = pulumi.interpolate`https://login.microsoftonline.com/${tenantId}/v2.0`;
+
 /**
  * @constant {string[]} defaultAzurePorts
  * @description List of default Azure ports commonly used in network security rules

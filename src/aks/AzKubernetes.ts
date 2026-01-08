@@ -188,7 +188,9 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         appType: 'web',
         vaultInfo,
         //memberof: groupRoles ? [groupRoles.readOnly] : undefined,
+        enableClientSecret: true,
         servicePrincipal: {
+          enable: true,
           appRoleAssignmentRequired: true,
           assignedGroupIds: groupRoles ? [groupRoles.readOnly.objectId] : undefined,
         },

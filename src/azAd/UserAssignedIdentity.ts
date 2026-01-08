@@ -67,7 +67,7 @@ export class UserAssignedIdentity extends BaseResourceComponent<UserAssignedIden
             ...rsGroup,
             federatedIdentityCredentialResourceName: name,
             audiences: ['api://AzureADTokenExchange'],
-            issuer: props.issuer ?? pulumi.interpolate`https://login.microsoftonline.com/${azureEnv.tenantId}/v2.0`,
+            issuer: props.issuer ?? azureEnv.entraIdAuthorityUrl,
             subject: props.subject,
             resourceName: managedIdentity.name,
           },

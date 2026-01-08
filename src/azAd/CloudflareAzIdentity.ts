@@ -18,6 +18,7 @@ export function createCloudflareAzIdentity(
     `${name}-cloudflare-idp`,
     {
       ...props,
+      enableClientSecret: true,
       appType: 'web',
       redirectUris: [`https://${name}.cloudflareaccess.com/cdn-cgi/access/callback`],
       implicitGrant: {

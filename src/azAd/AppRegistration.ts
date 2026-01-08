@@ -5,7 +5,7 @@ import { RoleAssignment, RoleAssignmentArgs } from './RoleAssignment';
 import { WithMemberOfArgs, WithVaultInfo } from '../types';
 
 import { BaseComponent } from '../base';
-import { VaultSecrets } from '../vault';
+import { SecretItemArgs, VaultSecrets } from '../vault';
 import { getComponentResourceType } from '../base/helpers';
 import { azureEnv, stackInfo } from '../helpers';
 
@@ -46,10 +46,12 @@ export interface AppRegistrationArgs
     subject: pulumi.Input<string>;
     audiences?: pulumi.Input<pulumi.Input<string>[]>;
   }>;
+  enableClientSecret?: boolean;
   servicePrincipal?: Pick<
     azAd.ServicePrincipalArgs,
     'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn'
   > & {
+    enable: boolean;
     appRoleAssignmentRequired?: pulumi.Input<boolean>;
     assignedGroupIds?: pulumi.Input<string>[];
   };
@@ -73,9 +75,9 @@ export interface AppRegistrationArgs
 export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   public readonly tenantId: pulumi.Output<string>;
   public readonly clientId: pulumi.Output<string>;
-  public readonly clientSecret: pulumi.Output<string>;
-  public readonly servicePrincipalId: pulumi.Output<string>;
-  public readonly servicePrincipalPassword: pulumi.Output<string>;
+  public readonly clientSecret?: pulumi.Output<string>;
+  public readonly servicePrincipalId?: pulumi.Output<string>;
+  public readonly servicePrincipalPassword?: pulumi.Output<string>;
   public readonly applicationId: pulumi.Output<string>;
   private vaultSecrets: ReturnType<VaultSecrets['getOutputs']> = {};
 
@@ -86,20 +88,27 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     const { app, clientSecret } = this.createAppRegistration();
     const sp = this.createServicePrincipal(app);
 
-    this.servicePrincipalId = sp.servicePrincipalId;
-    this.servicePrincipalPassword = sp.servicePrincipalPassword;
+    this.servicePrincipalId = sp?.servicePrincipalId;
+    this.servicePrincipalPassword = sp?.servicePrincipalPassword;
     this.clientId = app.clientId;
     this.clientSecret = clientSecret;
     this.tenantId = azureEnv.tenantId;
     this.applicationId = app.id;
 
-    this.addSecrets({
-      clientId: app.clientId,
-      clientSecret: clientSecret,
-      servicePrincipalId: sp.servicePrincipalId,
-      servicePrincipalPass: sp.servicePrincipalPassword,
-    });
+    const ss: { [key: string]: SecretItemArgs } = {
+      'client-id': { value: app.clientId, contentType: `AppRegistration:${this.name}` },
+    };
+    if (clientSecret) {
+      ss['client-secret'] = { value: clientSecret, contentType: `AppRegistration:${this.name}` };
+    }
+    if (sp?.servicePrincipalId) {
+      ss['principal-id'] = { value: sp.servicePrincipalId, contentType: `AppRegistration:${this.name}` };
+    }
+    if (sp?.servicePrincipalPassword) {
+      ss['principal-secret'] = { value: sp.servicePrincipalPassword, contentType: `AppRegistration:${this.name}` };
+    }
 
+    this.addSecrets(ss);
     this.registerOutputs();
   }
 
@@ -114,13 +123,14 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   }
 
   private createAppRegistration() {
-    const { info, federatedCredentials } = this.args;
+    const { info, enableClientSecret, federatedCredentials } = this.args;
 
     const app = new azAd.Application(
       `${stackInfo.stack}-${this.name}`,
       {
         ...this.args,
         ...info,
+
         displayName: info?.displayName ?? `${stackInfo.stack}-${this.name}`,
         description: info?.description ?? `${stackInfo.stack}-${this.name}`,
         preventDuplicateNames: true,
@@ -139,17 +149,19 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         singlePageApplication:
           this.args.appType == 'singlePageApplication' ? { redirectUris: this.args.redirectUris } : undefined,
       },
-      { ...this.opts, parent: this, ignoreChanges: ['tags'] },
+      { ...this.opts, parent: this, ignoreChanges: ['tags', 'identifierUris'] },
     );
 
-    const clientSecret = new azAd.ApplicationPassword(
-      `${this.name}-client-secret`,
-      {
-        displayName: this.name,
-        applicationId: app.id,
-      },
-      { dependsOn: app, parent: this },
-    );
+    const clientSecret = enableClientSecret
+      ? new azAd.ApplicationPassword(
+          `${this.name}-client-secret`,
+          {
+            displayName: this.name,
+            applicationId: app.id,
+          },
+          { dependsOn: app, parent: this },
+        )
+      : undefined;
 
     if (federatedCredentials) {
       federatedCredentials.map(
@@ -172,11 +184,14 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
           ),
       );
     }
-    return { app, clientSecret: clientSecret.value };
+
+    return { app, clientSecret: clientSecret?.value };
   }
 
   private createServicePrincipal(app: azAd.Application) {
     const { servicePrincipal } = this.args;
+    if (!servicePrincipal?.enable) return undefined;
+
     //Service Principal
     const sp = new azAd.ServicePrincipal(
       `${this.name}-sp`,
@@ -255,34 +270,14 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     );
   }
 
-  private addSecrets({
-    clientId,
-    clientSecret,
-    servicePrincipalId,
-    servicePrincipalPass,
-  }: {
-    clientId: pulumi.Input<string>;
-    clientSecret: pulumi.Input<string>;
-    servicePrincipalId: pulumi.Input<string>;
-    servicePrincipalPass: pulumi.Input<string>;
-  }) {
+  private addSecrets(secrets: { [key: string]: SecretItemArgs }) {
     if (!this.args.vaultInfo) return;
+
     const secret = new VaultSecrets(
       this.name,
       {
         vaultInfo: this.args.vaultInfo,
-        secrets: {
-          ['client-id']: { value: clientId, contentType: `AppRegistration:${this.name} ` },
-          ['client-secret']: { value: clientSecret, contentType: `AppRegistration:${this.name} ` },
-          ['principal-id']: {
-            value: servicePrincipalId,
-            contentType: `AppRegistration:${this.name} `,
-          },
-          ['principal-secret']: {
-            value: servicePrincipalPass,
-            contentType: `AppRegistration:${this.name} `,
-          },
-        },
+        secrets,
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );

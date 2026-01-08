@@ -29,7 +29,7 @@ export interface AppResourcesArgs
   serviceBus?: types.WithName & Partial<ServiceBusArgs> & Pick<ServiceBusArgs, 'sku'>;
   automation?: types.WithName & Partial<AutomationArgs>;
   azSearch?: types.WithName & Partial<AzSearchArgs> & Pick<AzSearchArgs, 'sku'>;
-  apim?: types.WithName & Partial<ApimArgs> & Pick<ApimArgs, 'sku'>;
+  apim?: types.WithName & Partial<ApimArgs> & Pick<ApimArgs, 'sku' | 'disableSignIn'>;
   appCert?: types.WithName & Partial<AppCertArgs> & Pick<AppCertArgs, 'domain' | 'productType'>;
   appConfig?: types.WithName & Partial<AppConfigArgs>;
   appContainerEnv?: types.WithName & Partial<AppContainerEnvArgs>;

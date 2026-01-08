@@ -2,7 +2,7 @@ import * as pulumi from '@pulumi/pulumi';
 
 import { SecretItemArgs, VaultSecret } from './VaultSecret';
 
-import { BaseComponent } from '../base/BaseComponent';
+import { BaseComponent } from '../base';
 import { WithVaultInfo } from '../types';
 import { getComponentResourceType } from '../base/helpers';
 

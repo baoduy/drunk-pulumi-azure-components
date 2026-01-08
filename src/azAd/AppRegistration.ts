@@ -17,6 +17,12 @@ export enum GroupMembershipClaimsTypes {
   All = 'All',
 }
 
+const groupClaimsArgs = {
+  additionalProperties: [],
+  essential: false,
+  name: 'groups',
+};
+
 export interface AppRegistrationArgs
   extends
     WithVaultInfo,
@@ -26,7 +32,6 @@ export interface AppRegistrationArgs
         azAd.ApplicationArgs,
         | 'identifierUris'
         | 'oauth2PostResponseRequired'
-        | 'optionalClaims'
         | 'featureTags'
         | 'api'
         | 'appRoles'
@@ -70,6 +75,10 @@ export interface AppRegistrationArgs
 
   /** Role assignments to be created for the Service Principal */
   roleAssignments?: Array<Omit<RoleAssignmentArgs, 'roleAssignmentName' | 'principalId' | 'principalType'>>;
+  /**Optional Claims*/
+  optionalClaims?: {
+    enableGroup: boolean;
+  };
 }
 
 export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
@@ -123,12 +132,16 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   }
 
   private createAppRegistration() {
-    const { info, enableClientSecret, federatedCredentials } = this.args;
+    const { info, enableClientSecret, federatedCredentials, optionalClaims, ...props } = this.args;
 
+    const optionalClaimsFinal = [];
+    if (optionalClaims?.enableGroup) {
+      optionalClaimsFinal.push(groupClaimsArgs);
+    }
     const app = new azAd.Application(
       `${stackInfo.stack}-${this.name}`,
       {
-        ...this.args,
+        ...props,
         ...info,
 
         displayName: info?.displayName ?? `${stackInfo.stack}-${this.name}`,
@@ -148,6 +161,12 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
             : undefined,
         singlePageApplication:
           this.args.appType == 'singlePageApplication' ? { redirectUris: this.args.redirectUris } : undefined,
+
+        optionalClaims: {
+          accessTokens: optionalClaimsFinal,
+          idTokens: optionalClaimsFinal,
+          saml2Tokens: optionalClaimsFinal,
+        },
       },
       { ...this.opts, parent: this, ignoreChanges: ['tags', 'identifierUris'] },
     );

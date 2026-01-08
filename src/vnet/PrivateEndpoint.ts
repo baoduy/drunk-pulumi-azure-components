@@ -164,7 +164,7 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
       case 'keyVault':
         return {
           privateDnsZoneName: 'privatelink.vaultcore.azure.net',
-          linkServiceGroupIds: ['keyVault'],
+          linkServiceGroupIds: ['vault'],
         };
       case 'mysql':
         return {

@@ -377,9 +377,10 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
         identity: enableResourceIdentity
           ? {
-              type: ccs.ResourceIdentityType.SystemAssigned,
-              //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
-              //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+              type: defaultUAssignedId
+                ? ccs.ResourceIdentityType.UserAssigned
+                : ccs.ResourceIdentityType.SystemAssigned,
+              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
             }
           : undefined,
 

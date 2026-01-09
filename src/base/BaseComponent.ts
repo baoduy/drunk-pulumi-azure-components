@@ -1,5 +1,4 @@
 import * as pulumi from '@pulumi/pulumi';
-
 import { getComponentResourceType } from './helpers';
 import crypto from 'crypto';
 

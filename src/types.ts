@@ -15,6 +15,8 @@ export type CommonProps =
   | 'resourceName'
   | 'tags';
 
+export type PrincipalTypes = 'User' | 'Group' | 'ServicePrincipal' | 'ForeignGroup' | 'Device';
+
 export type AsInput<T> = {
   [K in keyof T]: T[K] extends object
     ? T[K] extends Array<any>

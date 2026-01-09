@@ -184,7 +184,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         redirectUris: extensions?.argoCd
           ? [pulumi.interpolate`https://${extensions?.argoCd.argoCdDomain}/auth/callback`]
           : undefined,
-
         appType: 'web',
         vaultInfo,
         //memberof: groupRoles ? [groupRoles.readOnly] : undefined,
@@ -201,6 +200,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             description: 'Allows AKS have read access to the resource group',
           },
         ],
+        optionalClaims: extensions?.argoCd ? { enableGroup: true } : undefined,
       },
       { dependsOn: this.opts?.dependsOn, parent: this },
     );

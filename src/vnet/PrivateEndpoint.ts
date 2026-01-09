@@ -103,7 +103,10 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
         {
           rsGroup: args.rsGroup,
           vnetLinks,
-          aRecords: [{ name: '*', ipv4Address: privateIpAddresses }],
+          aRecords: [
+            { name: '@', ipv4Address: privateIpAddresses },
+            { name: '*', ipv4Address: privateIpAddresses },
+          ],
         },
         {
           dependsOn: privateEndpoint,

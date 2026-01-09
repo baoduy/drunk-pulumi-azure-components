@@ -15,7 +15,7 @@ const defaultQueueOptions: Partial<bus.QueueArgs> = {
   maxDeliveryCount: 10,
   enableBatchedOperations: true,
   enablePartitioning: false,
-  maxSizeInMegabytes: azureEnv.isPrd ? 10 * 1024 : 1024,
+  maxSizeInMegabytes: 1024,
   //Default is 'PT1M' (1 minute) and max is 5 minutes.
   lockDuration: 'PT1M',
   defaultMessageTimeToLive: azureEnv.isPrd ? 'P14D' : 'P5D',
@@ -28,7 +28,7 @@ const defaultTopicOptions: Partial<bus.TopicArgs> = {
   //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
   defaultMessageTimeToLive: azureEnv.isPrd ? 'P14D' : 'P5D',
   enablePartitioning: false,
-  maxSizeInMegabytes: azureEnv.isPrd ? 10 * 1024 : 1024,
+  maxSizeInMegabytes: 1024,
   enableBatchedOperations: true,
 };
 

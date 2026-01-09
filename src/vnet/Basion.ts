@@ -41,7 +41,6 @@ export class Basion extends BaseComponent<BasionArgs> {
     super(getComponentResourceType('Basion'), name, args, opts);
 
     const { rsGroup, sku, network, subnetId, ...props } = args;
-
     const ipAddress = this.createIpAddress();
 
     const bs = new nw.BastionHost(
@@ -84,10 +83,10 @@ export class Basion extends BaseComponent<BasionArgs> {
   }
 
   private createIpAddress() {
-    const { rsGroup, publicIPAddress } = this.args;
-    if (publicIPAddress) return publicIPAddress;
-    const n = `${this.name}-bastion-ip`;
+    const { rsGroup, publicIPAddress, sku } = this.args;
+    if (sku === 'Developer' || publicIPAddress) return publicIPAddress;
 
+    const n = `${this.name}-bastion-ip`;
     return new IpAddresses(
       `${this.name}-ip`,
       {

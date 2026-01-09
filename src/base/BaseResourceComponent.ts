@@ -90,7 +90,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
           groupObjectId: groupRoles[type].objectId,
           memberObjectId: i.principalId,
         },
-        { parent: this },
+        { parent: this, retainOnDelete: true },
       );
     });
   }
@@ -133,9 +133,10 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     );
   }
 
-  protected grantPermissionsToIdentity({ identity, resource, roleNames }: types.GrantIdentityRoles) {
+  public grantPermissionsToIdentity({ identity, resource, roleNames }: types.GrantIdentityRoles) {
     return pulumi.output(identity).apply((id) => {
       if (!id?.principalId) return;
+
       return pulumi.output(resource).apply((re) =>
         roleNames.map((r) =>
           pulumi.interpolate`${this.name}-${re!.resourceName}-${r}`.apply(
@@ -148,7 +149,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
                   roleName: r,
                   scope: re.id,
                 },
-                { parent: this, deletedWith: this },
+                { parent: this, retainOnDelete: true },
               ),
           ),
         ),

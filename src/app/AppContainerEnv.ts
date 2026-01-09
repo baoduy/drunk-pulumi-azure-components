@@ -192,7 +192,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
   }
 
   private createApps(env: app.ManagedEnvironment) {
-    const { containerApps, rsGroup, vaultInfo, defaultUAssignedId, groupRoles } = this.args;
+    const { containerApps, rsGroup, vaultInfo, defaultUAssignedId, groupRoles,enableResourceIdentity } = this.args;
     if (!containerApps) return undefined;
 
     return Object.entries(containerApps).forEach(
@@ -200,6 +200,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
         new AppContainer(
           appName,
           {
+            enableResourceIdentity,
             ...appArgs,
             rsGroup,
             vaultInfo,

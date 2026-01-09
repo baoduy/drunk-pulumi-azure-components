@@ -7,7 +7,6 @@ import {
   GroupRole,
   GroupRoleArgs,
   RoleAssignment,
-  RoleAssignmentArgs,
   UserAssignedIdentity,
   UserAssignedIdentityArgs,
 } from './azAd';
@@ -19,7 +18,7 @@ import { Vnet, VnetArgs } from './vnet';
 
 import { BaseComponent } from './base';
 import { getComponentResourceType } from './base/helpers';
-import { rsHelpers } from './helpers';
+import * as azAd from '@pulumi/azuread';
 
 export type ResourceBuilderOutputs = {
   groupRoles?: types.GroupRoleOutputTypes;
@@ -149,13 +148,24 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     };
   }
 
-  public grant(props: Omit<RoleAssignmentArgs, 'scope'>) {
-    new RoleAssignment(
-      `${this.name}-${props.roleName}`,
-      { ...props, scope: rsHelpers.getRsGroupIdFrom(this.rsGroup) },
-      { dependsOn: this, deletedWith: this, parent: this },
-    );
-    return this;
+  public addIdentityToRole(
+    type: types.GroupRoleTypes,
+    identity: pulumi.Input<{ principalId: pulumi.Input<string> } | undefined>,
+  ) {
+    const groupRoles = this.getOutputs().groupRoles;
+    if (!groupRoles) return;
+
+    return pulumi.output(identity).apply((i) => {
+      if (!i?.principalId) return;
+      return new azAd.GroupMember(
+        `${this.name}-${type}-${i.principalId}`,
+        {
+          groupObjectId: groupRoles[type].objectId,
+          memberObjectId: i.principalId,
+        },
+        { parent: this, retainOnDelete: true },
+      );
+    });
   }
 
   /** Assigns a role to a principal at the scope of this resource.

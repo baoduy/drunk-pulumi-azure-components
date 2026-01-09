@@ -15,6 +15,20 @@ import { IpAddresses, IpAddressesArgs } from './IpAddresses';
 import * as privateDns from '@pulumi/azure-native/privatedns';
 import { rsHelpers, zoneHelper } from '../helpers';
 
+type ServiceEndpointTypes =
+  | 'Microsoft.Storage'
+  | 'Microsoft.Sql'
+  | 'Microsoft.AzureActiveDirectory'
+  | 'Microsoft.AzureCosmosDB'
+  | 'Microsoft.Web'
+  | 'Microsoft.NetworkServiceEndpointTest'
+  | 'Microsoft.KeyVault'
+  | 'Microsoft.EventHub'
+  | 'Microsoft.ServiceBus'
+  | 'Microsoft.ContainerRegistry'
+  | 'Microsoft.CognitiveServices'
+  | 'Microsoft.Storage.Global';
+
 export type SubnetArgs = Partial<
   Pick<
     network.SubnetArgs,
@@ -24,10 +38,10 @@ export type SubnetArgs = Partial<
     | 'privateEndpointNetworkPolicies'
     | 'privateLinkServiceNetworkPolicies'
     | 'serviceEndpointPolicies'
-    | 'serviceEndpoints'
     | 'sharingScope'
   >
 > & {
+  serviceEndpoints?: ServiceEndpointTypes[];
   subnetName: string;
   addressPrefix: pulumi.Input<string>;
   disableSecurityGroup?: boolean;
@@ -447,6 +461,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
             {
               ...s,
               ...rsGroup,
+              serviceEndpoints: s.serviceEndpoints ? s.serviceEndpoints.map((s) => ({ service: s })) : undefined,
               virtualNetworkName: vnet.name,
 
               //Not allows outbound by default and it will be controlling by NatGateway or Firewall

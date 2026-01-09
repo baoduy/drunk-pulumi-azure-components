@@ -607,30 +607,23 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
   private assignPermission(aks: ccs.ManagedCluster) {
     const { attachToAcr } = this.args;
+    if (this.kubeletIdentity) {
+      this.addIdentityToRole('readOnly', { principalId: this.kubeletIdentity!.objectId });
 
-    if (attachToAcr && this.kubeletIdentity) {
-      pulumi.output(this.kubeletIdentity!).apply((p) => {
-        new RoleAssignment(
-          `${this.name}-aks-acr-pull`,
-          {
-            principalId: p!.objectId!,
-            principalType: 'ServicePrincipal',
-            roleName: 'AcrPull',
-            scope: attachToAcr.id,
-          },
-          { dependsOn: aks, deletedWith: aks, parent: this },
+      if (attachToAcr)
+        pulumi.output(this.kubeletIdentity!).apply(
+          (p) =>
+            new RoleAssignment(
+              `${this.name}-aks-acr-read`,
+              {
+                principalId: p!.objectId!,
+                principalType: 'ServicePrincipal',
+                roleName: 'Container Registry Repository Reader',
+                scope: attachToAcr.id,
+              },
+              { dependsOn: aks, deletedWith: aks, parent: this },
+            ),
         );
-        new RoleAssignment(
-          `${this.name}-aks-acr-read`,
-          {
-            principalId: p!.objectId!,
-            principalType: 'ServicePrincipal',
-            roleName: 'Container Registry Repository Reader',
-            scope: attachToAcr.id,
-          },
-          { dependsOn: aks, deletedWith: aks, parent: this },
-        );
-      });
     }
   }
 

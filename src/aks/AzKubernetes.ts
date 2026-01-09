@@ -227,8 +227,9 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private createDiskEncryptionSet() {
-    const { rsGroup, enableEncryption, diskEncryptionSet, groupRoles, defaultUAssignedId, vaultInfo } = this.args;
-    if (!enableEncryption) return undefined;
+    const { rsGroup, enableEncryption, features, diskEncryptionSet, groupRoles, defaultUAssignedId, vaultInfo } =
+      this.args;
+    if (!enableEncryption || features.enableNodeAutoProvisioning) return undefined;
     if (diskEncryptionSet) return diskEncryptionSet;
 
     return new DiskEncryptionSet(
@@ -615,23 +616,27 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
   private assignPermission(aks: ccs.ManagedCluster) {
     const { attachToAcr } = this.args;
-    if (this.kubeletIdentity) {
-      this.addIdentityToRole('readOnly', { principalId: this.kubeletIdentity!.objectId });
 
-      if (attachToAcr)
-        pulumi.output(this.kubeletIdentity!).apply(
-          (p) =>
-            new RoleAssignment(
-              `${this.name}-aks-acr-read`,
-              {
-                principalId: p!.objectId!,
-                principalType: 'ServicePrincipal',
-                roleName: 'Container Registry Repository Reader',
-                scope: attachToAcr.id,
-              },
-              { dependsOn: aks, deletedWith: aks, parent: this },
-            ),
-        );
+    //Allows AKS key vault provider to read secrets from Key Vault
+    if (this.keyVaultSecretProviderIdentity) {
+      this.addIdentityToRole('readOnly', { principalId: this.keyVaultSecretProviderIdentity!.objectId });
+    }
+
+    //Allows kubernetes to pull images from ACR
+    if (this.kubeletIdentity && attachToAcr) {
+      pulumi.output(this.kubeletIdentity!).apply(
+        (p) =>
+          new RoleAssignment(
+            `${this.name}-aks-acr-read`,
+            {
+              principalId: p!.objectId!,
+              principalType: 'ServicePrincipal',
+              roleName: 'Container Registry Repository Reader',
+              scope: attachToAcr.id,
+            },
+            { dependsOn: aks, deletedWith: aks, parent: this },
+          ),
+      );
     }
   }
 

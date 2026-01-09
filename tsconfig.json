@@ -54,6 +54,7 @@
     "src/azAd/CloudflareAzIdentity.ts",
     "src/azAd/CustomRoles.ts",
     "src/azAd/GroupRole.ts",
+    "src/azAd/GroupRoleMember.ts",
     "src/azAd/RoleAssignment.ts",
     "src/azAd/UserAssignedIdentity.ts",
     "src/azAd/helpers/graphBuiltIn.ts",

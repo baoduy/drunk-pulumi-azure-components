@@ -1,6 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
 
 import { getComponentResourceType } from './helpers';
+import crypto from 'crypto';
 
 /**
  * BaseComponent serves as an abstract foundation class for Pulumi resource components.
@@ -33,6 +34,18 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
   }
 
   /**
+   * Abstract method that must be implemented by derived classes to expose component outputs.
+   * This method should return all relevant outputs that consumers of the component might need.
+   * @returns An object containing the component's outputs, either as direct values or Pulumi outputs
+   */
+  public abstract getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs>;
+
+  protected getNameOrHash(name: string, length: number = 55): string {
+    if (name.length <= 55) return name;
+    return crypto.createHash('sha256').update(name).digest('hex').slice(-55);
+  }
+
+  /**
    * Registers component outputs with the Pulumi engine.
    * This method should be overridden by derived classes to ensure proper output registration.
    * @param outputs - The outputs to register for this component
@@ -40,11 +53,4 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
   protected registerOutputs(): void {
     super.registerOutputs(this.getOutputs());
   }
-
-  /**
-   * Abstract method that must be implemented by derived classes to expose component outputs.
-   * This method should return all relevant outputs that consumers of the component might need.
-   * @returns An object containing the component's outputs, either as direct values or Pulumi outputs
-   */
-  public abstract getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs>;
 }

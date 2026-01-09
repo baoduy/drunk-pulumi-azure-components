@@ -4,5 +4,6 @@ export * from './AzRole';
 export * from './CloudflareAzIdentity';
 export * from './CustomRoles';
 export * from './GroupRole';
+export * from './GroupRoleMember';
 export * from './RoleAssignment';
 export * from './UserAssignedIdentity';

@@ -108,13 +108,18 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     roleName,
     principalType,
     principalId,
+    scope,
   }: {
     roleName: pulumi.Input<string>;
     principalId: pulumi.Input<string>;
     principalType: types.PrincipalTypes;
+    /**if this scope is not provided then it will grant the permission to this resources*/
+    scope?: pulumi.Input<string>;
   }) {
-    const resourceId = this.getOutputs()?.id;
-    if (!resourceId) {
+    if (!scope) {
+      const scope = this.getOutputs()?.id;
+    }
+    if (!scope) {
       throw new Error(`Resource ID is not available for role assignment in component "${this.type}:${this.name}"`);
     }
     return pulumi.output([roleName, principalId]).apply(
@@ -125,7 +130,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
             principalId: id,
             principalType,
             roleName: role,
-            scope: resourceId,
+            scope: scope,
           },
           { parent: this, deletedWith: this },
         ),

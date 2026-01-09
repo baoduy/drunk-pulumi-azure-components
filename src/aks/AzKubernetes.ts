@@ -86,6 +86,7 @@ export interface AzKubernetesArgs
     enablePodIdentity?: boolean;
     enableAzurePolicy?: boolean;
     enableAzureKeyVault?: boolean;
+    enableNodeAutoProvisioning?: boolean;
   };
 
   network?: Omit<
@@ -280,7 +281,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       {
         ...props,
         ...rsGroup,
-        agentPoolProfiles: poolsWithZones,
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,
@@ -336,6 +336,13 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           //privateDNSZone: privateDnsZone?.id,
         },
 
+        nodeProvisioningProfile: features?.enableNodeAutoProvisioning
+          ? {
+              defaultNodePools: 'Auto',
+              mode: 'Auto',
+            }
+          : undefined,
+
         autoScalerProfile: autoScalerProfile ?? {
           balanceSimilarNodeGroups: 'false',
           expander: 'random',
@@ -355,6 +362,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           skipNodesWithLocalStorage: 'false',
           skipNodesWithSystemPods: 'true',
         },
+        agentPoolProfiles: poolsWithZones,
 
         autoUpgradeProfile: {
           nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,

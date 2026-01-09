@@ -377,10 +377,9 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
         identity: enableResourceIdentity
           ? {
-              type: defaultUAssignedId
-                ? ccs.ResourceIdentityType.UserAssigned
-                : ccs.ResourceIdentityType.SystemAssigned,
-              userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+              type: ccs.ResourceIdentityType.SystemAssigned,
+              //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
+              //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
             }
           : undefined,
 
@@ -616,7 +615,10 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private assignPermission(aks: ccs.ManagedCluster) {
-    const { attachToAcr } = this.args;
+    const { attachToAcr, enableResourceIdentity } = this.args;
+
+    if (enableResourceIdentity && this.systemIdentityId)
+      this.addIdentityToRole('readOnly', { principalId: this.systemIdentityId });
 
     //Allows AKS key vault provider to read secrets from Key Vault
     if (this.keyVaultSecretProviderIdentity) {

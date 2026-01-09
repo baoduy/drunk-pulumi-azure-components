@@ -106,7 +106,7 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
       vids.map((v) => {
         const vnetName = rsHelpers.getRsNameFromId(v.vnetId);
         return new privateDns.VirtualNetworkLink(
-          helpers.ensureLength(`${this._rsName}-${vnetName}`),
+          this.getNameOrHash(`${this._rsName}-${vnetName}`),
           {
             ...group,
             privateZoneName: zone.name,

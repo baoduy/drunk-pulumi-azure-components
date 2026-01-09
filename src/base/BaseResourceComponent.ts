@@ -12,7 +12,6 @@ import { ResourceLocker } from '../common/ResourceLocker';
 import { RoleAssignment } from '../azAd/RoleAssignment';
 import { SecretItemArgs } from '../vault/VaultSecret';
 import { getComponentResourceType } from './helpers';
-import * as enums from '@pulumi/azure-native/types/enums';
 
 /**
  * Base interface for resource component arguments that combines vault information
@@ -112,7 +111,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
   }: {
     roleName: pulumi.Input<string>;
     principalId: pulumi.Input<string>;
-    principalType: enums.authorization.PrincipalType;
+    principalType: types.PrincipalTypes;
   }) {
     const resourceId = this.getOutputs()?.id;
     if (!resourceId) {

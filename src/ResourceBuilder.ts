@@ -158,6 +158,37 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
     return this;
   }
 
+  /** Assigns a role to a principal at the scope of this resource.
+   * @param roleName The name of the role to assign (e.g., "Contributor", "Reader").
+   * @param principalType The type of the principal (e.g., "User", "Group", "ServicePrincipal").
+   * @param principalId The ID of the principal to whom the role is assigned.
+   * @returns A RoleAssignment resource representing the role assignment.
+   * */
+  public roleAssignment({
+    roleName,
+    principalType,
+    principalId,
+  }: {
+    roleName: pulumi.Input<string>;
+    principalId: pulumi.Input<string>;
+    principalType: types.PrincipalTypes;
+  }) {
+    const resourceId = this.rsGroup.id;
+    return pulumi.output([roleName, principalId]).apply(
+      ([role, id]) =>
+        new RoleAssignment(
+          `${this.name}-${role}-${id}`,
+          {
+            principalId: id,
+            principalType,
+            roleName: role,
+            scope: resourceId,
+          },
+          { parent: this, deletedWith: this },
+        ),
+    );
+  }
+
   private createGroupRoles(): types.GroupRoleOutputTypes | undefined {
     const { groupRoles, groupRolesCreate } = this.args;
     if (groupRoles) {

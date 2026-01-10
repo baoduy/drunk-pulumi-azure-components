@@ -5,7 +5,7 @@ import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
 
-export interface AzRoleArgs extends Pick<azAd.GroupArgs, 'members' | 'owners' | 'preventDuplicateNames'> {}
+export interface AzRoleArgs extends Partial<Pick<azAd.GroupArgs, 'members' | 'owners' | 'preventDuplicateNames'>> {}
 
 export class AzRole extends BaseComponent<AzRoleArgs> {
   public readonly objectId: pulumi.Output<string>;

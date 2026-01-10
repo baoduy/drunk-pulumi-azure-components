@@ -123,6 +123,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     if (!scope) {
       throw new Error(`Resource ID is not available for role assignment in component "${this.type}:${this.name}"`);
     }
+
     return pulumi.output([roleName, principalId, scope]).apply(([role, id, s]) => {
       const n = this.getNameOrHash(`${this.name}-${role}-${id}-${s}`);
       return new RoleAssignment(

@@ -86,6 +86,8 @@ export class PrivateEndpoint extends BaseComponent<PrivateEndpointArgs> {
       {
         ...opts,
         parent: this,
+        deleteBeforeReplace: true,
+        replaceOnChanges: ['privateLinkServiceConnections'],
       },
     );
 

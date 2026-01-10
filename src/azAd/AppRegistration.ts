@@ -9,19 +9,7 @@ import { SecretItemArgs, VaultSecrets } from '../vault';
 import { getComponentResourceType } from '../base/helpers';
 import { azureEnv, stackInfo } from '../helpers';
 
-export enum GroupMembershipClaimsTypes {
-  None = 'None',
-  SecurityGroup = 'SecurityGroup',
-  DirectoryRole = 'DirectoryRole',
-  ApplicationGroup = 'ApplicationGroup',
-  All = 'All',
-}
-
-const groupClaimsArgs = {
-  additionalProperties: [],
-  essential: false,
-  name: 'groups',
-};
+export type GroupMembershipClaimsTypes = 'None' | 'SecurityGroup' | 'DirectoryRole' | 'ApplicationGroup' | 'All';
 
 export interface AppRegistrationArgs
   extends
@@ -43,7 +31,7 @@ export interface AppRegistrationArgs
     azAd.ApplicationArgs,
     'description' | 'displayName' | 'logoImage' | 'marketingUrl' | 'notes' | 'privacyStatementUrl'
   >;
-  groupMembershipClaims?: pulumi.Input<GroupMembershipClaimsTypes[]>;
+  //groupMembershipClaims?: pulumi.Input<GroupMembershipClaimsTypes[]>;
   identifierUris?: pulumi.Input<pulumi.Input<string>[]>;
   federatedCredentials?: Array<{
     name: string;
@@ -77,6 +65,9 @@ export interface AppRegistrationArgs
   /**Optional Claims*/
   optionalClaims?: {
     enableGroup: boolean;
+    accessTokens?: pulumi.Input<string>[];
+    idTokens?: pulumi.Input<string>[];
+    saml2Tokens?: pulumi.Input<string>[];
   };
 }
 
@@ -130,13 +121,41 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     };
   }
 
-  private createAppRegistration() {
-    const { info, enableClientSecret, federatedCredentials, optionalClaims, ...props } = this.args;
+  private createOptionalClaims() {
+    const { optionalClaims } = this.args;
+    const results = {
+      accessTokens:
+        optionalClaims?.accessTokens?.map((n) => ({ additionalProperties: [], essential: false, name: n })) ?? [],
+      idTokens: optionalClaims?.idTokens?.map((n) => ({ additionalProperties: [], essential: false, name: n })) ?? [],
+      saml2Tokens:
+        optionalClaims?.saml2Tokens?.map((n) => ({ additionalProperties: [], essential: false, name: n })) ?? [],
+    };
 
-    const optionalClaimsFinal = [];
     if (optionalClaims?.enableGroup) {
-      optionalClaimsFinal.push(groupClaimsArgs);
+      results.accessTokens.push({
+        additionalProperties: [],
+        essential: false,
+        name: 'groups',
+      });
+      results.idTokens.push({
+        additionalProperties: [],
+        essential: false,
+        name: 'groups',
+      });
+      results.saml2Tokens.push({
+        additionalProperties: [],
+        essential: false,
+        name: 'groups',
+      });
     }
+
+    return results;
+  }
+  private createAppRegistration() {
+    const { info, enableClientSecret, federatedCredentials, optionalClaims, servicePrincipal, ...props } = this.args;
+
+    const optionalClaimsFinal = this.createOptionalClaims();
+
     const app = new azAd.Application(
       `${stackInfo.stack}-${this.name}`,
       {
@@ -161,11 +180,10 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         singlePageApplication:
           this.args.appType == 'singlePageApplication' ? { redirectUris: this.args.redirectUris } : undefined,
 
-        optionalClaims: {
-          accessTokens: optionalClaimsFinal,
-          idTokens: optionalClaimsFinal,
-          saml2Tokens: optionalClaimsFinal,
-        },
+        groupMembershipClaims: optionalClaims?.enableGroup
+          ? [servicePrincipal?.appRoleAssignmentRequired ? 'ApplicationGroup' : 'SecurityGroup']
+          : undefined,
+        optionalClaims: optionalClaimsFinal,
       },
       { ...this.opts, parent: this, ignoreChanges: ['tags', 'identifierUris'] },
     );

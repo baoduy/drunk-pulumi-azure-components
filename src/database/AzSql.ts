@@ -64,7 +64,7 @@ export interface AzSqlArgs
     useDefaultUAssignedIdForConnection?: boolean;
     /**additionalUAssignedClientIds exable: {'abc':identity.clientId}*/
     additionalUAssignedClientIds?: Record<string, pulumi.Input<string>>;
-    adminGroup: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
+    adminGroup?: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
   };
 
   elasticPoolCreate?: Partial<
@@ -119,6 +119,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   private createSql() {
     const {
       rsGroup,
+      groupRoles,
       enableResourceIdentity,
       enableEncryption,
       defaultUAssignedId,
@@ -129,6 +130,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       ...props
     } = this.args;
 
+    const adminGroup = administrators?.adminGroup ?? groupRoles?.contributor;
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption
@@ -167,8 +169,8 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
               principalType: sql.PrincipalType.Group,
               tenantId: azureEnv.tenantId,
-              sid: administrators.adminGroup?.objectId,
-              login: administrators.adminGroup?.displayName,
+              sid: adminGroup?.objectId,
+              login: adminGroup?.displayName,
             }
           : undefined,
 
@@ -179,8 +181,6 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       {
         ...this.opts,
         protect: lock ?? this.opts?.protect,
-        dependsOn: this.opts?.dependsOn ? this.opts.dependsOn : password,
-        ignoreChanges: ['administrators.azureAdOnlyAuthentication'],
         parent: this,
       },
     );

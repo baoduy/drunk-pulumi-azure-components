@@ -67,6 +67,7 @@ export type ArgoCDExtensionArgs = types.WithResourceGroupInputs &
       [key: string]: pulumi.Input<string>;
     };
     permission: {
+      defaultRole?: 'readonly' | 'app-sync' | 'org-admin';
       syncGroupObjectId?: pulumi.Input<string>;
       readonlyGroupObjectId?: pulumi.Input<string>;
       adminGroupObjectId?: pulumi.Input<string>;
@@ -104,7 +105,7 @@ requestedScopes:
   - email
   `;
 
-  const defaultPolicy = 'role:readonly';
+  const defaultPolicy = `role:${permission.defaultRole ?? 'readonly'}`;
 
   const policy = pulumi.interpolate`
 # Admin role

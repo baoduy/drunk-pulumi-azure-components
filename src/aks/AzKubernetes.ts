@@ -615,13 +615,29 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   }
 
   private assignPermission(aks: ccs.ManagedCluster) {
-    const { attachToAcr, enableResourceIdentity } = this.args;
+    const { attachToAcr, features, enableResourceIdentity, rsGroup } = this.args;
 
-    if (enableResourceIdentity && this.systemIdentityId)
+    if (enableResourceIdentity && this.systemIdentityId) {
       this.addIdentityToRole('readOnly', { principalId: this.systemIdentityId });
 
+      //Allows AKS to have contributor role in the resource group to create resources like load balancer, public IP, etc
+      this.roleAssignment({
+        principalId: this.systemIdentityId,
+        principalType: 'ServicePrincipal',
+        roleName: 'Contributor',
+        scope: rsHelpers.getRsGroupIdFrom(rsGroup),
+      });
+      //allows to have contributor role in the node resource group to create managed identity resources
+      this.roleAssignment({
+        principalId: this.systemIdentityId,
+        principalType: 'ServicePrincipal',
+        roleName: 'Contributor',
+        scope: rsHelpers.getRsGroupIdFrom({ resourceGroupName: aks.nodeResourceGroup.apply((g) => g!) }),
+      });
+    }
+
     //Allows AKS key vault provider to read secrets from Key Vault
-    if (this.keyVaultSecretProviderIdentity) {
+    if (features.enableAzureKeyVault && this.keyVaultSecretProviderIdentity) {
       this.addIdentityToRole('readOnly', { principalId: this.keyVaultSecretProviderIdentity!.objectId });
     }
 

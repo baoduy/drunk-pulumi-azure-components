@@ -102,6 +102,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    * @param roleName The name of the role to assign (e.g., "Contributor", "Reader").
    * @param principalType The type of the principal (e.g., "User", "Group", "ServicePrincipal").
    * @param principalId The ID of the principal to whom the role is assigned.
+   * @param scope
    * @returns A RoleAssignment resource representing the role assignment.
    * */
   public roleAssignment({
@@ -117,24 +118,24 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     scope?: pulumi.Input<string>;
   }) {
     if (!scope) {
-      const scope = this.getOutputs()?.id;
+      scope = this.getOutputs()?.id;
     }
     if (!scope) {
       throw new Error(`Resource ID is not available for role assignment in component "${this.type}:${this.name}"`);
     }
-    return pulumi.output([roleName, principalId]).apply(
-      ([role, id]) =>
-        new RoleAssignment(
-          `${this.name}-${role}-${id}`,
-          {
-            principalId: id,
-            principalType,
-            roleName: role,
-            scope: scope,
-          },
-          { parent: this, deletedWith: this },
-        ),
-    );
+    return pulumi.output([roleName, principalId, scope]).apply(([role, id, s]) => {
+      const n = this.getNameOrHash(`${this.name}-${role}-${id}-${s}`);
+      return new RoleAssignment(
+        n,
+        {
+          principalId: id,
+          principalType,
+          roleName: role,
+          scope: s,
+        },
+        { parent: this, deletedWith: this },
+      );
+    });
   }
 
   public grantPermissionsToIdentity({ identity, resource, roleNames }: types.GrantIdentityRoles) {

@@ -627,6 +627,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         roleName: 'Contributor',
         scope: rsHelpers.getRsGroupIdFrom(rsGroup),
       });
+
       //allows to have contributor role in the node resource group to create managed identity resources
       this.roleAssignment({
         principalId: this.systemIdentityId,

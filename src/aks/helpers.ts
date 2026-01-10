@@ -68,6 +68,7 @@ export type ArgoCDExtensionArgs = types.WithResourceGroupInputs &
     };
     permission: {
       defaultRole?: 'readonly' | 'app-sync' | 'org-admin';
+      groupEssential?: 'SecurityGroup' | 'ApplicationGroup';
       syncGroupObjectId?: pulumi.Input<string>;
       readonlyGroupObjectId?: pulumi.Input<string>;
       adminGroupObjectId?: pulumi.Input<string>;
@@ -99,6 +100,7 @@ azure:
 requestedIDTokenClaims:
   groups:
     essential: true
+    ${permission?.groupEssential === 'ApplicationGroup' ? 'value: "ApplicationGroup"' : ''}
 requestedScopes:
   - openid
   - profile
@@ -146,11 +148,12 @@ g, ${permission.readonlyGroupObjectId ?? '00000000-0000-0000-0000-000000000000'}
         'workloadIdentity.enable': 'true',
         'workloadIdentity.clientId': defaultUAssignedId.clientId,
         'workloadIdentity.entraSSOClientId': identity.clientId,
-        'config-maps.argocd-cm.data.admin.\\enabled': 'false',
+        'config-maps.argocd-cm.data.admin\\.enabled': 'false',
         'config-maps.argocd-cm.data.oidc\\.config': oidcConfig,
         'config-maps.argocd-cm.data.url': pulumi.interpolate`https://${argoCdDomain}/`,
         'config-maps.argocd-rbac-cm.data.policy\\.default': defaultPolicy,
         'config-maps.argocd-rbac-cm.data.policy\\.csv': policy,
+        'config-maps.argocd-rbac-cm.data.scopes': '[groups, email]',
         'config-maps.argocd-cmd-params-cm.data.server\\.insecure': allowInsecureAccess ? 'true' : 'false',
         'config-maps.argocd-cmd-params-cm.data.application\\.namespaces': allowedNameSpaces
           ? pulumi.output(allowedNameSpaces).apply((ns) => ns.join(','))

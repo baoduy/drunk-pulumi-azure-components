@@ -88,6 +88,8 @@ export function defaultAllowedPolicies({
           '*.msftauthimages.net',
           'www.microsoft.com',
           'learn.microsoft.com',
+          'graph.microsoft.com',
+          'loin.microsoft.com',
         ],
         protocols: [
           { protocolType: 'Http', port: 80 },
@@ -520,37 +522,37 @@ export function allowsAksPolicies({
       destinationPorts: ['443'],
     });
 
-  const targetFqdns:pulumi.Input<string>[] = [
-        `*.hcp.${azureEnv.currentRegionCode}.azmk8s.io`,
-        'mcr.microsoft.com',
-        '*.data.mcr.microsoft.com',
-        'mcr-0001.mcr-msedge.net',
-        'management.azure.com',
-        'login.microsoftonline.com',
-        'packages.microsoft.com',
-        'acs-mirror.azureedge.net',
-        'packages.aks.azure.com',
-        //Defender for Containers and Monitoring
-        '*.ods.opinsights.azure.com',
-        '*.oms.opinsights.azure.com',
-        '*.cloud.defender.microsoft.com',
-        '*.in.applicationinsights.azure.com',
-        '*.monitoring.azure.com',
-        'global.handler.control.monitor.azure.com',
-        '*.ingest.monitor.azure.com',
-        '*.metrics.ingest.monitor.azure.com',
-        `${azureEnv.currentRegionCode}.handler.control.monitor.azure.com`,
-        //Key Vault
-        'vault.azure.net',
-        '*.vault.usgovcloudapi.net',
-        //Storage for container
-        '*.blob.core.windows.net',
-      ];
+  const targetFqdns: pulumi.Input<string>[] = [
+    `*.hcp.${azureEnv.currentRegionCode}.azmk8s.io`,
+    'mcr.microsoft.com',
+    '*.data.mcr.microsoft.com',
+    'mcr-0001.mcr-msedge.net',
+    'management.azure.com',
+    'login.microsoftonline.com',
+    'packages.microsoft.com',
+    'acs-mirror.azureedge.net',
+    'packages.aks.azure.com',
+    //Defender for Containers and Monitoring
+    '*.ods.opinsights.azure.com',
+    '*.oms.opinsights.azure.com',
+    '*.cloud.defender.microsoft.com',
+    '*.in.applicationinsights.azure.com',
+    '*.monitoring.azure.com',
+    'global.handler.control.monitor.azure.com',
+    '*.ingest.monitor.azure.com',
+    '*.metrics.ingest.monitor.azure.com',
+    `${azureEnv.currentRegionCode}.handler.control.monitor.azure.com`,
+    //Key Vault
+    'vault.azure.net',
+    '*.vault.usgovcloudapi.net',
+    //Storage for container
+    '*.blob.core.windows.net',
+  ];
 
-  if(allowsAcrs){
-    allowsAcrs.map(acr=>targetFqdns.push(pulumi.interpolate`${acr}.azurecr.io`));
+  if (allowsAcrs) {
+    allowsAcrs.map((acr) => targetFqdns.push(pulumi.interpolate`${acr}.azurecr.io`));
   }
-  
+
   builder
     //App
     .addAppRule('acrs', {

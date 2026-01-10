@@ -52,9 +52,8 @@ export interface AppRegistrationArgs
     audiences?: pulumi.Input<pulumi.Input<string>[]>;
   }>;
   enableClientSecret?: boolean;
-  servicePrincipal?: Pick<
-    azAd.ServicePrincipalArgs,
-    'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn'
+  servicePrincipal?: Partial<
+    Pick<azAd.ServicePrincipalArgs, 'notificationEmailAddresses' | 'preferredSingleSignOnMode' | 'samlSingleSignOn'>
   > & {
     enable: boolean;
     appRoleAssignmentRequired?: pulumi.Input<boolean>;

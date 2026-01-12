@@ -64,6 +64,7 @@ export interface ApimArgs
 export class Apim extends BaseResourceComponent<ApimArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
+  public readonly outboundPublicIPAddresses?: pulumi.Output<string[]>;
 
   constructor(name: string, args: ApimArgs, opts?: pulumi.ComponentResourceOptions) {
     super('Apim', name, args, opts);
@@ -76,6 +77,8 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
     this.buildProducts(apim);
     this.buildGroupRoles(apim);
 
+    this.outboundPublicIPAddresses = apim.outboundPublicIPAddresses;
+
     this.id = apim.id;
     this.resourceName = apim.name;
 
@@ -86,6 +89,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      outboundPublicIPAddresses: this.outboundPublicIPAddresses,
     };
   }
 

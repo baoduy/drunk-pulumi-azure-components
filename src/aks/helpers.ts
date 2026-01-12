@@ -121,6 +121,7 @@ p, role:org-admin, repositories, delete, *, allow
 # Read-all + manual application sync custom role
 p, role:app-sync, applications, get, */*, allow
 p, role:app-sync, applications, sync, */*, allow
+p, role:app-sync, applications, update, */*, allow
 p, role:app-sync, projects, get, *, allow
 p, role:app-sync, clusters, get, *, allow
 p, role:app-sync, repositories, get, *, allow

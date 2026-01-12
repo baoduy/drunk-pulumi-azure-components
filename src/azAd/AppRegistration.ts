@@ -11,6 +11,34 @@ import { azureEnv, stackInfo } from '../helpers';
 
 export type GroupMembershipClaimsTypes = 'None' | 'SecurityGroup' | 'DirectoryRole' | 'ApplicationGroup' | 'All';
 
+export interface ApplicationAppRole {
+  /**
+   * Specifies whether this app role definition can be assigned to users and groups by setting to `User`, or to other applications (that are accessing this application in a standalone scenario) by setting to `Application`, or to both.
+   */
+  allowedMemberTypes: pulumi.Input<'User' | 'Application'>[];
+  /**
+   * Description of the app role that appears when the role is being assigned and, if the role functions as an application permissions, during the consent experiences.
+   */
+  description: pulumi.Input<string>;
+  /**
+   * Display name for the app role that appears during app role assignment and in consent experiences.
+   */
+  displayName: pulumi.Input<string>;
+  /**
+   * Determines if the app role is enabled. Defaults to `true`.
+   */
+  enabled?: pulumi.Input<boolean>;
+  /**
+   * The unique identifier of the app role. Must be a valid UUID.
+   *
+   * > **Tip: Generating a UUID for the `id` field** To generate a value for the `id` field in cases where the actual UUID is not important, you can use the `randomUuid` resource. See the application example in the provider repository.
+   */
+  id: pulumi.Input<string>;
+  /**
+   * The value that is used for the `roles` claim in ID tokens and OAuth 2.0 access tokens that are authenticating an assigned service or user principal
+   */
+  value?: pulumi.Input<string>;
+}
 export interface AppRegistrationArgs
   extends
     WithVaultInfo,
@@ -18,15 +46,10 @@ export interface AppRegistrationArgs
     Partial<
       Pick<
         azAd.ApplicationArgs,
-        | 'identifierUris'
-        | 'oauth2PostResponseRequired'
-        | 'featureTags'
-        | 'api'
-        | 'appRoles'
-        | 'owners'
-        | 'requiredResourceAccesses'
+        'identifierUris' | 'oauth2PostResponseRequired' | 'featureTags' | 'api' | 'owners' | 'requiredResourceAccesses'
       >
     > {
+  appRoles?: ApplicationAppRole[];
   info?: Pick<
     azAd.ApplicationArgs,
     'description' | 'displayName' | 'logoImage' | 'marketingUrl' | 'notes' | 'privacyStatementUrl'
@@ -225,7 +248,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
   }
 
   private createServicePrincipal(app: azAd.Application) {
-    const { servicePrincipal } = this.args;
+    const { servicePrincipal, appRoles } = this.args;
     if (!servicePrincipal?.enable) return undefined;
 
     //Service Principal
@@ -250,13 +273,14 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
     );
 
     if (servicePrincipal?.assignedGroupIds) {
+      const appRoleId = appRoles ? appRoles[0].id : '00000000-0000-0000-0000-000000000000';
       pulumi.output(servicePrincipal?.assignedGroupIds).apply((ids) =>
         ids.map(
           (id) =>
             new azAd.AppRoleAssignment(
               `${this.name}-sp-appRole-${id}`,
               {
-                appRoleId: '00000000-0000-0000-0000-000000000000',
+                appRoleId,
                 resourceObjectId: sp.objectId,
                 principalObjectId: id,
               },

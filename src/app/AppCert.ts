@@ -10,6 +10,7 @@ export interface AppCertArgs extends CommonBaseArgs, Partial<Pick<cert.AppServic
 export class AppCert extends BaseResourceComponent<AppCertArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
+  public readonly domainVerificationToken: pulumi.Output<string>;
 
   constructor(name: string, args: AppCertArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AppCert', name, args, opts);
@@ -49,6 +50,7 @@ export class AppCert extends BaseResourceComponent<AppCertArgs> {
     //Grant this Microsoft.Azure.CertificateRegistration appId=`f3c21649-0979-4721-ac85-b0216b2cf413` objectId=`f509b0a6-e3b6-4876-90df-404ea160095a` to have access to the Key Vault certificate.
     this.addIdentityToRole('contributor', { principalId: 'f509b0a6-e3b6-4876-90df-404ea160095a' });
 
+    this.domainVerificationToken = appCert.domainVerificationToken;
     this.id = appCert.id;
     this.resourceName = appCert.name;
 
@@ -59,6 +61,7 @@ export class AppCert extends BaseResourceComponent<AppCertArgs> {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      domainVerificationToken: this.domainVerificationToken,
     };
   }
 }

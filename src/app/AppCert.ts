@@ -2,9 +2,8 @@ import * as cert from '@pulumi/azure-native/certificateregistration';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
-export interface AppCertArgs
-  extends CommonBaseArgs,
-    Pick<cert.AppServiceCertificateOrderArgs, 'productType' | 'keySize'> {
+export interface AppCertArgs extends CommonBaseArgs, Partial<Pick<cert.AppServiceCertificateOrderArgs, 'keySize'>> {
+  productType: 'Standard' | 'WildCard';
   domain: string;
 }
 
@@ -15,15 +14,19 @@ export class AppCert extends BaseResourceComponent<AppCertArgs> {
   constructor(name: string, args: AppCertArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AppCert', name, args, opts);
 
+    const { rsGroup, productType, keySize, domain } = args;
     const appCert = new cert.AppServiceCertificateOrder(
       name,
       {
-        ...args.rsGroup,
+        ...rsGroup,
         location: 'global',
-        productType: args.productType,
+        productType:
+          productType === 'Standard'
+            ? cert.CertificateProductType.StandardDomainValidatedSsl
+            : cert.CertificateProductType.StandardDomainValidatedWildCardSsl,
         autoRenew: true,
-        distinguishedName: `CN=*.${args.domain}`,
-        keySize: args.keySize ?? 2048,
+        distinguishedName: productType === 'Standard' ? `CN=${domain}` : `CN=*.${domain}`,
+        keySize: keySize ?? 2048,
         validityInYears: 1,
       },
       { ...opts, parent: this },

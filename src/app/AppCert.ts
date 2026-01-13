@@ -46,6 +46,9 @@ export class AppCert extends BaseResourceComponent<AppCertArgs> {
       );
     }
 
+    //Grant this Microsoft.Azure.CertificateRegistration appId=`f3c21649-0979-4721-ac85-b0216b2cf413` to have access to the Key Vault certificate.
+    this.addIdentityToRole('contributor', { principalId: 'f3c21649-0979-4721-ac85-b0216b2cf413' });
+
     this.id = appCert.id;
     this.resourceName = appCert.name;
 

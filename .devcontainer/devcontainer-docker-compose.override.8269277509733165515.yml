@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: "."
+      dockerfile: ".features.temp.dockerfile"
+    command:
+    - "-c"
+    - "while sleep 1000; do :; done"
+    entrypoint:
+    - "/bin/sh"
+    environment:
+      DEVCONTAINER_CONFIG_PATH: "/.jbdevcontainer/config/JetBrains/host-config.json"
+    image: "jb-devcontainer-7fd8d5e43685abeb326c977dc5a7bf89"
+    labels:
+      com.intellij.devcontainer.workspace.path: "/code"
+      com.intellij.devcontainer.sources.path: "/Users/steven/_CODE/GIT/drunk-pulumi-azure-components"
+      com.intellij.devcontainer.local.source: "{\"modelFile\":\"file:///Users/steven/_CODE/GIT/drunk-pulumi-azure-components/.devcontainer/devcontainer.json\"\
+        ,\"mount\":true,\"sourcesDir\":\"file:///Users/steven/_CODE/GIT/drunk-pulumi-azure-components/\"\
+        }"
+      com.intellij.devcontainer.initial.model: "{\"customizations\":{\"jetbrains\"\
+        :{\"backend\":\"WebStorm\"}},\"dockerComposeFile\":[\"docker-compose.yml\"\
+        ],\"features\":{\"features\":[{\"cachePath\":null,\"config\":{\"id\":\"azure-cli\"\
+        ,\"isRequired\":true,\"options\":{}},\"ref\":{\"id\":\"azure-cli\",\"namespace\"\
+        :\"devcontainers/features\",\"registry\":\"ghcr.io\",\"tag\":\"1\"}},{\"cachePath\"\
+        :null,\"config\":{\"id\":\"pulumi\",\"isRequired\":true,\"options\":{}},\"\
+        ref\":{\"id\":\"pulumi\",\"namespace\":\"flexwie/devcontainer-features\",\"\
+        registry\":\"ghcr.io\",\"tag\":\"1\"}}]},\"name\":\"Drunk-Pulumi-Azure\",\"\
+        service\":\"app\",\"workspaceFolder\":\"/code\"}"
+      com.intellij.devcontainer.json.path: "/code/.devcontainer/devcontainer.json"
+      com.intellij.devcontainer.id: "532e2675b3b52704424d0483027f436d"
+      com.intellij.devcontainer.model: "{\"customizations\":{\"jetbrains\":{\"backend\"\
+        :\"WebStorm\"}}}"
+      com.intellij.devcontainer.presentable.name: "Drunk-Pulumi-Azure"
+    ports: []
+    pull_policy: "build"
+    user: "root"
+    volumes:
+    - type: "volume"
+      source: "jb_devcontainers_shared_volume"
+      target: "/.jbdevcontainer/JetBrains/RemoteDev/dist"
+      read_only: false
+    - type: "bind"
+      source: "/Users/steven/_CODE/GIT/drunk-pulumi-azure-components"
+      target: "/code"
+      read_only: false
+volumes:
+  jb_devcontainers_shared_volume:
+    external: true

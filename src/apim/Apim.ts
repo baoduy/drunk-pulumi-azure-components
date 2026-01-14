@@ -293,10 +293,9 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
       {
         ...rsGroup,
         serviceName: service.name,
-
         loggerType: apim.LoggerType.ApplicationInsights,
         description: 'App Insight Logger',
-        loggerId: `${this.name}-appInsight`,
+        loggerId: pulumi.interpolate`${service.name}-appInsight`,
         resourceId: logs!.appInsight.id,
         credentials: {
           //This credential will be added to NameValue automatically.

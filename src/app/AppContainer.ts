@@ -162,7 +162,6 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
         ...props,
         ...rsGroup,
         managedEnvironmentId,
-
         identity: enableResourceIdentity
           ? {
               type: defaultUAssignedId

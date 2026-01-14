@@ -5,6 +5,7 @@ import { AppContainer, AppContainerArgs } from './AppContainer';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { azureEnv } from '../helpers';
 import * as enums from '@pulumi/azure-native/types/enums';
+import { AppJob, AppJobArgs } from './AppJob';
 
 interface ScheduledEntryArgs {
   /**
@@ -69,6 +70,7 @@ export interface AppContainerEnvArgs
   };
 
   containerApps?: Record<string, Omit<AppContainerArgs, types.CommonProps | 'managedEnvironmentId'>>;
+  containerJobs?: Record<string, Omit<AppJobArgs, types.CommonProps | 'managedEnvironmentId'>>;
   maintenanceSchedules?: pulumi.Input<ScheduledEntryArgs>[];
 }
 
@@ -84,6 +86,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
     const managedEnv = this.createManagedEnvironment();
     this.createMaintenance(managedEnv);
     this.createApps(managedEnv);
+    this.createJobs(managedEnv);
 
     this.id = managedEnv.id;
     this.resourceName = managedEnv.name;
@@ -192,7 +195,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
   }
 
   private createApps(env: app.ManagedEnvironment) {
-    const { containerApps, rsGroup, vaultInfo, defaultUAssignedId, groupRoles,enableResourceIdentity } = this.args;
+    const { containerApps, rsGroup, vaultInfo, defaultUAssignedId, groupRoles, enableResourceIdentity } = this.args;
     if (!containerApps) return undefined;
 
     return Object.entries(containerApps).forEach(
@@ -204,8 +207,30 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
             ...appArgs,
             rsGroup,
             vaultInfo,
-            defaultUAssignedId: appArgs.defaultUAssignedId ?? defaultUAssignedId,
             groupRoles,
+            defaultUAssignedId: appArgs.defaultUAssignedId ?? defaultUAssignedId,
+            managedEnvironmentId: env.id,
+          },
+          { dependsOn: env, deletedWith: env, parent: this },
+        ),
+    );
+  }
+
+  private createJobs(env: app.ManagedEnvironment) {
+    const { containerJobs, rsGroup, vaultInfo, defaultUAssignedId, groupRoles, enableResourceIdentity } = this.args;
+    if (!containerJobs) return undefined;
+
+    return Object.entries(containerJobs).forEach(
+      ([appName, appArgs]) =>
+        new AppJob(
+          appName,
+          {
+            enableResourceIdentity,
+            ...appArgs,
+            rsGroup,
+            vaultInfo,
+            groupRoles,
+            defaultUAssignedId: appArgs.defaultUAssignedId ?? defaultUAssignedId,
             managedEnvironmentId: env.id,
           },
           { dependsOn: env, deletedWith: env, parent: this },

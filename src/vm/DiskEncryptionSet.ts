@@ -1,6 +1,7 @@
 import * as compute from '@pulumi/azure-native/compute';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 export interface DiskEncryptionSetArgs extends CommonBaseArgs {
   encryptionType: compute.DiskEncryptionSetType;
@@ -51,10 +52,11 @@ export class DiskEncryptionSet extends BaseResourceComponent<DiskEncryptionSetAr
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 }

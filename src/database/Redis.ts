@@ -7,6 +7,7 @@ import { PrivateEndpointType } from '../vnet';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { convertToIpRange } from './helpers';
 import { zoneHelper } from '../helpers';
+import * as types from '../types';
 
 export interface RedisArgs
   extends
@@ -70,10 +71,11 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs & { privateLink?: ReturnType<vnet.PrivateEndpoint['getOutputs']> } {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       privateLink: this.privateLink,
     };
   }

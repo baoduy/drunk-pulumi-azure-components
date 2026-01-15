@@ -3,6 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseComponent } from '../base';
 import { getComponentResourceType } from '../base/helpers';
 import { rsHelpers } from '../helpers';
+import * as types from '../types';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 import * as helpers from './helpers';
 
@@ -50,10 +51,11 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 

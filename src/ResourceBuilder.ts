@@ -216,9 +216,14 @@ export class ResourceBuilder extends BaseComponent<ResourceBuilderArgs> {
 
   private createVault(): types.ResourceOutputs | undefined {
     const { vaultInfo, vaultCreate } = this.args;
-    if (vaultInfo) return { resourceName: pulumi.output(vaultInfo.resourceName), id: pulumi.output(vaultInfo.id) };
-    if (!vaultCreate) return undefined;
+    if (vaultInfo)
+      return {
+        resourceName: pulumi.output(vaultInfo.resourceName),
+        id: pulumi.output(vaultInfo.id),
+        resourceGroupName: pulumi.output(vaultInfo.resourceGroupName),
+      };
 
+    if (!vaultCreate) return undefined;
     return new KeyVault(
       vaultCreate.name ?? this.name,
       { ...vaultCreate, rsGroup: this.rsGroup, groupRoles: this.groupRoles },

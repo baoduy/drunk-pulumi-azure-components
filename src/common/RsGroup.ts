@@ -33,7 +33,7 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceGroupOutputs {
     return {
       location: this.location,
       resourceGroupName: this.resourceGroupName,

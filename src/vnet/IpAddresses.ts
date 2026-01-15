@@ -2,6 +2,7 @@ import * as network from '@pulumi/azure-native/network';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { zoneHelper } from '../helpers';
+import * as types from '../types';
 
 type IpSku = {
   /**
@@ -35,9 +36,7 @@ export interface IpAddressesArgs extends CommonBaseArgs {
 export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
   public readonly ipAddresses: Record<
     string,
-    {
-      id: pulumi.Output<string>;
-      resourceName: pulumi.Output<string>;
+    types.ResourceOutputs & {
       ipAddress: pulumi.Output<string | undefined>;
     }
   > = {};
@@ -62,14 +61,19 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
         { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this, ignoreChanges: ['natGateway'] },
       );
 
-      this.ipAddresses[ip.name] = { id: ipAddress.id, resourceName: ipAddress.name, ipAddress: ipAddress.ipAddress };
+      this.ipAddresses[ip.name] = {
+        id: ipAddress.id,
+        resourceName: ipAddress.name,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+        ipAddress: ipAddress.ipAddress,
+      };
       return ipAddress;
     });
 
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): Record<string, types.ResourceOutputs & { ipAddress: pulumi.Output<string | undefined> }> {
     return this.ipAddresses;
   }
 

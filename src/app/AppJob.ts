@@ -3,6 +3,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 /**
  * Azure Container App Job component providing scheduled or event-driven job execution
@@ -102,13 +103,16 @@ export class AppJob extends BaseResourceComponent<AppJobArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs & {
+    outboundIpAddresses: pulumi.Output<string[]>;
+    eventStreamEndpoint: pulumi.Output<string>;
+  } {
     return {
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       resourceName: this.resourceName,
       id: this.id,
       outboundIpAddresses: this.outboundIpAddresses,
       eventStreamEndpoint: this.eventStreamEndpoint,
-      vaultSecrets: this.vaultSecrets,
     };
   }
 

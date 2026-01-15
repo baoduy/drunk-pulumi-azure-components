@@ -138,14 +138,46 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     //this.createOutboundRoute({ router: routeTable!, natGateway, firewall });
     this.createPeering(vnet);
 
-    if (basion) this.basion = { id: basion.id, resourceName: basion.resourceName };
-    if (securityGroup) this.securityGroup = { id: securityGroup.id, resourceName: securityGroup.name };
-    this.routeTable = { id: routeTable.id, resourceName: routeTable.resourceName };
-    if (natGateway) this.natGateway = { id: natGateway.id, resourceName: natGateway.name };
-    if (vpnGateway) this.vpnGateway = { id: vpnGateway.id, resourceName: vpnGateway.resourceName };
+    if (basion)
+      this.basion = {
+        id: basion.id,
+        resourceName: basion.resourceName,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+      };
+    if (securityGroup)
+      this.securityGroup = {
+        id: securityGroup.id,
+        resourceName: securityGroup.name,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+      };
+    this.routeTable = {
+      id: routeTable.id,
+      resourceName: routeTable.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+    };
+    if (natGateway)
+      this.natGateway = {
+        id: natGateway.id,
+        resourceName: natGateway.name,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+      };
+    if (vpnGateway)
+      this.vpnGateway = {
+        id: vpnGateway.id,
+        resourceName: vpnGateway.resourceName,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+      };
     if (firewall) this.firewall = firewall.getOutputs();
-    this.vnet = { id: vnet.id, resourceName: vnet.name };
-    this.subnets = dictReduce(subnets, (name, s) => ({ id: s.id, resourceName: s.name.apply((n) => n!) }));
+    this.vnet = {
+      id: vnet.id,
+      resourceName: vnet.name,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+    };
+    this.subnets = dictReduce(subnets, (name, s) => ({
+      id: s.id,
+      resourceName: s.name.apply((n) => n!),
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+    }));
     this.ipAddresses = ipAddresses;
     this.createPrivateZonesLinks(vnet);
 
@@ -229,7 +261,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
       },
     );
 
-    return Object.values(this.ipAddressInstance.ipAddresses);
+    return Object.values(this.ipAddressInstance.ipAddresses).map((ip) => ({
+      ...ip,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+    }));
   }
 
   private createManagePublicIpAddress(): types.SubResourceInputs | undefined {
@@ -505,7 +540,11 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
       `${this.name}-peering`,
       {
         ...peeringCreate,
-        firstVnet: { id: vnet.id, resourceName: vnet.name },
+        firstVnet: {
+          id: vnet.id,
+          resourceName: vnet.name,
+          resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+        },
         secondVnet: peeringCreate.vnet,
       },
       { dependsOn: vnet, parent: this },
@@ -524,7 +563,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
           `${this.name}-${info.resourceName}`.substring(0, 55),
           {
             privateZoneName: info.resourceName,
-            resourceGroupName: info.rsGroup.resourceGroupName,
+            resourceGroupName: info.resourceGroupName,
             location: 'global',
             registrationEnabled: false,
             virtualNetwork: { id: vnet.id },

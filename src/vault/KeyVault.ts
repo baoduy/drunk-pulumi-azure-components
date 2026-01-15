@@ -91,8 +91,9 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       resourceName: this.resourceName,
       id: this.id,
     };
@@ -121,7 +122,11 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     return new VaultSecrets(
       `${this.name}-secrets`,
       {
-        vaultInfo: { resourceName: vault.name, id: vault.id },
+        vaultInfo: {
+          resourceName: vault.name,
+          id: vault.id,
+          resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+        },
         secrets: aditionalSecrets,
       },
       { dependsOn: vault, deletedWith: vault, parent: this },

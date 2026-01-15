@@ -35,7 +35,11 @@ export interface NetworkPeeringArgs {
 }
 
 export class NetworkPeering extends pulumi.ComponentResource<NetworkPeeringArgs> {
-  constructor(private name: string, private args: NetworkPeeringArgs, private opts?: pulumi.ComponentResourceOptions) {
+  constructor(
+    private name: string,
+    private args: NetworkPeeringArgs,
+    private opts?: pulumi.ComponentResourceOptions,
+  ) {
     super(getComponentResourceType('NetworkPeering'), name, args, opts);
 
     const { firstVnet, secondVnet, direction } = args;
@@ -57,7 +61,7 @@ export class NetworkPeering extends pulumi.ComponentResource<NetworkPeeringArgs>
         ...options,
         virtualNetworkPeeringName: n,
         virtualNetworkName: vnetInfo.resourceName,
-        resourceGroupName: vnetInfo.rsGroup.resourceGroupName,
+        resourceGroupName: vnetInfo.resourceGroupName,
         peeringSyncLevel: 'FullyInSync',
         remoteVirtualNetwork: {
           id: to.id,

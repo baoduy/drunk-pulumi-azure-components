@@ -1,6 +1,7 @@
 import * as logic from '@pulumi/azure-native/logic';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 export interface LogicAppArgs extends CommonBaseArgs {
   integrationAccount: Pick<logic.IntegrationAccountArgs, 'integrationServiceEnvironment'> & {
@@ -61,10 +62,11 @@ export class LogicApp extends BaseResourceComponent<LogicAppArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 }

@@ -1,6 +1,7 @@
 import * as dns from '@pulumi/azure-native/dns';
 import * as pulumi from '@pulumi/pulumi';
 
+import * as types from '../types';
 import { DnsRecordTypes, WithResourceGroupInputs } from '../types';
 
 import { BaseComponent } from '../base';
@@ -44,10 +45,11 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 

@@ -134,6 +134,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     this.namespaces = rsHelpers.dictReduce(nss, (n, ns) => ({
       id: ns.id,
       resourceName: ns.name.apply((n) => n!),
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     }));
 
     const privateDns = this.getPrivateDNSZone(cluster);
@@ -161,10 +162,21 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs & {
+    namespaces: Record<string, types.ResourceOutputs>;
+    privateDnsZone?: types.ResourceOutputs;
+    privateIpAddress?: pulumi.Output<string | undefined>;
+    azAppIdentity: ReturnType<AppRegistration['getOutputs']>;
+    keyVaultSecretProviderIdentity?: types.IdentityOutputs;
+    kubeletIdentity?: types.IdentityOutputs;
+    systemIdentityId?: pulumi.Output<string>;
+    oidcIssuerUrl?: pulumi.Output<string>;
+  } {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+
       namespaces: this.namespaces,
       privateDnsZone: this.privateDnsZone,
       privateIpAddress: this.privateIpAddress,
@@ -680,7 +692,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     });
 
     return {
-      privateZone: { id, resourceName: zoneNames.privateZoneName },
+      privateZone: {
+        id,
+        resourceName: zoneNames.privateZoneName,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+      },
       privateIpAddress: rs!.aRecords!.apply((ars) => (ars && ars.length > 0 ? ars[0].ipv4Address : undefined)),
     };
   }

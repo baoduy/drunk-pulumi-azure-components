@@ -197,11 +197,11 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       id: this.id,
-      rsGroup: this.rsGroup,
     };
   }
 

@@ -95,10 +95,11 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 

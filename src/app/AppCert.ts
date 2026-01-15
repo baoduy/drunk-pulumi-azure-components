@@ -1,6 +1,7 @@
 import * as cert from '@pulumi/azure-native/certificateregistration';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 export interface AppCertArgs extends CommonBaseArgs, Partial<Pick<cert.AppServiceCertificateOrderArgs, 'keySize'>> {
   productType: 'Standard' | 'WildCard';
@@ -57,10 +58,11 @@ export class AppCert extends BaseResourceComponent<AppCertArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs & { domainVerificationToken?: pulumi.Output<string> } {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       domainVerificationToken: this.domainVerificationToken,
     };
   }

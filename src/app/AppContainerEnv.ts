@@ -96,13 +96,16 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs & {
+    defaultDomain: pulumi.Output<string>;
+    staticIp: pulumi.Output<string>;
+  } {
     return {
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       id: this.id,
       defaultDomain: this.defaultDomain,
       staticIp: this.staticIp,
-      vaultSecrets: this.vaultSecrets,
     };
   }
 

@@ -85,8 +85,16 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
     const firewall = this.createFirewall(policy);
     this.createPolicyRuleGroup(policy);
 
-    this.firewall = { id: firewall.id, resourceName: firewall.name };
-    this.policy = { id: policy.id, resourceName: policy.name };
+    this.firewall = {
+      id: firewall.id,
+      resourceName: firewall.name,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+    };
+    this.policy = {
+      id: policy.id,
+      resourceName: policy.name,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
+    };
     this.privateIpAddress = firewall.ipConfigurations.apply((config) => config![0].privateIPAddress);
 
     // Export the resource ID

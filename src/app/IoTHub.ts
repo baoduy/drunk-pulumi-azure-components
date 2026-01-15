@@ -1,6 +1,7 @@
 import * as devices from '@pulumi/azure-native/iothub';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 export interface IoTHubArgs extends CommonBaseArgs, Pick<devices.IotHubResourceArgs, 'properties' | 'sku'> {}
 
@@ -51,10 +52,11 @@ export class IoTHub extends BaseResourceComponent<IoTHubArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 }

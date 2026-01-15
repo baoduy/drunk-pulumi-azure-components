@@ -5,7 +5,8 @@ import { ApimApi, ApimApiArgs } from './ApimApi';
 import * as types from '../types';
 
 export interface ApimApiSetArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     Omit<apim.ApiVersionSetArgs, types.CommonProps | 'displayName' | 'description' | 'versioningScheme'> {
   displayName?: pulumi.Input<string>;
   description?: pulumi.Input<string>;
@@ -33,10 +34,11 @@ export class ApimApiSet extends BaseResourceComponent<ApimApiSetArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 

@@ -29,6 +29,7 @@ export class RoleAssignment extends BaseComponent<RoleAssignmentArgs> {
 
     this.id = assignment.id;
     this.resourceName = assignment.name;
+
     this.registerOutputs();
   }
 

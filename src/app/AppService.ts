@@ -1,6 +1,7 @@
 import * as web from '@pulumi/azure-native/web';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 /**
  * Represents different kinds of Azure App Service configurations
@@ -63,8 +64,7 @@ export enum AppKind {
 }
 
 export interface AppServiceArgs
-  extends CommonBaseArgs,
-    Omit<web.AppServicePlanArgs, 'resourceGroupName' | 'location' | 'name' | 'kind'> {
+  extends CommonBaseArgs, Omit<web.AppServicePlanArgs, 'resourceGroupName' | 'location' | 'name' | 'kind'> {
   kind?: AppKind;
   webApps: Array<
     Omit<web.WebAppArgs, 'resourceGroupName' | 'location' | 'serverFarmId' | 'kind' | 'name'> & {
@@ -100,10 +100,11 @@ export class AppService extends BaseResourceComponent<AppServiceArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 

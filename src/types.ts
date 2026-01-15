@@ -60,6 +60,7 @@ export type WithResourceGroupOutputs = {
 export type WithResourceIdentityFlag = { enableResourceIdentity?: boolean };
 
 export type ResourceType = {
+  resourceGroupName: string;
   resourceName: string;
   id: string;
 };
@@ -98,12 +99,9 @@ export type IdentityType = {
 export type IdentityInputs = AsInput<IdentityType>;
 export type IdentityOutputs = AsOutput<IdentityType>;
 
-export type UserAssignedIdentityType = {
-  id: string;
+export type UserAssignedIdentityType = ResourceType & {
   clientId: string;
   principalId: string;
-  resourceName: string;
-  resourceGroupName: string;
 };
 
 export type UserAssignedIdentityInputs = AsInput<UserAssignedIdentityType>;
@@ -164,7 +162,7 @@ export type WorkspaceType = ResourceType & { customerId: string };
 export type WorkspaceInputs = AsInput<WorkspaceType>;
 export type WorkspaceOutputs = AsOutput<WorkspaceType>;
 
-export type AppInsightType = ResourceType & { instrumentationKey: string };
+export type AppInsightType = ResourceType & { instrumentationKey: string; connectionString: string };
 export type AppInsightInputs = AsInput<AppInsightType>;
 export type AppInsightOutputs = AsOutput<AppInsightType>;
 

@@ -3,6 +3,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import * as types from '../types';
 
 /**
  * Azure Container App component providing secure, serverless container execution
@@ -134,14 +135,18 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs & {
+    fqdn: pulumi.Output<string | undefined>;
+    latestRevisionName: pulumi.Output<string>;
+    outboundIpAddresses: pulumi.Output<string[]>;
+  } {
     return {
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       id: this.id,
       fqdn: this.fqdn,
       latestRevisionName: this.latestRevisionName,
       outboundIpAddresses: this.outboundIpAddresses,
-      vaultSecrets: this.vaultSecrets,
     };
   }
 

@@ -85,10 +85,11 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs & { outboundPublicIPAddresses?: pulumi.Output<string[]> } {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       outboundPublicIPAddresses: this.outboundPublicIPAddresses,
     };
   }

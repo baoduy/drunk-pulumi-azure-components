@@ -7,7 +7,8 @@ import { azureEnv, stackInfo } from '../helpers';
 import * as types from '../types';
 
 export interface ApimApiArgs
-  extends CommonBaseArgs,
+  extends
+    CommonBaseArgs,
     Omit<
       apim.ApiArgs,
       | types.CommonProps
@@ -58,10 +59,11 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 

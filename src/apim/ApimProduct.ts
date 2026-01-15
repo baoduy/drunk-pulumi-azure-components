@@ -8,8 +8,7 @@ import { ApimPolicyBuilder } from './ApimPolicyBuilder';
 import * as types from '../types';
 
 export interface ApimProductArgs
-  extends CommonBaseArgs,
-    Omit<apim.ProductArgs, types.CommonProps | 'displayName' | 'subscriptionRequired'> {
+  extends CommonBaseArgs, Omit<apim.ProductArgs, types.CommonProps | 'displayName' | 'subscriptionRequired'> {
   displayName?: pulumi.Input<string>;
   subscriptionRequired?: boolean;
   enableDiagnostic?: boolean;
@@ -37,10 +36,11 @@ export class ApimProduct extends BaseResourceComponent<ApimProductArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.ResourceOutputs {
     return {
       id: this.id,
       resourceName: this.resourceName,
+      resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
     };
   }
 

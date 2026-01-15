@@ -42,16 +42,14 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
     const appInsight = this.createAppInsight(workspace);
 
     if (storage) {
-      this.storage = {
-        id: storage.id,
-        resourceName: storage.resourceName,
-      };
+      this.storage = storage.getOutputs();
     }
 
     if (workspace) {
       this.workspace = {
         id: workspace.id,
         resourceName: workspace.name,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
         customerId: workspace.customerId,
       };
 
@@ -62,7 +60,9 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
       this.appInsight = {
         id: appInsight.id,
         resourceName: appInsight.name,
+        resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
         instrumentationKey: appInsight.instrumentationKey,
+        connectionString: appInsight.connectionString,
       };
 
       this.addSecret(`${name}-appInsight-key`, appInsight.instrumentationKey);

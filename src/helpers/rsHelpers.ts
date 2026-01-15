@@ -10,10 +10,13 @@ import * as stackInfo from './stackEnv';
  * @returns A new dictionary with the processed values.
  */
 export const dictReduce = <K extends keyof any, T, O>(inputs: Record<K, T>, processor: (key: K, props: T) => O) =>
-  Object.entries(inputs).reduce((acc, [key, value]) => {
-    acc[key as K] = processor(key as K, value as T);
-    return acc;
-  }, {} as Record<K, O>);
+  Object.entries(inputs).reduce(
+    (acc, [key, value]) => {
+      acc[key as K] = processor(key as K, value as T);
+      return acc;
+    },
+    {} as Record<K, O>,
+  );
 
 /**
  * Delays the execution for a specified amount of time.
@@ -110,9 +113,7 @@ export function getRsNameFromIdOutput(resourceId: pulumi.Input<string>) {
  * //   subscriptionId: "sub123"
  * // }
  */
-export function getRsInfoFromId(
-  resourceId: string,
-): types.ResourceWithGroupType & { id: string; subscriptionId: string } {
+export function getRsInfoFromId(resourceId: string): types.ResourceType & { subscriptionId: string } {
   const details = resourceId.trim().split('/');
   let name = '';
   let groupName = '';
@@ -127,7 +128,7 @@ export function getRsInfoFromId(
   return {
     resourceName: name,
     id: resourceId,
-    rsGroup: { resourceGroupName: groupName },
+    resourceGroupName: groupName,
     subscriptionId: subId ?? azureEnv.subscriptionId,
   };
 }

@@ -40,12 +40,12 @@ export interface AppContainerEnvArgs
         | 'peerTrafficConfiguration'
         | 'workloadProfiles'
         | 'zoneRedundant'
-        | 'appInsightsConfiguration'
-        | 'appLogsConfiguration'
-        | 'openTelemetryConfiguration'
         | 'publicNetworkAccess'
       >
     > {
+  logs?: Omit<types.LogsInputs, 'storage'> & {
+    enableOpenTelemetry?: boolean;
+  };
   /** VNet configuration for internal networking */
   vnetConfiguration?: {
     /** Subnet resource info for infrastructure components */
@@ -57,9 +57,6 @@ export interface AppContainerEnvArgs
     /** Platform-reserved DNS IP (must be within platformReservedCidr) */
     platformReservedDnsIP?: pulumi.Input<string>;
   };
-
-  /** Log Analytics workspace for Container App logs and metrics */
-  logAnalyticsWorkspace?: types.ResourceInputs;
 
   /** Dapr configuration */
   dapr?: {
@@ -115,32 +112,19 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
       enableResourceIdentity,
       defaultUAssignedId,
       vnetConfiguration,
-      logAnalyticsWorkspace,
       dapr,
+      logs,
       workloadProfiles,
       zoneRedundant,
       ...props
     } = this.args;
-
-    // Build Log Analytics configuration
-    const appLogsConfiguration = logAnalyticsWorkspace
-      ? {
-          appLogsConfiguration: {
-            logAnalyticsConfiguration: {
-              customerId: logAnalyticsWorkspace.id,
-              sharedKey: pulumi.secret(logAnalyticsWorkspace.id), // In practice, retrieve actual shared key
-            },
-          },
-        }
-      : undefined;
 
     return new app.ManagedEnvironment(
       this.name,
       {
         ...props,
         ...rsGroup,
-        // Logging and monitoring
-        ...appLogsConfiguration,
+
         workloadProfiles: workloadProfiles ?? [
           {
             name: 'Consumption',
@@ -171,6 +155,23 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
         daprAIConnectionString: dapr?.connectionString ?? this.args.daprAIConnectionString,
         daprAIInstrumentationKey: dapr?.instrumentationKey ?? this.args.daprAIInstrumentationKey,
         zoneRedundant: zoneRedundant ?? azureEnv.isPrd,
+
+        appLogsConfiguration: logs?.workspace
+          ? {
+              destination: 'log-analytics',
+              logAnalyticsConfiguration: {
+                customerId: logs.workspace.customerId,
+              },
+            }
+          : { destination: 'azure-monitor' },
+        openTelemetryConfiguration: logs?.enableOpenTelemetry
+          ? {
+              logsConfiguration: {
+                destinations: ['appInsights'],
+              },
+            }
+          : undefined,
+        appInsightsConfiguration: logs?.appInsight ? { connectionString: logs.appInsight.connectionString } : undefined,
       },
       { ...this.opts, parent: this, deleteBeforeReplace: true },
     );

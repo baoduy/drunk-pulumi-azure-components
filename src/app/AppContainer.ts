@@ -5,6 +5,13 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
 
+export type AppSecretArgs = {
+  name: string;
+  /** Plain value OR keyVaultUrl (prefer Key Vault) */
+  value?: pulumi.Input<string>;
+  keyVaultUrl?: pulumi.Input<string>;
+  identity?: pulumi.Input<string>;
+};
 /**
  * Azure Container App component providing secure, serverless container execution
  * with auto-scaling, ingress, and managed environment integration.
@@ -18,14 +25,9 @@ export interface AppContainerArgs
   template: {
     /** Container definitions (at least one required) */
     containers: Array<
-      Partial<
-        Pick<
-          inputs.app.ContainerArgs,
-          'args' | 'command' | 'env' | 'probes' | 'volumeMounts' | 'resources' | 'imageType'
-        >
-      > & {
+      Partial<Pick<inputs.app.ContainerArgs, 'args' | 'command' | 'env' | 'probes' | 'volumeMounts' | 'resources'>> & {
         /** Container name */
-        name: string;
+        name?: string;
         /** Container image (e.g., 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest') */
         image: pulumi.Input<string>;
       }
@@ -33,18 +35,12 @@ export interface AppContainerArgs
     /** Init containers */
     initContainers?: Array<
       Partial<Pick<inputs.app.InitContainerArgs, 'args' | 'command' | 'env' | 'volumeMounts' | 'resources'>> & {
-        name: string;
+        name?: string;
         image: pulumi.Input<string>;
       }
     >;
     /** Scaling configuration */
-    scale?: Partial<
-      Pick<inputs.app.ScaleArgs, 'cooldownPeriod' | 'pollingInterval'> & {
-        minReplicas?: number;
-        maxReplicas?: number;
-        rules?: pulumi.Input<pulumi.Input<inputs.app.ScaleRuleArgs>[]>;
-      }
-    >;
+    scale?: inputs.app.ScaleArgs;
     /** Volume definitions */
     volumes?: pulumi.Input<pulumi.Input<inputs.app.VolumeArgs>[]>;
     /** Revision suffix */
@@ -102,13 +98,7 @@ export interface AppContainerArgs
     /** Registry credentials */
     registries?: pulumi.Input<pulumi.Input<inputs.app.RegistryCredentialsArgs>[]>;
     /** Secrets for environment variables or registry auth */
-    secrets?: Array<{
-      name: string;
-      /** Plain value OR keyVaultUrl (prefer Key Vault) */
-      value?: pulumi.Input<string>;
-      keyVaultUrl?: pulumi.Input<string>;
-      identity?: pulumi.Input<string>;
-    }>;
+    secrets?: Array<AppSecretArgs>;
     /** Max inactive revisions */
     maxInactiveRevisions?: pulumi.Input<number>;
   };
@@ -199,7 +189,7 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
                 name: s.name,
                 value: s.value,
                 keyVaultUrl: s.keyVaultUrl,
-                identity: s.identity,
+                identity: s.identity ?? defaultUAssignedId?.id,
               })),
               maxInactiveRevisions: configuration.maxInactiveRevisions,
             }
@@ -208,30 +198,29 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
         template: {
           containers: template.containers.map((c) => ({
             ...c,
-            name: c.name,
+            name: c.name ?? this.name,
             image: c.image,
+            imageType: 'ContainerImage',
             resources: c.resources ?? {
               cpu: 0.25,
               memory: '0.5Gi',
             },
+            env:
+              c.env ??
+              configuration?.secrets?.map((s) => ({
+                name: s.name,
+                secretRef: s.name,
+              })),
           })),
+
           initContainers: template.initContainers?.map((ic) => ({
             ...ic,
-            name: ic.name,
+            name: ic.name ?? `${this.name}-init`,
             image: ic.image,
+            imageType: 'ContainerImage',
           })),
-          scale: template.scale
-            ? {
-                cooldownPeriod: template.scale.cooldownPeriod,
-                maxReplicas: template.scale.maxReplicas ?? 10,
-                minReplicas: template.scale.minReplicas ?? 0,
-                pollingInterval: template.scale.pollingInterval,
-                rules: template.scale.rules,
-              }
-            : {
-                minReplicas: 0,
-                maxReplicas: 10,
-              },
+
+          scale: template.scale,
           volumes: template.volumes,
           revisionSuffix: template.revisionSuffix,
           serviceBinds: template.serviceBinds,
@@ -241,20 +230,4 @@ export class AppContainer extends BaseResourceComponent<AppContainerArgs> {
       { ...this.opts, parent: this, deletedWith: this },
     );
   }
-
-  // private createPrivateLink(containerApp: app.ContainerApp) {
-  //   const { rsGroup, network } = this.args;
-  //   if (!network?.privateLink) return undefined;
-  //
-  //   return new vnet.PrivateEndpoint(
-  //     this.name,
-  //     {
-  //       ...network.privateLink,
-  //       resourceInfo: containerApp,
-  //       rsGroup,
-  //       type: 'containerapp',
-  //     },
-  //     { dependsOn: containerApp, deletedWith: containerApp, parent: this },
-  //   );
-  // }
 }

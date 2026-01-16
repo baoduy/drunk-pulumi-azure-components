@@ -7,7 +7,7 @@ import { azureEnv } from '../helpers';
 import * as enums from '@pulumi/azure-native/types/enums';
 import { AppJob, AppJobArgs } from './AppJob';
 
-interface ScheduledEntryArgs {
+export interface ScheduledEntryArgs {
   /**
    * Length of maintenance window range from 8 to 24 hours.
    */
@@ -22,6 +22,8 @@ interface ScheduledEntryArgs {
   weekDay: pulumi.Input<enums.app.WeekDay>;
 }
 
+export type ContainerAppsArgs = Omit<AppContainerArgs, types.CommonProps | 'managedEnvironmentId'>;
+export type ContainerJobsArgs = Omit<AppJobArgs, types.CommonProps | 'managedEnvironmentId'>;
 /**
  * Azure Container Apps Managed Environment component providing isolated hosting
  * environment for container apps with networking, monitoring, and scaling features.
@@ -66,8 +68,8 @@ export interface AppContainerEnvArgs
     instrumentationKey?: pulumi.Input<string>;
   };
 
-  containerApps?: Record<string, Omit<AppContainerArgs, types.CommonProps | 'managedEnvironmentId'>>;
-  containerJobs?: Record<string, Omit<AppJobArgs, types.CommonProps | 'managedEnvironmentId'>>;
+  containerApps?: Record<string, ContainerAppsArgs>;
+  containerJobs?: Record<string, ContainerJobsArgs>;
   maintenanceSchedules?: pulumi.Input<ScheduledEntryArgs>[];
 }
 

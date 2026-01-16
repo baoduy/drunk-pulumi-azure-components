@@ -18,14 +18,9 @@ export interface AppJobArgs
   template: {
     /** Container definitions (at least one required) */
     containers: Array<
-      Partial<
-        Pick<
-          inputs.app.ContainerArgs,
-          'args' | 'command' | 'env' | 'probes' | 'volumeMounts' | 'resources' | 'imageType'
-        >
-      > & {
+      Partial<Pick<inputs.app.ContainerArgs, 'args' | 'command' | 'env' | 'probes' | 'volumeMounts' | 'resources'>> & {
         /** Container name */
-        name: string;
+        name?: string;
         /** Container image (e.g., 'mcr.microsoft.com/azuredocs/containerapps-job:latest') */
         image: pulumi.Input<string>;
       }
@@ -33,7 +28,7 @@ export interface AppJobArgs
     /** Init containers */
     initContainers?: Array<
       Partial<Pick<inputs.app.InitContainerArgs, 'args' | 'command' | 'env' | 'volumeMounts' | 'resources'>> & {
-        name: string;
+        name?: string;
         image: pulumi.Input<string>;
       }
     >;
@@ -176,24 +171,33 @@ export class AppJob extends BaseResourceComponent<AppJobArgs> {
             name: s.name,
             value: s.value,
             keyVaultUrl: s.keyVaultUrl,
-            identity: s.identity,
+            identity: s.identity ?? defaultUAssignedId?.id,
           })),
         },
 
         template: {
           containers: template.containers.map((c) => ({
             ...c,
-            name: c.name,
+            name: c.name ?? this.name,
             image: c.image,
+            imageType: 'ContainerImage',
             resources: c.resources ?? {
               cpu: 0.25,
               memory: '0.5Gi',
             },
+            env:
+              c.env ??
+              configuration.secrets?.map((s) => ({
+                name: s.name,
+                secretRef: s.name,
+              })),
           })),
+
           initContainers: template.initContainers?.map((ic) => ({
             ...ic,
-            name: ic.name,
+            name: ic.name ?? `${this.name}-init`,
             image: ic.image,
+            imageType: 'ContainerImage',
           })),
           volumes: template.volumes,
         },

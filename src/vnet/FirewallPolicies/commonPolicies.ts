@@ -33,6 +33,7 @@ export function defaultAllowedPolicies({
   allowsAzureDevOps,
   allowsOffice365,
   allowsWindowsUpdate,
+  allowsGitHubRunner,
 }: {
   name?: string;
   priority: number;
@@ -43,6 +44,7 @@ export function defaultAllowedPolicies({
   /**This is dangerous rule use with care*/
   allowsAllApps?: boolean;
   allowsWindowsUpdate?: boolean;
+  allowsGitHubRunner?: boolean;
 }) {
   const builder = new FirewallPolicyBuilder(name, { priority, action: 'Allow' });
 
@@ -378,6 +380,27 @@ export function defaultAllowedPolicies({
     });
   }
 
+  if (allowsGitHubRunner) {
+    builder.addAppRule('allows-github-runner', {
+      description: 'Allows Github Runner',
+      sourceAddresses,
+      targetFqdns: [
+        'github.com',
+        '*.github.com',
+        'githubusercontent.com',
+        '*.githubusercontent.com',
+        'github-cloud.s3.amazonaws.com',
+        'registry.npmjs.org',
+        '*.pulumi.com',
+        '*.cloudflare.com',
+        'unpkg.com',
+        '*.unpkg.com',
+        'nodejs.org',
+        '*.nodejs.org',
+      ],
+      protocols: [{ protocolType: 'Https', port: 443 }],
+    });
+  }
   return builder;
 }
 

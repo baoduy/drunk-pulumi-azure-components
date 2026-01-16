@@ -49,6 +49,7 @@
     "src/app/IoTHub.ts",
     "src/app/LogicApp.ts",
     "src/app/SignalR.ts",
+    "src/app/appContainerHelper.ts",
     "src/app/index.ts",
     "src/azAd/AppRegistration.ts",
     "src/azAd/AzRole.ts",

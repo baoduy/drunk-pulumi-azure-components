@@ -395,9 +395,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             }
           : undefined,
 
-        // identityProfile: defaultUAssignedId
-        //   ? pulumi.output(defaultUAssignedId).apply((uID) => ({ [uID.id]: uID }))
-        //   : undefined,
+        //identityProfile: {},
 
         linuxProfile: {
           adminUsername: login.userName,

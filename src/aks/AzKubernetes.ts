@@ -65,7 +65,10 @@ export interface AzKubernetesArgs
         'dnsPrefix' | 'supportPlan' | 'autoScalerProfile' | 'autoUpgradeProfile' | 'storageProfile'
       >
     > {
-  sku: ccs.ManagedClusterSKUTier;
+  sku: {
+    name: ccs.ManagedClusterSKUName;
+    tier?: ccs.ManagedClusterSKUTier;
+  };
   nodeResourceGroup?: pulumi.Input<string>;
   namespaces?: Record<string, ccs.NamespaceArgs['properties']>;
   /** This only allows when cluster creating. For additional agent pool after cluster created please use extraAgentPools */
@@ -294,6 +297,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       {
         ...props,
         ...rsGroup,
+        sku,
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,
@@ -440,11 +444,6 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         servicePrincipalProfile: {
           clientId: appID.clientId,
           secret: appID.clientSecret,
-        },
-
-        sku: {
-          name: ccs.ManagedClusterSKUName.Base,
-          tier: sku,
         },
 
         windowsProfile: undefined,

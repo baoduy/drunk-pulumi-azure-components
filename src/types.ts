@@ -87,7 +87,7 @@ export type WithDiskEncryptSet = { diskEncryptionSet?: SubResourceInputs };
 
 export type WithMemberOfArgs = {
   /** The Id of the EntraID group */
-  memberof?: pulumi.Input<{ objectId: string }>[];
+  memberof?: AsInput<GroupRoleOutput>[];
 };
 
 export type IdentityType = {
@@ -137,22 +137,16 @@ export interface GroupRoleOutput {
 }
 
 export type GroupRoleInputTypes = {
-  admin: pulumi.Input<GroupRoleOutput>;
-  contributor: pulumi.Input<GroupRoleOutput>;
-  readOnly: pulumi.Input<GroupRoleOutput>;
+  admin: AsInput<GroupRoleOutput>;
+  contributor: AsInput<GroupRoleOutput>;
+  readOnly: AsInput<GroupRoleOutput>;
 };
 
 export type GroupRoleOutputTypes = {
-  admin: pulumi.Output<GroupRoleOutput>;
-  contributor: pulumi.Output<GroupRoleOutput>;
-  readOnly: pulumi.Output<GroupRoleOutput>;
+  admin: AsOutput<GroupRoleOutput>;
+  contributor: AsOutput<GroupRoleOutput>;
+  readOnly: AsOutput<GroupRoleOutput>;
 };
-
-// export type GroupRolesArgs = {
-//   admin: pulumi.Output<GroupRoleOutput>;
-//   contributor: pulumi.Output<GroupRoleOutput>;
-//   readOnly: pulumi.Output<GroupRoleOutput>;
-// };
 
 export type WithGroupRolesArgs = {
   groupRoles?: GroupRoleOutputTypes;

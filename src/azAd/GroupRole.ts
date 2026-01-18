@@ -14,9 +14,9 @@ export interface GroupRoleArgs
 }
 
 export class GroupRole extends BaseComponent<GroupRoleArgs> {
-  public readonly admin: pulumi.Output<types.GroupRoleOutput>;
-  public readonly contributor: pulumi.Output<types.GroupRoleOutput>;
-  public readonly readOnly: pulumi.Output<types.GroupRoleOutput>;
+  public readonly admin: types.AsOutput<types.GroupRoleOutput>;
+  public readonly contributor: types.AsOutput<types.GroupRoleOutput>;
+  public readonly readOnly: types.AsOutput<types.GroupRoleOutput>;
 
   constructor(name: string = stackInfo.stack, args: GroupRoleArgs = {}, opts?: pulumi.ComponentResourceOptions) {
     super(getComponentResourceType('GroupRole'), name, args, opts);
@@ -38,20 +38,9 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
       ]),
     );
 
-    this.admin = pulumi.output({
-      objectId: roleInstances.admin.objectId,
-      displayName: roleInstances.admin.displayName,
-    });
-
-    this.contributor = pulumi.output({
-      objectId: roleInstances.contributor.objectId,
-      displayName: roleInstances.contributor.displayName,
-    });
-
-    this.readOnly = pulumi.output({
-      objectId: roleInstances.readOnly.objectId,
-      displayName: roleInstances.readOnly.displayName,
-    });
+    this.admin = roleInstances.admin.getOutputs();
+    this.contributor = roleInstances.contributor.getOutputs();
+    this.readOnly = roleInstances.readOnly.getOutputs();
 
     this.configHierarchyRoles(roleInstances);
 

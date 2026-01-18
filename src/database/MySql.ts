@@ -94,7 +94,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
               primaryUserAssignedIdentityId: uid.id,
               primaryKeyURI: encryptionKey.id,
             }
-          : { type: 'SystemManaged' },
+          : { type: mysql.DataEncryptionType.SystemManaged },
 
         maintenanceWindow:
           this.args.sku.tier !== 'Burstable'

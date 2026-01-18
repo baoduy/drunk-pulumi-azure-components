@@ -243,6 +243,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   private createPublicIpAddresses(): types.ResourceInputs[] {
     const { publicIpCreate, publicIpAddresses, rsGroup, natGatewayCreate, firewallCreate } = this.args;
     if (publicIpAddresses) return publicIpAddresses;
+
     const ipCreate: PublicIpCreateType | undefined =
       (natGatewayCreate || firewallCreate) && !publicIpCreate
         ? {
@@ -252,10 +253,12 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         : publicIpCreate;
 
     if (!ipCreate) return [];
+
     this.ipAddressInstance = new IpAddresses(
       `${this.name}-ip`,
       { ...ipCreate, rsGroup },
       {
+        ...this.opts,
         parent: this,
         retainOnDelete: true,
       },
@@ -294,10 +297,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         ...rsGroup,
         ...natGatewayCreate,
         sku: { name: natGatewayCreate.sku },
-        zones: natGatewayCreate.sku == 'Standard' ? ['1'] : zoneHelper.getDefaultZones(natGatewayCreate.zones),
+        zones: natGatewayCreate.sku == 'Standard' ? undefined : zoneHelper.getDefaultZones(natGatewayCreate.zones),
         publicIpAddresses: ipAddresses,
       },
-      { dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },
+      { ...this.opts, dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },
     );
   }
 
@@ -313,7 +316,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         rsGroup,
         subnetId: vpnSubnet.id,
       },
-      { dependsOn: vpnSubnet, parent: this },
+      { ...this.opts, dependsOn: vpnSubnet, parent: this },
     );
   }
 
@@ -356,7 +359,11 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
               },
             ],
       },
-      { dependsOn: firewallManageSubnet ? [firewallManageSubnet, firewallSubnet] : firewallSubnet, parent: this },
+      {
+        ...this.opts,
+        dependsOn: firewallManageSubnet ? [firewallManageSubnet, firewallSubnet] : firewallSubnet,
+        parent: this,
+      },
     );
   }
 
@@ -373,7 +380,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         subnetId: basionSubnet.id,
         network: { ...basion.network },
       },
-      { dependsOn: basionSubnet, parent: this },
+      { ...this.opts, dependsOn: basionSubnet, parent: this },
     );
   }
 
@@ -457,7 +464,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
           enforcement: network.VirtualNetworkEncryptionEnforcement.AllowUnencrypted,
         },
       },
-      { dependsOn, ignoreChanges: ['virtualNetworkPeerings', 'subnets'], parent: this },
+      { ...this.opts, dependsOn, ignoreChanges: ['virtualNetworkPeerings', 'subnets'], parent: this },
     );
 
     const subs = this.createSubnets({
@@ -547,7 +554,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         },
         secondVnet: peeringCreate.vnet,
       },
-      { dependsOn: vnet, parent: this },
+      { ...this.opts, dependsOn: vnet, parent: this },
     );
   }
 
@@ -568,7 +575,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
             registrationEnabled: false,
             virtualNetwork: { id: vnet.id },
           },
-          { dependsOn: vnet, deletedWith: vnet, parent: this },
+          { ...this.opts, dependsOn: vnet, deletedWith: vnet, parent: this },
         );
       }),
     );

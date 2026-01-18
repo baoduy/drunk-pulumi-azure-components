@@ -552,6 +552,7 @@ export function allowsAksPolicies({
     'mcr-0001.mcr-msedge.net',
     'management.azure.com',
     'login.microsoftonline.com',
+    'graph.microsoft.com',
     'packages.microsoft.com',
     'acs-mirror.azureedge.net',
     'packages.aks.azure.com',
@@ -565,9 +566,6 @@ export function allowsAksPolicies({
     '*.ingest.monitor.azure.com',
     '*.metrics.ingest.monitor.azure.com',
     `${azureEnv.currentRegionCode}.handler.control.monitor.azure.com`,
-    //Key Vault
-    'vault.azure.net',
-    '*.vault.usgovcloudapi.net',
     //Storage for container
     '*.blob.core.windows.net',
   ];
@@ -578,7 +576,7 @@ export function allowsAksPolicies({
 
   builder
     //App
-    .addAppRule('acrs', {
+    .addAppRule('azure-resources', {
       description: 'Allows pods to access AzureKubernetesService',
       sourceAddresses: subnetAddressSpaces,
       targetFqdns,

@@ -4,7 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
 import * as mid from '@pulumi/azure-native/managedidentity';
 
-import { AppRegistration, RoleAssignment } from '../azAd';
+import { AppRegistration, AzRole, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { azureEnv, rsHelpers, zoneHelper } from '../helpers';
 
@@ -261,6 +261,21 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     ).getOutputs();
   }
 
+  private createAksAdminGroupRole() {
+    const n = this.name.toLowerCase().includes('aks') ? `${this.name}-ADMIN` : `${this.name}-AKS-ADMIN`;
+    const aksAdminGroup = new AzRole(
+      n,
+      {
+        preventDuplicateNames: true,
+        description: `The Admin Group for AKS Cluster ${this.name}`,
+      },
+      { dependsOn: this.opts?.dependsOn, parent: this },
+    );
+    this.addMemberToGroupRole('readOnly', aksAdminGroup.group.objectId);
+
+    return aksAdminGroup;
+  }
+
   private createCluster(appID: AppRegistration) {
     const {
       rsGroup,
@@ -285,6 +300,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     const nodeRg = nodeResourceGroup ?? pulumi.interpolate`${rsGroup.resourceGroupName}-nodes`;
     const login = this.createUserNameAndSshKeys();
     const diskEncryptionSet = this.createDiskEncryptionSet();
+    const aksAdminGroup = this.createAksAdminGroupRole();
 
     // Add default zones for PRD environment to agent pools
     const poolsWithZones = agentPoolProfiles.map((pool) => ({
@@ -302,7 +318,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           ? {
               enableAzureRBAC: true,
               managed: true,
-              adminGroupObjectIDs: [groupRoles.admin.objectId],
+              adminGroupObjectIDs: [aksAdminGroup.getOutputs().objectId],
               tenantID: azureEnv.tenantId,
             }
           : undefined,
@@ -627,7 +643,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     const { attachToAcr, features, enableResourceIdentity, rsGroup } = this.args;
 
     if (enableResourceIdentity && this.systemIdentityId) {
-      this.addIdentityToRole('readOnly', { principalId: this.systemIdentityId });
+      this.addMemberToGroupRole('readOnly', this.systemIdentityId);
 
       //Allows AKS to have contributor role in the resource group to create resources like load balancer, public IP, etc
       this.roleAssignment({
@@ -648,7 +664,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
 
     //Allows AKS key vault provider to read secrets from Key Vault
     if (features.enableAzureKeyVault && this.keyVaultSecretProviderIdentity) {
-      this.addIdentityToRole('readOnly', { principalId: this.keyVaultSecretProviderIdentity!.objectId });
+      this.addMemberToGroupRole('readOnly', this.keyVaultSecretProviderIdentity!.objectId);
     }
 
     //Allows kubernetes to pull images from ACR

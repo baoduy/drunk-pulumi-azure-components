@@ -11,6 +11,7 @@ import { azureEnv } from '../helpers';
 import { convertToIpRange } from './helpers';
 import { getStorageAccessKeyOutputs } from '../storage/helpers';
 import { storageHelpers } from '../storage';
+import { AzRole } from '../azAd';
 
 export type AzSqlSkuType = {
   /**
@@ -64,7 +65,6 @@ export interface AzSqlArgs
     useDefaultUAssignedIdForConnection?: boolean;
     /**additionalUAssignedClientIds exable: {'abc':identity.clientId}*/
     additionalUAssignedClientIds?: Record<string, pulumi.Input<string>>;
-    adminGroup?: { displayName: pulumi.Input<string>; objectId: pulumi.Input<string> };
   };
 
   elasticPoolCreate?: Partial<
@@ -117,6 +117,21 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     };
   }
 
+  private createAdminGroupRole() {
+    const n = this.name.toLowerCase().includes('sql') ? `${this.name}-ADMIN` : `${this.name}-SQL-ADMIN`;
+    const aksAdminGroup = new AzRole(
+      n,
+      {
+        preventDuplicateNames: true,
+        description: `The Admin Group for Azure SQL ${this.name}`,
+      },
+      { dependsOn: this.opts?.dependsOn, parent: this },
+    );
+    this.addMemberToGroupRole('readOnly', aksAdminGroup.group.objectId);
+
+    return aksAdminGroup;
+  }
+
   private createSql() {
     const {
       rsGroup,
@@ -131,7 +146,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       ...props
     } = this.args;
 
-    const adminGroup = administrators?.adminGroup ?? groupRoles?.contributor;
+    const adminGroup = this.createAdminGroupRole().getOutputs();
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption
@@ -160,11 +175,8 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
         administrators: administrators
           ? {
-              administratorType: administrators.adminGroup?.objectId
-                ? sql.AdministratorType.ActiveDirectory
-                : undefined,
-
-              azureADOnlyAuthentication: administrators.adminGroup?.objectId
+              administratorType: adminGroup.objectId ? sql.AdministratorType.ActiveDirectory : undefined,
+              azureADOnlyAuthentication: adminGroup.objectId
                 ? (administrators.azureAdOnlyAuthentication ?? true)
                 : false,
 
@@ -187,7 +199,11 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     );
 
     this.createEncryptionProtector(server, encryptionKey);
-    if (enableResourceIdentity) this.addIdentityToRole('readOnly', server.identity);
+    if (enableResourceIdentity)
+      this.addMemberToGroupRole(
+        'readOnly',
+        server.identity.apply((id) => id?.principalId),
+      );
 
     return { server, password };
   }
@@ -314,11 +330,15 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createVulnerabilityAssessment(server: sql.Server) {
-    const { enableResourceIdentity, rsGroup, vulnerabilityAssessment, vaultInfo } = this.args;
+    const { rsGroup, vulnerabilityAssessment, vaultInfo } = this.args;
     if (!vulnerabilityAssessment) return undefined;
-    //this will allows sql server to able to write log into the storage account
 
-    if (enableResourceIdentity) this.addIdentityToRole('contributor', server.identity);
+    //this will allow SQL server to be able to write log into the storage account
+    // if (enableResourceIdentity)
+    //   this.addMemberToGroupRole(
+    //     'contributor',
+    //     server.identity.apply((id) => id?.principalId),
+    //   );
 
     const stgEndpoints = storageHelpers.getStorageEndpointsOutputs(vulnerabilityAssessment.logStorage);
     const storageKey = getStorageAccessKeyOutputs(vulnerabilityAssessment.logStorage, vaultInfo);

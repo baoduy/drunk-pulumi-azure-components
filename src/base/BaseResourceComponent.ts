@@ -70,24 +70,21 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
 
   /**
    * Adds a managed identity to a specified Azure AD group role
-   * @param type - The type of group role to add the identity to (from GroupRoleTypes enum)
-   * @param identity - A Pulumi output containing the managed identity with its principal ID
+   * @param roleType - The type of group role to add the identity to (from GroupRoleTypes enum)
+   * @param memberId - A User ObjectId, Group ObjectID or principal ID
    * @returns A new GroupMember resource if successful, undefined if groupRoles not configured or identity invalid
    */
-  public addIdentityToRole(
-    type: types.GroupRoleTypes,
-    identity: pulumi.Input<{ principalId: pulumi.Input<string> } | undefined>,
-  ) {
+  public addMemberToGroupRole(roleType: types.GroupRoleTypes, memberId: pulumi.Input<string | undefined> | undefined) {
     const { groupRoles } = this.args;
     if (!groupRoles) return;
 
-    return pulumi.output(identity).apply((i) => {
-      if (!i?.principalId) return;
+    return pulumi.output(memberId).apply((i) => {
+      if (!i) return;
       return new azAd.GroupMember(
-        `${this.name}-${type}-${i.principalId}`,
+        `${this.name}-${roleType}-${i}`,
         {
-          groupObjectId: groupRoles[type].objectId,
-          memberObjectId: i.principalId,
+          groupObjectId: groupRoles[roleType].objectId,
+          memberObjectId: i,
         },
         { parent: this, retainOnDelete: true },
       );

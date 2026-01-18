@@ -297,7 +297,10 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         ...rsGroup,
         ...natGatewayCreate,
         sku: { name: natGatewayCreate.sku },
-        zones: natGatewayCreate.sku == 'Standard' ? undefined : zoneHelper.getDefaultZones(natGatewayCreate.zones),
+        zones:
+          natGatewayCreate.sku == 'Standard'
+            ? natGatewayCreate.zones
+            : zoneHelper.getDefaultZones(natGatewayCreate.zones),
         publicIpAddresses: ipAddresses,
       },
       { ...this.opts, dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },

@@ -430,7 +430,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           networkDataplane: network?.networkPolicy ?? ccs.NetworkDataplane.Cilium,
           networkPluginMode: ccs.NetworkPluginMode.Overlay,
 
-          loadBalancerSku: 'Standard',
+          loadBalancerSku: ccs.LoadBalancerSku.Standard,
           outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
         },
 

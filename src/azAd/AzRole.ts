@@ -16,7 +16,7 @@ export class AzRole extends BaseComponent<AzRoleArgs> {
     const rsName = `rol-${name.toLowerCase().replace(/\s+/g, '-')}`;
     super(getComponentResourceType('AzRole'), rsName, args, opts);
 
-    this.group = this.createGroup(rsName);
+    this.group = this.createGroup(name);
     this.createMembers(this.group);
 
     this.registerOutputs();
@@ -29,15 +29,15 @@ export class AzRole extends BaseComponent<AzRoleArgs> {
     };
   }
 
-  private createGroup(rsName: string) {
+  private createGroup(name: string) {
     const { description, owners, preventDuplicateNames } = this.args;
 
-    const roleName = this.name.includes(stackInfo.stack)
-      ? `ROL ${this.name}`.toUpperCase()
-      : `ROL ${stackInfo.stack} ${this.name}`.toUpperCase();
+    const roleName = name.includes(stackInfo.stack)
+      ? `ROL ${name}`.toUpperCase()
+      : `ROL ${stackInfo.stack} ${name}`.toUpperCase();
 
     return new azAd.Group(
-      rsName,
+      this.name,
       {
         displayName: roleName,
         description: description ?? roleName,

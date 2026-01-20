@@ -15,7 +15,7 @@ import { vaultHelpers } from '../vault';
 export type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
 export type ApimProductType = Omit<
   ApimProductArgs,
-  'rsGroup' | 'serviceName' | 'vaultInfo' | 'groupRoles' | 'enableDiagnostic'
+  'rsGroup' | 'serviceName' | 'groupRoles' | 'enableDiagnostic'
 > &
   Required<types.WithName>;
 
@@ -317,9 +317,9 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         new ApimProduct(
           p.name,
           {
+            vaultInfo,
             ...p,
             rsGroup,
-            vaultInfo,
             groupRoles,
             serviceName: service.name,
             enableDiagnostic: Boolean(logs?.appInsight),

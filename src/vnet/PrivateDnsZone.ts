@@ -46,7 +46,7 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
     this.id = zone.id;
     this.resourceName = zone.name;
 
-    this.createARecord();
+    this.createARecord(zone);
 
     this.registerOutputs();
   }
@@ -64,16 +64,21 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
       name: string;
       ipv4Address: pulumi.Input<pulumi.Input<string>[]>;
     }>,
+    zone: privateDns.PrivateZone,
   ) {
     return aRecords.map((aRecord) =>
-      this.addRecordSet(aRecord.name, {
-        recordType: 'A',
-        aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
-      }),
+      this.addRecordSet(
+        aRecord.name,
+        {
+          recordType: 'A',
+          aRecords: pulumi.output(aRecord.ipv4Address).apply((ips) => ips.map((i) => ({ ipv4Address: i }))),
+        },
+        zone,
+      ),
     );
   }
 
-  public addRecordSet(name: string, props: DnsRecordArgs) {
+  public addRecordSet(name: string, props: DnsRecordArgs, zone: privateDns.PrivateZone) {
     const group = this.getRsGroupInfo();
     return new privateDns.PrivateRecordSet(
       `${this._rsName}-${helpers.getDnsRecordName(name)}-${props.recordType}`,
@@ -84,7 +89,7 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
         relativeRecordSetName: name,
         ttl: 3600,
       },
-      { parent: this },
+      { dependsOn: zone, deletedWith: zone, parent: this },
     );
   }
 
@@ -96,10 +101,10 @@ export class PrivateDnsZone extends BaseComponent<PrivateDnsZoneArgs> {
     };
   }
 
-  private createARecord() {
+  private createARecord(zone: privateDns.PrivateZone) {
     const { aRecords } = this.args;
     if (!aRecords) return;
-    this.addARecords(aRecords);
+    this.addARecords(aRecords, zone);
   }
 
   private createVnetLinks(zone: privateDns.PrivateZone) {

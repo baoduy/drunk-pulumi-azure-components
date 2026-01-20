@@ -111,7 +111,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
         type: 'keyVault',
         ...network.privateLink,
       },
-      { dependsOn: vault, parent: this },
+      { dependsOn: vault,deletedWith:vault, parent: this },
     );
   }
 

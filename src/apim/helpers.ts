@@ -1,5 +1,6 @@
 import { ApimApiType } from './ApimApiSet';
 import { ApimPolicyBuilder } from './ApimPolicyBuilder';
+import * as pulumi from '@pulumi/pulumi';
 
 export const createProxyApi = ({
   targetUrlHeaderKey,
@@ -19,6 +20,10 @@ export const createProxyApi = ({
     policyBuilder: (p: ApimPolicyBuilder) =>
       p
         .checkHeader({ name: targetUrlHeaderKey })
-        .setBaseUrl(`@(context.Request.Headers.GetValueOrDefault(&quot;${targetUrlHeaderKey}&quot;,&quot;&quot;))`),
+        .setBaseUrl(`@(context.Request.Headers.GetValueOrDefault(&quot;${targetUrlHeaderKey}&quot;,&quot;&quot;))`)
+        .setRequestHeader({
+          name: pulumi.output(subscriptionKeyParameterNames).apply((s) => s?.header ?? 'x-apim-header'),
+          type: 'delete',
+        }),
   };
 };

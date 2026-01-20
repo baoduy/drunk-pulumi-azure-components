@@ -22,7 +22,7 @@ export const createProxyApi = ({
         .checkHeader({ name: targetUrlHeaderKey })
         .setBaseUrl(`@(context.Request.Headers.GetValueOrDefault(&quot;${targetUrlHeaderKey}&quot;,&quot;&quot;))`)
         .setRequestHeader({
-          name: pulumi.output(subscriptionKeyParameterNames).apply((s) => s?.header ?? 'x-apim-header'),
+          name: pulumi.output(subscriptionKeyParameterNames).apply((s: any) => s?.header ?? 'x-apim-header'),
           type: 'delete',
         }),
   };

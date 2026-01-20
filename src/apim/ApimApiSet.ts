@@ -4,6 +4,9 @@ import * as apim from '@pulumi/azure-native/apimanagement';
 import { ApimApi, ApimApiArgs } from './ApimApi';
 import * as types from '../types';
 
+export type ApimApiType = Omit<ApimApiArgs, types.CommonProps | 'productId' | 'serviceName' | 'enableDiagnostic'> &
+  Required<types.WithName>;
+
 export interface ApimApiSetArgs
   extends
     CommonBaseArgs,
@@ -14,9 +17,7 @@ export interface ApimApiSetArgs
   subscriptionRequired?: boolean;
   versioningScheme?: apim.VersioningScheme;
   enableDiagnostic?: boolean;
-  apis: Array<
-    Omit<ApimApiArgs, types.CommonProps | 'productId' | 'serviceName' | 'enableDiagnostic'> & { name: string }
-  >;
+  apis: Array<ApimApiType>;
 }
 
 export class ApimApiSet extends BaseResourceComponent<ApimApiSetArgs> {

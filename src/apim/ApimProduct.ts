@@ -7,17 +7,19 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { ApimPolicyBuilder } from './ApimPolicyBuilder';
 import * as types from '../types';
 
+export type ApimApiSetType = Omit<
+  ApimApiSetArgs,
+  types.CommonProps | 'serviceName' | 'vaultInfo' | 'enableDiagnostic' | 'productId'
+> &
+  Required<types.WithName>;
+
 export interface ApimProductArgs
   extends CommonBaseArgs, Omit<apim.ProductArgs, types.CommonProps | 'displayName' | 'subscriptionRequired'> {
   displayName?: pulumi.Input<string>;
   subscriptionRequired?: boolean;
   enableDiagnostic?: boolean;
   policyBuilder?: (policy: ApimPolicyBuilder) => ApimPolicyBuilder;
-  apiSets?: Array<
-    Omit<ApimApiSetArgs, types.CommonProps | 'serviceName' | 'vaultInfo' | 'enableDiagnostic' | 'productId'> & {
-      name: string;
-    }
-  >;
+  apiSets?: Array<ApimApiSetType>;
 }
 
 export class ApimProduct extends BaseResourceComponent<ApimProductArgs> {

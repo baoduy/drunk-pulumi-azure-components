@@ -12,7 +12,12 @@ import { AppRegistration } from '../azAd';
 import { PrivateEndpoint } from '../vnet';
 import { vaultHelpers } from '../vault';
 
-type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
+export type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
+export type ApimProductType = Omit<
+  ApimProductArgs,
+  'rsGroup' | 'serviceName' | 'groupRoles' | 'enableDiagnostic'
+> &
+  Required<types.WithName>;
 
 export interface ApimArgs
   extends
@@ -54,11 +59,7 @@ export interface ApimArgs
   };
   disableSignIn: boolean;
   permissions?: Array<Omit<types.GrantIdentityRoles, 'identity'>>;
-  products?: Array<
-    Omit<ApimProductArgs, 'rsGroup' | 'serviceName' | 'vaultInfo' | 'groupRoles' | 'enableDiagnostic'> & {
-      name: string;
-    }
-  >;
+  products?: Array<ApimProductType>;
 }
 
 export class Apim extends BaseResourceComponent<ApimArgs> {
@@ -316,9 +317,9 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         new ApimProduct(
           p.name,
           {
+            vaultInfo,
             ...p,
             rsGroup,
-            vaultInfo,
             groupRoles,
             serviceName: service.name,
             enableDiagnostic: Boolean(logs?.appInsight),

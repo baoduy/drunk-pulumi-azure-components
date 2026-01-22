@@ -4,7 +4,7 @@ import * as types from '../types';
 
 import { RandomPassword, RandomPasswordArgs } from '../common/RandomPassword';
 import { RandomString, RandomStringArgs } from '../common/RandomString';
-import { VaultSecretResult, VaultSecrets } from '../vault/VaultSecrets';
+import { VaultSecrets } from '../vault/VaultSecrets';
 
 import { BaseComponent } from './BaseComponent';
 import { EncryptionKey } from '../vault/EncryptionKey';
@@ -48,7 +48,7 @@ export interface CommonBaseArgs
  * @template TArgs - Type parameter extending BaseArgs to define required component arguments
  */
 export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends BaseComponent<TArgs> {
-  public vaultSecrets?: { [key: string]: VaultSecretResult };
+  public vaultSecrets?: pulumi.Output<string>[];
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
 
@@ -259,6 +259,6 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
       { dependsOn: this.opts?.dependsOn, parent: this },
     );
 
-    this.vaultSecrets = rs.results;
+    this.vaultSecrets = Object.keys(rs.results).map((k) => pulumi.output(k));
   }
 }

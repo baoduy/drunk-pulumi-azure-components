@@ -91,11 +91,12 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs(): types.ResourceOutputs {
+  public getOutputs(): types.ResourceOutputs & { secrets?: pulumi.Output<string>[] } {
     return {
       resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       resourceName: this.resourceName,
       id: this.id,
+      secrets: this.vaultSecrets,
     };
   }
 
@@ -111,7 +112,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
         type: 'keyVault',
         ...network.privateLink,
       },
-      { dependsOn: vault,deletedWith:vault, parent: this },
+      { dependsOn: vault, deletedWith: vault, parent: this },
     );
   }
 

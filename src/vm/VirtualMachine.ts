@@ -47,7 +47,6 @@ export interface VirtualMachineArgs
       name: string;
     }
   >;
-  lock?: boolean;
   maintenance?: Partial<Pick<mnc.MaintenanceConfigurationArgs, 'recurEvery' | 'maintenanceScope'>> | false;
 }
 
@@ -62,8 +61,6 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     this.createSchedule(vm);
     this.createExtensions(vm);
     this.createMaintenance(vm);
-
-    if (args.lock) this.lockFromDeleting(vm);
 
     this.id = vm.id;
     this.resourceName = vm.name;
@@ -89,7 +86,6 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       storageProfile,
       vaultInfo,
       diskEncryptionSet,
-      lock,
       ...props
     } = this.args;
 
@@ -227,7 +223,6 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       },
       {
         ...this.opts,
-        protect: lock,
         parent: this,
       },
     );

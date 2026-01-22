@@ -31,7 +31,6 @@ export interface MySqlArgs
   };
   enableAzureADAdmin: boolean;
   databases?: Array<{ name: string }>;
-  lock?: boolean;
 }
 
 export class MySql extends BaseResourceComponent<MySqlArgs> {
@@ -46,8 +45,6 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     this.createNetwork(server);
     this.enableADAdmin(server, uAssignedId);
     this.createDatabases(server, credentials);
-
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -64,7 +61,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   }
 
   private createMySql(uid: types.UserAssignedIdentityInputs) {
-    const { rsGroup, enableResourceIdentity, enableEncryption, administratorLogin, lock } = this.args;
+    const { rsGroup, enableResourceIdentity, enableEncryption, administratorLogin } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
@@ -127,7 +124,6 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       },
       {
         ...this.opts,
-        protect: lock ?? this.opts?.protect,
         parent: this,
       },
     );

@@ -7,7 +7,6 @@ import * as types from '../types';
 export interface RsGroupArgs extends BaseArgs, Omit<resources.ResourceGroupArgs, 'managedBy' | 'location'> {
   /** if the role definition is not provided the readonly role will be added to this group by default  */
   roleAssignments?: RsRoleDefinitionType[];
-  lock?: boolean;
 }
 
 export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
@@ -28,8 +27,6 @@ export class RsGroup extends BaseResourceComponent<RsGroupArgs> {
     this.id = group.id;
 
     this.createRoleAssignment();
-    if (args.lock) this.lockFromDeleting(group);
-
     this.registerOutputs();
   }
 

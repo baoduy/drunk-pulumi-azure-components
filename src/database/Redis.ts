@@ -46,7 +46,6 @@ export interface RedisArgs
     privateLink?: PrivateEndpointType;
     ipRules?: pulumi.Input<pulumi.Input<string>[]>;
   };
-  lock?: boolean;
 }
 
 export class Redis extends BaseResourceComponent<RedisArgs> {
@@ -62,8 +61,6 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     this.createMaintenance(server);
     this.AccessPolicyAssignments(server);
     this.addSecretsToVault(server);
-
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -81,7 +78,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   }
 
   private createRedis() {
-    const { rsGroup, enableResourceIdentity, network, lock, defaultUAssignedId, ...props } = this.args;
+    const { rsGroup, enableResourceIdentity, network, defaultUAssignedId, ...props } = this.args;
 
     const sku = props.sku ?? { name: 'Basic', family: 'C', capacity: 0 };
 
@@ -109,7 +106,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
             }
           : undefined,
       },
-      { ...this.opts, protect: lock ?? this.opts?.protect, parent: this, ignoreChanges: ['name'] },
+      { ...this.opts, parent: this, ignoreChanges: ['name'] },
     );
   }
 

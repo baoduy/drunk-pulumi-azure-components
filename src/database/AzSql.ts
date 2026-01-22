@@ -84,7 +84,6 @@ export interface AzSqlArgs
     alertEmails: pulumi.Input<string[]>;
     retentionDays?: number;
   };
-  lock?: boolean;
   databases?: Record<string, AzSqlDbType>;
 }
 
@@ -101,7 +100,6 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     this.createVulnerabilityAssessment(server);
     this.createNetwork(server);
     this.createDatabases(server, password, elastic);
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -141,7 +139,6 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       defaultUAssignedId,
       administrators,
       network,
-      lock,
       administratorLogin,
       ...props
     } = this.args;
@@ -193,7 +190,6 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       },
       {
         ...this.opts,
-        protect: lock ?? this.opts?.protect,
         parent: this,
       },
     );

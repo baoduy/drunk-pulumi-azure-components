@@ -8,10 +8,10 @@ import { VaultSecrets } from '../vault/VaultSecrets';
 
 import { BaseComponent } from './BaseComponent';
 import { EncryptionKey } from '../vault/EncryptionKey';
-import { ResourceLocker } from '../common/ResourceLocker';
 import { RoleAssignment } from '../azAd/RoleAssignment';
 import { SecretItemArgs } from '../vault/VaultSecret';
 import { getComponentResourceType } from './helpers';
+import * as authorization from '@pulumi/azure-native/authorization';
 
 /**
  * Base interface for resource component arguments that combines vault information
@@ -220,22 +220,27 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     return new RandomString(props.name ?? this.name, props, { parent: this });
   }
 
-  protected lockFromDeleting(resource: pulumi.CustomResource) {
-    return new ResourceLocker(
-      `${this.name}-lock`,
-      {
-        resource,
-        level: 'CanNotDelete',
-      },
-      { dependsOn: resource, parent: this },
-    );
+  private lockFromDeleting() {
+    const { protect } = this.opts ?? { protect: false };
+    if (!protect) return undefined;
+
+    pulumi.output(this.getOutputs()).apply((o) => {
+      const id = o?.id;
+      if (!id) return undefined;
+
+      new authorization.ManagementLockByScope(
+        `${this.name}-lock`,
+        {
+          level: 'CanNotDelete',
+          scope: id,
+          notes: `Lock ${this.name} from DELETE`,
+        },
+        { dependsOn: this, parent: this, retainOnDelete: true },
+      );
+    });
   }
 
-  /**
-   * Internal method to handle post-creation secret management
-   * Creates vault secrets if any secrets were added during component creation
-   */
-  private postCreated() {
+  private createVaultSecrets() {
     const { vaultInfo } = this.args;
     if (this._vaultSecretsCreated || Object.keys(this._secrets).length <= 0 || !vaultInfo) return;
 
@@ -260,5 +265,14 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     );
 
     this.vaultSecrets = Object.keys(rs.results).map((k) => pulumi.output(k));
+  }
+
+  /**
+   * Internal method to handle post-creation secret management
+   * Creates vault secrets if any secrets were added during component creation
+   */
+  private postCreated() {
+    this.createVaultSecrets();
+    this.lockFromDeleting();
   }
 }

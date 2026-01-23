@@ -14,7 +14,7 @@ export const createProxyApi = ({
     ...props,
     //Dummy serviceUrl for proxy api this will be overwritten by api management during runtime
     serviceUrl: `https://${props.name}-hook-delivery.local`,
-    operations: [{ name: 'POST', method: 'POST', urlTemplate: '/' }],
+    operations: [{ name: 'POST', method: 'POST', urlTemplate: '/', responses: [{ statusCode: 200 }] }],
     subscriptionRequired: Boolean(subscriptionKeyParameterNames),
     subscriptionKeyParameterNames,
     policyBuilder: (p: ApimPolicyBuilder) =>

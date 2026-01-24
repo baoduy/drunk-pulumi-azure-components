@@ -2,7 +2,6 @@ import * as pulumi from '@pulumi/pulumi';
 import * as redis from '@pulumi/azure-native/redis';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
-import { PrivateEndpointType } from '../vnet';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { convertToIpRange } from './helpers';
@@ -39,14 +38,10 @@ export interface RedisArgs
     accessPolicy: 'Data Owner' | 'Data Contributor' | 'Data Reader';
     clientId: pulumi.Input<string>;
   }>;
-  network?: {
-    allowAllInbound?: boolean;
+  network?: Omit<types.NetworkArgs, 'vnetRules'> & {
     subnetId?: pulumi.Input<string>;
     staticIP?: pulumi.Input<string>;
-    privateLink?: PrivateEndpointType;
-    ipRules?: pulumi.Input<pulumi.Input<string>[]>;
   };
-  lock?: boolean;
 }
 
 export class Redis extends BaseResourceComponent<RedisArgs> {
@@ -62,8 +57,6 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     this.createMaintenance(server);
     this.AccessPolicyAssignments(server);
     this.addSecretsToVault(server);
-
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -81,7 +74,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   }
 
   private createRedis() {
-    const { rsGroup, enableResourceIdentity, network, lock, defaultUAssignedId, ...props } = this.args;
+    const { rsGroup, enableResourceIdentity, network, defaultUAssignedId, ...props } = this.args;
 
     const sku = props.sku ?? { name: 'Basic', family: 'C', capacity: 0 };
 
@@ -94,9 +87,11 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         redisVersion: props.redisVersion ?? '6.0',
         minimumTlsVersion: '1.2',
         enableNonSslPort: false,
+
         subnetId: network?.subnetId,
         staticIP: network?.staticIP,
-        publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+
         updateChannel: redis.UpdateChannel.Stable,
         zones: sku.name === 'Premium' ? zoneHelper.getDefaultZones(props.zones) : undefined,
 
@@ -109,7 +104,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
             }
           : undefined,
       },
-      { ...this.opts, protect: lock ?? this.opts?.protect, parent: this, ignoreChanges: ['name'] },
+      { ...this.opts, parent: this, ignoreChanges: ['name'] },
     );
   }
 

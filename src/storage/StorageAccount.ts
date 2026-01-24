@@ -148,7 +148,8 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
 
         //isLocalUserEnabled: false,
         allowedCopyScope: network?.privateLink ? 'PrivateLink' : 'AAD',
-        publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+
         networkRuleSet: {
           bypass: args.network?.bypass ?? 'None',
           defaultAction:

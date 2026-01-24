@@ -30,7 +30,6 @@ export interface PostgresArgs
   enableAzureADAdmin: boolean;
   enablePasswordAuth?: boolean;
   databases?: Array<{ name: string }>;
-  lock?: boolean;
 }
 
 export class Postgres extends BaseResourceComponent<PostgresArgs> {
@@ -43,7 +42,6 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     const { server, credentials } = this.createPostgres();
     this.createNetwork(server);
     this.createDatabases(server, credentials);
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -67,7 +65,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       administratorLogin,
       enableAzureADAdmin,
       enablePasswordAuth,
-      lock,
+      network,
     } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
@@ -130,13 +128,11 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
 
         network: {
-          publicNetworkAccess:
-            (this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink) ? 'Disabled' : 'Enabled',
+          publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
         },
       },
       {
         ...this.opts,
-        protect: lock ?? this.opts?.protect,
         parent: this,
       },
     );

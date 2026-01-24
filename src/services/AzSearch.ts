@@ -43,7 +43,8 @@ export class AzSearch extends BaseResourceComponent<AzSearchArgs> {
             }
           : undefined,
 
-        publicNetworkAccess: network?.publicNetworkAccess ? 'enabled' : network?.privateLink ? 'disabled' : 'enabled',
+        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+
         networkRuleSet: network?.ipRules
           ? {
               ipRules: pulumi.output(network.ipRules).apply((ips) => ips.map((i) => ({ value: i }))),

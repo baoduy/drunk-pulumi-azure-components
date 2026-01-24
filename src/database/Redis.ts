@@ -2,7 +2,6 @@ import * as pulumi from '@pulumi/pulumi';
 import * as redis from '@pulumi/azure-native/redis';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
-import { PrivateEndpointType } from '../vnet';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { convertToIpRange } from './helpers';
@@ -39,12 +38,9 @@ export interface RedisArgs
     accessPolicy: 'Data Owner' | 'Data Contributor' | 'Data Reader';
     clientId: pulumi.Input<string>;
   }>;
-  network?: {
-    allowAllInbound?: boolean;
+  network?: Omit<types.NetworkArgs, 'vnetRules'> & {
     subnetId?: pulumi.Input<string>;
     staticIP?: pulumi.Input<string>;
-    privateLink?: PrivateEndpointType;
-    ipRules?: pulumi.Input<pulumi.Input<string>[]>;
   };
 }
 
@@ -91,9 +87,11 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         redisVersion: props.redisVersion ?? '6.0',
         minimumTlsVersion: '1.2',
         enableNonSslPort: false,
+
         subnetId: network?.subnetId,
         staticIP: network?.staticIP,
-        publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+
         updateChannel: redis.UpdateChannel.Stable,
         zones: sku.name === 'Premium' ? zoneHelper.getDefaultZones(props.zones) : undefined,
 

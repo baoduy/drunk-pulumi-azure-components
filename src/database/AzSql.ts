@@ -184,9 +184,11 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
             }
           : undefined,
 
-        publicNetworkAccess: network?.privateLink
-          ? sql.ServerNetworkAccessFlag.Disabled
-          : sql.ServerNetworkAccessFlag.Enabled,
+        publicNetworkAccess: network?.publicNetworkAccess
+          ? sql.ServerNetworkAccessFlag.Enabled
+          : network?.privateLink
+            ? sql.ServerNetworkAccessFlag.Disabled
+            : sql.ServerNetworkAccessFlag.Enabled,
       },
       {
         ...this.opts,

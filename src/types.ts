@@ -184,7 +184,7 @@ export type LogsOutputs = {
 
 export type NetworkArgs = {
   allowAllInbound?: boolean;
-  publicNetworkAccess?: 'disabled' | 'enabled';
+  publicNetworkAccess?: boolean;
   bypass?: 'AzureServices' | 'None' | string;
   defaultAction?: 'Allow' | 'Deny';
 

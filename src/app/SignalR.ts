@@ -57,7 +57,9 @@ export class SignalR extends BaseResourceComponent<SignalRArgs> {
         ...props,
         ...rsGroup,
         sku,
+
         publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+
         networkACLs: isFreeTier
           ? undefined
           : network?.privateLink

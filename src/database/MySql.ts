@@ -61,7 +61,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   }
 
   private createMySql(uid: types.UserAssignedIdentityInputs) {
-    const { rsGroup, enableResourceIdentity, enableEncryption, administratorLogin } = this.args;
+    const { rsGroup, enableResourceIdentity, enableEncryption, administratorLogin, network } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
@@ -118,8 +118,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
 
         network: {
-          publicNetworkAccess:
-            (this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink) ? 'Disabled' : 'Enabled',
+          publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
         },
       },
       {

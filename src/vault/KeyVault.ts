@@ -52,8 +52,11 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
             name: args.sku ?? 'standard',
           },
 
-          publicNetworkAccess:
-            args.network?.publicNetworkAccess ?? (args.network?.privateLink ? 'disabled' : 'enabled'),
+          publicNetworkAccess: args.network?.publicNetworkAccess
+            ? keyvault.PublicNetworkAccess.Enabled
+            : args.network?.privateLink
+              ? keyvault.PublicNetworkAccess.Disabled
+              : keyvault.PublicNetworkAccess.Enabled,
 
           networkAcls: {
             bypass: args.network?.bypass,

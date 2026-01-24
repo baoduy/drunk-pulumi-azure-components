@@ -65,6 +65,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       administratorLogin,
       enableAzureADAdmin,
       enablePasswordAuth,
+      network,
     } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
@@ -127,8 +128,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
 
         network: {
-          publicNetworkAccess:
-            (this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink) ? 'Disabled' : 'Enabled',
+          publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
         },
       },
       {

@@ -95,6 +95,7 @@ See `pulumi-test/samples/` for more usage examples.
 
 - **src/**: All core component code
 - **pulumi-test/**: Example Pulumi stacks and sample usage
+- **Skills/**: GitHub Copilot skills for enhanced developer productivity
 - **.devcontainer/**: Development container setup for VS Code
 
 ## Component Overview
@@ -109,6 +110,29 @@ See `pulumi-test/samples/` for more usage examples.
 - **storage/**: Storage accounts
 - **app/**: App Service, IoT Hub, Logic Apps, SignalR
 - **services/**: Automation, Search, Service Bus
+
+## GitHub Copilot Skills
+
+This project includes a comprehensive set of **GitHub Copilot Skills** to help developers work more efficiently with the library. These skills provide context-aware guidance for common tasks and best practices.
+
+### Available Skills
+
+1. **[Component Development](./Skills/component-development.md)** - Creating new Azure infrastructure components
+2. **[ResourceBuilder Usage](./Skills/resource-builder.md)** - Composing complex infrastructure with ResourceBuilder
+3. **[Testing & Validation](./Skills/testing-validation.md)** - Testing strategies and validation approaches
+4. **[Security Best Practices](./Skills/security-practices.md)** - Implementing secure Azure infrastructure
+5. **[Troubleshooting & Debugging](./Skills/troubleshooting.md)** - Diagnosing and resolving common issues
+6. **[Migration & Refactoring](./Skills/migration-refactoring.md)** - Migrating from other IaC tools and refactoring code
+
+### Using the Skills
+
+Reference skills in GitHub Copilot Chat:
+
+```
+@workspace Using the Component Development skill, help me create a new Azure Cognitive Search component
+```
+
+Or simply browse the [Skills directory](./Skills/README.md) for detailed guidance on each topic.
 
 ## Contributing
 

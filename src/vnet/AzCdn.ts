@@ -131,7 +131,7 @@ export class AzCdn extends BaseResourceComponent<AzCdnArgs> {
       {
         resourceGroupName: rsGroup.resourceGroupName,
         location: 'global',
-        identity: enableResourceIdentity ? { type: cdn.ManagedServiceIdentityType.SystemAssigned } : undefined,
+        identity: enableResourceIdentity ? { type: 'SystemAssigned' } : undefined,
         sku: { name: sku ?? cdn.SkuName.Standard_Microsoft },
       },
       { parent: this },

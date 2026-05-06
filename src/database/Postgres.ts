@@ -79,7 +79,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         ...this.args,
         ...rsGroup,
 
-        version: this.args.version ?? postgresql.ServerVersion.ServerVersion_16,
+        version: this.args.version ?? postgresql.PostgresMajorVersion.PostgresMajorVersion_16,
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         storage: this.args.storage ?? { storageSizeGB: 32 },

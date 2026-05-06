@@ -37,10 +37,10 @@ export interface AppResourcesArgs
   logicApp?: types.WithName & Partial<LogicAppArgs> & Pick<LogicAppArgs, 'integrationAccount' | 'workflow'>;
   signalR?: types.WithName & Partial<SignalRArgs> & Pick<SignalRArgs, 'sku'>;
   azSql?: types.WithName & Partial<AzSqlArgs> & Pick<AzSqlArgs, 'administrators'>;
-  mySql?: types.WithName & Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'>;
+  mySql?: types.WithName & Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'|'version'>;
   postgres?: types.WithName &
     Partial<PostgresArgs> &
-    Pick<PostgresArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'>;
+    Pick<PostgresArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'|'version'>;
   redis?: types.WithName & Partial<RedisArgs> & Pick<RedisArgs, 'sku' | 'disableAccessKeyAuthentication'>;
 }
 

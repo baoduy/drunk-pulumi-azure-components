@@ -19,6 +19,7 @@ export interface MySqlArgs
         'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
       >
     > {
+  version?: pulumi.Input<string | mysql.ServerVersion>;
   sku: {
     /**
      * The name of the sku, e.g. Standard_D32s_v3.
@@ -75,7 +76,6 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         //serverName: this.name,
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
-        version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
         storage: this.args.storage ?? { storageSizeGB: 30 },
 
         identity: enableResourceIdentity

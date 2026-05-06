@@ -16,9 +16,10 @@ export interface PostgresArgs
     Partial<
       Pick<
         postgresql.ServerArgs,
-        'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
+         'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
       >
     > {
+  version: pulumi.Input<string | postgresql.PostgresMajorVersion>;
   sku: {
     /** The name of postgres: Standard_B2ms,  */
     name: pulumi.Input<string>;
@@ -79,7 +80,6 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         ...this.args,
         ...rsGroup,
 
-        version: this.args.version ?? postgresql.PostgresMajorVersion.PostgresMajorVersion_16,
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         storage: this.args.storage ?? { storageSizeGB: 32 },

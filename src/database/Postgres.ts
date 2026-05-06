@@ -215,9 +215,26 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         { dependsOn: server, parent: this },
       );
 
-      //add connection string to vault
-      const conn = pulumi.interpolate`Host=${cred.host};Database=${d.name};User Id=${cred.username};Password=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
-      this.addSecret(`${this.name}-${d.name}-postgres-conn`, conn);
+      // Create connection strings in multiple formats for different platforms
+      const connStrings: { [key: string]: pulumi.Input<string> } = {};
+
+      // .NET / ADO.NET format
+      connStrings[`${this.name}-${d.name}-postgres-conn-dotnet`] = pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
+
+      // Node.js / JavaScript URI format
+      connStrings[`${this.name}-${d.name}-postgres-conn-nodejs`] = pulumi.interpolate`postgresql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?sslmode=require`;
+
+      // Python / psycopg2 format
+      //connStrings[`${this.name}-${d.name}-postgres-conn-python`] = pulumi.interpolate`postgresql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}`;
+
+      // JDBC / Java format
+      //connStrings[`${this.name}-${d.name}-postgres-conn-jdbc`] = pulumi.interpolate`jdbc:postgresql://${cred.host}:${cred.port}/${d.name}?user=${cred.username}&password=${cred.password}&sslmode=require`;
+
+      // Generic/standard format
+      connStrings[`${this.name}-${d.name}-postgres-conn`] = pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
+
+      // Add all connection strings at once
+      this.addSecrets(connStrings);
 
       return db;
     });

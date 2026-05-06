@@ -226,9 +226,20 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         { dependsOn: server, parent: this },
       );
 
-      //add connection string to vault
-      const conn = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
-      this.addSecret(`${this.name}-${d.name}-mysql-conn`, conn);
+      // Create connection strings in multiple formats for different platforms
+      const connStrings: { [key: string]: pulumi.Input<string> } = {};
+
+      // .NET / ADO.NET format
+      connStrings[`${this.name}-${d.name}-mysql-conn-dotnet`] = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+
+      // Node.js / JavaScript format
+      connStrings[`${this.name}-${d.name}-mysql-conn-nodejs`] = pulumi.interpolate`mysql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?ssl=true&tls=true`;
+
+      // Generic/standard format
+      connStrings[`${this.name}-${d.name}-mysql-conn`] = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+
+      // Add all connection strings at once
+      this.addSecrets(connStrings);
 
       return db;
     });

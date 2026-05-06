@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",
+    "rootDir": "./src",
     "outDir": "./bin",
     "target": "ESNext",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "declaration": true,
     "inlineSourceMap": true,
     "stripInternal": true,

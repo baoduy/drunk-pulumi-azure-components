@@ -137,8 +137,8 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
         identity: enableResourceIdentity
           ? {
               type: defaultUAssignedId
-                ? app.ManagedServiceIdentityType.SystemAssigned_UserAssigned
-                : app.ManagedServiceIdentityType.SystemAssigned,
+                ? 'SystemAssigned,UserAssigned'
+                : 'SystemAssigned',
               userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
             }
           : undefined,

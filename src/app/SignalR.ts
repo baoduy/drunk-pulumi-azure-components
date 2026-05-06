@@ -6,7 +6,7 @@ import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { VaultSecrets } from '../vault';
 
 import { PrivateEndpoint } from '../vnet';
-import { SecretItemArgs } from 'vault';
+import { SecretItemArgs } from '../vault';
 
 export interface SignalRArgs
   extends CommonBaseArgs, Partial<Pick<ss.SignalRArgs, 'kind' | 'cors' | 'features' | 'tls' | 'identity'>> {

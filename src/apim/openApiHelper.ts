@@ -58,11 +58,18 @@ const downloadSpecFile = async (specUrl: string): Promise<OpenAPI3 | undefined> 
   return isHttpSpecUrl(specUrl) ? downloadRemoteSpecFile(specUrl) : downloadLocalSpecFile(specUrl);
 };
 
-export const getImportConfig = async (specUrl: string, version: string): Promise<string | undefined> => {
-  const spec = await downloadSpecFile(specUrl);
-  if (!spec) return undefined;
+export const getImportConfig = async (
+  specUrls: string[],
+  version: string,
+): Promise<string | undefined> => {
+  for (const url of specUrls) {
+    const spec = await downloadSpecFile(url);
+    if (spec) {
+      // Remove version prefix from paths.
+      const data = removeVersion(spec, version);
+      return JSON.stringify(data);
+    }
+  }
 
-  // Remove version prefix from paths.
-  const data = removeVersion(spec, version);
-  return JSON.stringify(data);
+  return undefined;
 };

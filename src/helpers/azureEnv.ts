@@ -47,7 +47,7 @@ export const subscriptionId = azEnv['azure-native:config:subscriptionId'] ?? con
  * @constant {Output<string>} currentPrincipal
  * @description Current Azure principal object ID
  */
-export const currentPrincipal = config.objectId;
+export const currentPrincipal: pulumi.Output<string> = config.objectId;
 
 /**
  * @constant {string} currentRegionName

@@ -4,6 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { BaseComponent } from '../base/BaseComponent';
 import { getComponentResourceType } from '../base/helpers';
 import { stackInfo } from '../helpers';
+import * as types from '../types';
 
 export interface AzRoleArgs extends Partial<Pick<azAd.GroupArgs, 'owners' | 'preventDuplicateNames' | 'description'>> {
   members?: pulumi.Input<string>[];
@@ -22,7 +23,7 @@ export class AzRole extends BaseComponent<AzRoleArgs> {
     this.registerOutputs();
   }
 
-  public getOutputs() {
+  public getOutputs(): types.AsOutput<types.GroupRoleOutput> {
     return {
       objectId: this.group.objectId,
       displayName: this.group.displayName,

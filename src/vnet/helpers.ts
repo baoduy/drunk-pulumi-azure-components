@@ -46,6 +46,8 @@ export const defaultRouteRules = {
   } as RouteArgs,
 };
 
-export const getPrivateRecordSetOutput = (args: privateDns.GetPrivateRecordSetOutputArgs) => {
+export const getPrivateRecordSetOutput = (
+  args: privateDns.GetPrivateRecordSetOutputArgs,
+): ReturnType<typeof privateDns.getPrivateRecordSetOutput> => {
   return privateDns.getPrivateRecordSetOutput(args);
 };

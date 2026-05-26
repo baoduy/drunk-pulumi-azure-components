@@ -24,7 +24,7 @@ describe('openApiHelper.getImportConfig', () => {
     );
 
     try {
-      const value = await getImportConfig(specPath, 'v1');
+      const value = await getImportConfig([specPath], 'v1');
       expect(value).toBeDefined();
       expect(value).toContain('/ping');
       expect(value).not.toContain('/v1/ping');
@@ -34,7 +34,7 @@ describe('openApiHelper.getImportConfig', () => {
   });
 
   test('returns undefined when local file does not exist', async () => {
-    const value = await getImportConfig(join(tmpdir(), 'does-not-exist-open-api.json'), 'v1');
+    const value = await getImportConfig([join(tmpdir(), 'does-not-exist-open-api.json')], 'v1');
     expect(value).toBeUndefined();
   });
 
@@ -44,7 +44,7 @@ describe('openApiHelper.getImportConfig', () => {
     await writeFile(specPath, '{"openapi":"3.0.0","paths":', 'utf8');
 
     try {
-      const value = await getImportConfig(specPath, 'v1');
+      const value = await getImportConfig([specPath], 'v1');
       expect(value).toBeUndefined();
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -62,7 +62,7 @@ describe('openApiHelper.getImportConfig', () => {
       }),
     } as Response);
 
-    const value = await getImportConfig('https://example.com/openapi.json', 'v2');
+    const value = await getImportConfig(['https://example.com/openapi.json'], 'v2');
     expect(value).toBeDefined();
     expect(value).toContain('/health');
     expect(value).not.toContain('/v2/health');
@@ -75,14 +75,14 @@ describe('openApiHelper.getImportConfig', () => {
       json: async () => ({}),
     } as Response);
 
-    const value = await getImportConfig('https://example.com/notfound.json', 'v1');
+    const value = await getImportConfig(['https://example.com/notfound.json'], 'v1');
     expect(value).toBeUndefined();
   });
 
   test('returns undefined when HTTP request fails', async () => {
     jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network failed'));
 
-    const value = await getImportConfig('https://example.com/error.json', 'v1');
+    const value = await getImportConfig(['https://example.com/error.json'], 'v1');
     expect(value).toBeUndefined();
   });
 

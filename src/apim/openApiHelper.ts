@@ -59,12 +59,10 @@ const downloadSpecFile = async (specUrl: string): Promise<OpenAPI3 | undefined> 
 };
 
 export const getImportConfig = async (
-  specUrl: string | string[],
+  specUrls: string[],
   version: string,
 ): Promise<string | undefined> => {
-  const urls = Array.isArray(specUrl) ? specUrl : [specUrl];
-
-  for (const url of urls) {
+  for (const url of specUrls) {
     const spec = await downloadSpecFile(url);
     if (spec) {
       // Remove version prefix from paths.

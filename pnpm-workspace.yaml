@@ -1,0 +1,9 @@
+packages:
+  - '.'
+
+allowBuilds:
+  protobufjs: true
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@drunk-pulumi/azure-providers'

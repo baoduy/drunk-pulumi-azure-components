@@ -108,7 +108,9 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
           : `https://${stackInfo.organization}.com/${apiVersion}`,
 
         format: openSpecUrl ? apim.ContentFormat.Openapi_json : undefined,
-        value: openSpecUrl ? pulumi.output(openApi.getImportConfig(openSpecUrl, apiVersion)) : undefined,
+        value: openSpecUrl
+          ? pulumi.output(openApi.getImportConfig(openSpecUrl, apiVersion)).apply((v) => v ?? '')
+          : undefined,
       },
       {
         ...this.opts,

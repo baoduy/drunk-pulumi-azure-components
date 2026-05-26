@@ -85,4 +85,49 @@ describe('openApiHelper.getImportConfig', () => {
     const value = await getImportConfig('https://example.com/error.json', 'v1');
     expect(value).toBeUndefined();
   });
+
+  test('tries multiple URLs and returns first successful result', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'openapi-spec-arr-'));
+    const specPath = join(dir, 'spec.json');
+    await writeFile(
+      specPath,
+      JSON.stringify({
+        openapi: '3.0.0',
+        paths: {
+          '/v1/users': { get: { responses: { 200: { description: 'ok' } } } },
+        },
+      }),
+      'utf8',
+    );
+
+    try {
+      // First URL doesn't exist, second is the local file
+      const value = await getImportConfig(
+        [join(tmpdir(), 'does-not-exist.json'), specPath],
+        'v1',
+      );
+      expect(value).toBeDefined();
+      expect(value).toContain('/users');
+      expect(value).not.toContain('/v1/users');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('returns undefined when all URLs in array fail', async () => {
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+    } as Response);
+
+    const value = await getImportConfig(
+      [
+        join(tmpdir(), 'does-not-exist-1.json'),
+        'https://example.com/notfound.json',
+      ],
+      'v1',
+    );
+    expect(value).toBeUndefined();
+  });
 });

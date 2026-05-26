@@ -24,7 +24,7 @@ export interface ApimApiArgs
   apiVersion: 'v1' | 'v2' | 'v3' | string;
   productId?: pulumi.Input<string>;
   enableDiagnostic?: boolean;
-  openSpecUrl?: string;
+  openSpecUrl?: string | string[];
   soapApiType?: apim.SoapApiType;
   protocols?: Array<apim.Protocol>;
   operations?: Array<
@@ -111,7 +111,8 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
         value: openSpecUrl
           ? pulumi.output(openApi.getImportConfig(openSpecUrl, apiVersion)).apply((v) => {
               if (v === undefined) {
-                console.error(`APIM-openApi: Not able to load spec from: ${openSpecUrl}`);
+                const urls = Array.isArray(openSpecUrl) ? openSpecUrl.join(', ') : openSpecUrl;
+                console.error(`APIM-openApi: Not able to load spec from: ${urls}`);
               }
               // ApiArgs.value does not allow undefined, so keep prior empty-string fallback behavior.
               return v ?? '';

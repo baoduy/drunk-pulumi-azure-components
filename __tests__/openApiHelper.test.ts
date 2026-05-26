@@ -38,6 +38,19 @@ describe('openApiHelper.getImportConfig', () => {
     expect(value).toBeUndefined();
   });
 
+  test('returns undefined when local file contains invalid JSON', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'openapi-spec-invalid-'));
+    const specPath = join(dir, 'spec.json');
+    await writeFile(specPath, '{"openapi":"3.0.0","paths":', 'utf8');
+
+    try {
+      const value = await getImportConfig(specPath, 'v1');
+      expect(value).toBeUndefined();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   test('reads OpenAPI spec from HTTP URL', async () => {
     jest.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,

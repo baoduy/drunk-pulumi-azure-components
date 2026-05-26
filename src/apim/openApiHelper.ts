@@ -41,7 +41,13 @@ const downloadLocalSpecFile = async (filePath: string): Promise<OpenAPI3 | undef
   try {
     await access(filePath, constants.F_OK);
     const fileContent = await readFile(filePath, 'utf8');
-    return JSON.parse(fileContent) as OpenAPI3;
+
+    try {
+      return JSON.parse(fileContent) as OpenAPI3;
+    } catch (error) {
+      console.error(`Invalid JSON in spec file: ${filePath}`, error);
+      return undefined;
+    }
   } catch (error) {
     console.error(`Not able to read spec file from: ${filePath}`, error);
     return undefined;
@@ -56,7 +62,7 @@ export const getImportConfig = async (specUrl: string, version: string): Promise
   const spec = await downloadSpecFile(specUrl);
   if (!spec) return undefined;
 
-  //Remove Version
+  // Remove version prefix from paths.
   const data = removeVersion(spec, version);
   return JSON.stringify(data);
 };

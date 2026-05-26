@@ -106,7 +106,12 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
               }
             : undefined,
 
-        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: network?.publicNetworkAccess
+          ? registry.PublicNetworkAccess.Enabled
+          : network?.privateLink
+            ? registry.PublicNetworkAccess.Disabled
+            : registry.PublicNetworkAccess.Enabled,
+
         networkRuleBypassOptions: network?.bypass,
 
         networkRuleSet:

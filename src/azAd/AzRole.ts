@@ -48,7 +48,7 @@ export class AzRole extends BaseComponent<AzRoleArgs> {
         mailEnabled: false,
         assignableToRole: false,
       },
-      { parent: this, ignoreChanges: ['members'] },
+      { parent: this, ignoreChanges: ['members'], deleteBeforeReplace: true },
     );
   }
 

@@ -19,6 +19,7 @@ export interface MySqlArgs
         'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
       >
     > {
+  version?: pulumi.Input<string | mysql.ServerVersion>;
   sku: {
     /**
      * The name of the sku, e.g. Standard_D32s_v3.
@@ -31,7 +32,6 @@ export interface MySqlArgs
   };
   enableAzureADAdmin: boolean;
   databases?: Array<{ name: string }>;
-  lock?: boolean;
 }
 
 export class MySql extends BaseResourceComponent<MySqlArgs> {
@@ -46,8 +46,6 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     this.createNetwork(server);
     this.enableADAdmin(server, uAssignedId);
     this.createDatabases(server, credentials);
-
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -64,7 +62,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
   }
 
   private createMySql(uid: types.UserAssignedIdentityInputs) {
-    const { rsGroup, enableResourceIdentity, enableEncryption, administratorLogin, lock } = this.args;
+    const { rsGroup, enableResourceIdentity, enableEncryption, administratorLogin, network } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
@@ -78,7 +76,6 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         //serverName: this.name,
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
-        version: this.args.version ?? mysql.ServerVersion.ServerVersion_8_0_21,
         storage: this.args.storage ?? { storageSizeGB: 30 },
 
         identity: enableResourceIdentity
@@ -121,13 +118,11 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
 
         network: {
-          publicNetworkAccess:
-            (this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink) ? 'Disabled' : 'Enabled',
+          publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
         },
       },
       {
         ...this.opts,
-        protect: lock ?? this.opts?.protect,
         parent: this,
       },
     );
@@ -231,9 +226,20 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         { dependsOn: server, parent: this },
       );
 
-      //add connection string to vault
-      const conn = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
-      this.addSecret(`${this.name}-${d.name}-mysql-conn`, conn);
+      // Create connection strings in multiple formats for different platforms
+      const connStrings: { [key: string]: pulumi.Input<string> } = {};
+
+      // .NET / ADO.NET format
+      connStrings[`${this.name}-${d.name}-mysql-conn-dotnet`] = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+
+      // Node.js / JavaScript format
+      connStrings[`${this.name}-${d.name}-mysql-conn-nodejs`] = pulumi.interpolate`mysql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?ssl=true&tls=true`;
+
+      // Generic/standard format
+      connStrings[`${this.name}-${d.name}-mysql-conn`] = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+
+      // Add all connection strings at once
+      this.addSecrets(connStrings);
 
       return db;
     });

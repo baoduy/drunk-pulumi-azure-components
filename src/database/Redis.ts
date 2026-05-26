@@ -2,7 +2,6 @@ import * as pulumi from '@pulumi/pulumi';
 import * as redis from '@pulumi/azure-native/redis';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
-import { PrivateEndpointType } from '../vnet';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { convertToIpRange } from './helpers';
@@ -39,14 +38,10 @@ export interface RedisArgs
     accessPolicy: 'Data Owner' | 'Data Contributor' | 'Data Reader';
     clientId: pulumi.Input<string>;
   }>;
-  network?: {
-    allowAllInbound?: boolean;
+  network?: Omit<types.NetworkArgs, 'vnetRules'> & {
     subnetId?: pulumi.Input<string>;
     staticIP?: pulumi.Input<string>;
-    privateLink?: PrivateEndpointType;
-    ipRules?: pulumi.Input<pulumi.Input<string>[]>;
   };
-  lock?: boolean;
 }
 
 export class Redis extends BaseResourceComponent<RedisArgs> {
@@ -62,8 +57,6 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     this.createMaintenance(server);
     this.AccessPolicyAssignments(server);
     this.addSecretsToVault(server);
-
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -81,7 +74,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
   }
 
   private createRedis() {
-    const { rsGroup, enableResourceIdentity, network, lock, defaultUAssignedId, ...props } = this.args;
+    const { rsGroup, enableResourceIdentity, network, defaultUAssignedId, ...props } = this.args;
 
     const sku = props.sku ?? { name: 'Basic', family: 'C', capacity: 0 };
 
@@ -94,22 +87,24 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         redisVersion: props.redisVersion ?? '6.0',
         minimumTlsVersion: '1.2',
         enableNonSslPort: false,
+
         subnetId: network?.subnetId,
         staticIP: network?.staticIP,
-        publicNetworkAccess: network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+
         updateChannel: redis.UpdateChannel.Stable,
         zones: sku.name === 'Premium' ? zoneHelper.getDefaultZones(props.zones) : undefined,
 
         identity: enableResourceIdentity
           ? {
               type: defaultUAssignedId
-                ? redis.ManagedServiceIdentityType.UserAssigned
-                : redis.ManagedServiceIdentityType.SystemAssigned,
+                ? 'UserAssigned'
+                : 'SystemAssigned',
               userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
             }
           : undefined,
       },
-      { ...this.opts, protect: lock ?? this.opts?.protect, parent: this, ignoreChanges: ['name'] },
+      { ...this.opts, parent: this, ignoreChanges: ['name'] },
     );
   }
 
@@ -229,30 +224,35 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
         resourceGroupName: rsGroup.resourceGroupName,
       });
 
-      return new vault.VaultSecrets(
-        this.name,
-        {
-          vaultInfo,
-          secrets: {
-            [`${this.name}-redis-host`]: { value: h, contentType: `Redis host` },
-            [`${this.name}-redis-pass`]: { value: keys.primaryKey, contentType: `Redis pass` },
-            [`${this.name}-redis-port`]: { value: '6380', contentType: `Redis port` },
-            [`${this.name}-redis-conn`]: {
-              value: disableAccessKeyAuthentication
-                ? pulumi.interpolate`rediss://${h}:6380`
-                : pulumi.interpolate`rediss://:${keys.primaryKey}@${h}:6380`,
-              contentType: `Redis Connection String For General Use`,
-            },
-            [`${this.name}-redis-net-conn`]: {
-              value: disableAccessKeyAuthentication
-                ? pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`
-                : pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`,
-              contentType: `Redis Connection String For .NET Apps`,
-            },
-          },
-        },
-        { dependsOn: server, parent: this },
-      );
+      // Create connection strings in multiple formats for different platforms
+      const secrets: { [key: string]: pulumi.Input<string> } = {
+        [`${this.name}-redis-host`]: h,
+        [`${this.name}-redis-pass`]: keys.primaryKey,
+        [`${this.name}-redis-port`]: '6380',
+      };
+
+      // Node.js / JavaScript format
+      secrets[`${this.name}-redis-conn-nodejs`] = disableAccessKeyAuthentication
+        ? pulumi.interpolate`rediss://${h}:6380`
+        : pulumi.interpolate`rediss://:${keys.primaryKey}@${h}:6380`;
+
+      // .NET / StackExchange.Redis format
+      secrets[`${this.name}-redis-conn-dotnet`] = disableAccessKeyAuthentication
+        ? pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`
+        : pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`;
+
+      // Python format
+      secrets[`${this.name}-redis-conn-python`] = disableAccessKeyAuthentication
+        ? pulumi.interpolate`rediss://${h}:6380`
+        : pulumi.interpolate`rediss://:${keys.primaryKey}@${h}:6380`;
+
+      // Generic format
+      secrets[`${this.name}-redis-conn`] = disableAccessKeyAuthentication
+        ? pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`
+        : pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`;
+
+      // Add all secrets at once
+      this.addSecrets(secrets);
     });
   }
 }

@@ -4,3 +4,4 @@ bin
 .pnpm-store
 .idea
 **/.DS_Store
+.gitnexus

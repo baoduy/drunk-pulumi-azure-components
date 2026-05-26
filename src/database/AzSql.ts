@@ -84,7 +84,6 @@ export interface AzSqlArgs
     alertEmails: pulumi.Input<string[]>;
     retentionDays?: number;
   };
-  lock?: boolean;
   databases?: Record<string, AzSqlDbType>;
 }
 
@@ -101,7 +100,6 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     this.createVulnerabilityAssessment(server);
     this.createNetwork(server);
     this.createDatabases(server, password, elastic);
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -141,7 +139,6 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       defaultUAssignedId,
       administrators,
       network,
-      lock,
       administratorLogin,
       ...props
     } = this.args;
@@ -187,13 +184,14 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
             }
           : undefined,
 
-        publicNetworkAccess: network?.privateLink
-          ? sql.ServerNetworkAccessFlag.Disabled
-          : sql.ServerNetworkAccessFlag.Enabled,
+        publicNetworkAccess: network?.publicNetworkAccess
+          ? sql.ServerNetworkAccessFlag.Enabled
+          : network?.privateLink
+            ? sql.ServerNetworkAccessFlag.Disabled
+            : sql.ServerNetworkAccessFlag.Enabled,
       },
       {
         ...this.opts,
-        protect: lock ?? this.opts?.protect,
         parent: this,
       },
     );
@@ -438,7 +436,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
       if (defaultUAssignedId && administrators.useDefaultUAssignedIdForConnection)
         secrets[`${name}-sql-default-uid-conn`] =
-          pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${defaultUAssignedId?.principalId}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
+          pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; User Id=${defaultUAssignedId?.principalId}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
 
       if (!administrators.azureAdOnlyAuthentication) {
         secrets[`${name}-sql-password-conn`] =
@@ -448,7 +446,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       const adds = administrators.additionalUAssignedClientIds;
       if (adds) {
         Object.keys(adds).forEach((k) => {
-          const conn = pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Managed Identity"; User Id=${adds[k]}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
+          const conn = pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; User Id=${adds[k]}; MultipleActiveResultSets=False; Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`;
           secrets[`${name}-sql-${k}-conn`] = conn;
         });
       }

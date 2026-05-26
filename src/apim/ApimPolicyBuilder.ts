@@ -4,12 +4,8 @@ import * as pulumi from '@pulumi/pulumi';
 
 type ApimCorsType = { origins: pulumi.Input<string>[] };
 
-export enum SetHeaderTypes {
-  delete = 'delete',
-  override = 'override',
-  skip = 'skip',
-  append = 'append',
-}
+export type SetHeaderTypes = 'delete' | 'override' | 'skip' | 'append';
+
 export type ApimClientCertType = {
   issuer?: pulumi.Input<string>;
   subject?: pulumi.Input<string>;
@@ -107,7 +103,7 @@ export class ApimPolicyBuilder {
     if (props.setHeaderKey)
       this.setRequestHeader({
         name: props.setHeaderKey,
-        type: SetHeaderTypes.override,
+        type: 'override',
         value: pulumi.interpolate`@($"Bearer {context.Variables[&quot;${props.variableName}&quot;]}")`,
       });
 
@@ -177,7 +173,7 @@ export class ApimPolicyBuilder {
     this.setRequestHeader({
       name: headerKey ?? `x-${stackInfo.organization}-clientIp`,
       value: '@(context.Request.IpAddress)',
-      type: SetHeaderTypes.override,
+      type: 'override',
     });
     return this;
   }
@@ -221,7 +217,7 @@ export class ApimPolicyBuilder {
       Object.keys(props.brokerProperties).forEach((key) =>
         this.setRequestHeader({
           name: key,
-          type: SetHeaderTypes.append,
+          type: 'append',
           value: props.brokerProperties![key],
         }),
       );

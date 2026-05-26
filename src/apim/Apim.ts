@@ -12,7 +12,9 @@ import { AppRegistration } from '../azAd';
 import { PrivateEndpoint } from '../vnet';
 import { vaultHelpers } from '../vault';
 
-type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
+export type ApimCertType = certHelpers.CertType | certHelpers.VaultCertType | certHelpers.CertFile;
+export type ApimProductType = Omit<ApimProductArgs, 'rsGroup' | 'serviceName' | 'groupRoles' | 'enableDiagnostic'> &
+  Required<types.WithName>;
 
 export interface ApimArgs
   extends
@@ -54,11 +56,7 @@ export interface ApimArgs
   };
   disableSignIn: boolean;
   permissions?: Array<Omit<types.GrantIdentityRoles, 'identity'>>;
-  products?: Array<
-    Omit<ApimProductArgs, 'rsGroup' | 'serviceName' | 'vaultInfo' | 'groupRoles' | 'enableDiagnostic'> & {
-      name: string;
-    }
-  >;
+  products?: Array<ApimProductType>;
 }
 
 export class Apim extends BaseResourceComponent<ApimArgs> {
@@ -180,7 +178,12 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         //Only support when linking to a virtual network
         //publicIpAddressId: this._apimVnet ? this._ipAddressInstances[this.commonProps.name]?.id : undefined,
         //natGatewayState: this._apimVnet?.enableGateway ? 'Enabled' : 'Disabled',
-        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: network?.publicNetworkAccess
+          ? apim.PublicNetworkAccess.Enabled
+          : network?.privateLink
+            ? apim.PublicNetworkAccess.Disabled
+            : apim.PublicNetworkAccess.Enabled,
+
         //NATGateway
         virtualNetworkType: 'None',
         virtualNetworkConfiguration: network?.vnetRules
@@ -189,7 +192,11 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             }
           : undefined,
 
-        zones: sku.name == 'Basic' || sku.name == 'Consumption' ? undefined : zoneHelper.getDefaultZones(zones),
+        zones:
+          sku.name == apim.SkuType.Basic || sku.name == apim.SkuType.Consumption
+            ? undefined
+            : zoneHelper.getDefaultZones(zones),
+
         //Only available for Premium
         additionalLocations:
           sku.name === 'Premium'
@@ -316,9 +323,9 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         new ApimProduct(
           p.name,
           {
+            vaultInfo,
             ...p,
             rsGroup,
-            vaultInfo,
             groupRoles,
             serviceName: service.name,
             enableDiagnostic: Boolean(logs?.appInsight),

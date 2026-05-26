@@ -16,9 +16,10 @@ export interface PostgresArgs
     Partial<
       Pick<
         postgresql.ServerArgs,
-        'version' | 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
+         'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
       >
     > {
+  version: pulumi.Input<string | postgresql.PostgresMajorVersion>;
   sku: {
     /** The name of postgres: Standard_B2ms,  */
     name: pulumi.Input<string>;
@@ -30,7 +31,6 @@ export interface PostgresArgs
   enableAzureADAdmin: boolean;
   enablePasswordAuth?: boolean;
   databases?: Array<{ name: string }>;
-  lock?: boolean;
 }
 
 export class Postgres extends BaseResourceComponent<PostgresArgs> {
@@ -43,7 +43,6 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     const { server, credentials } = this.createPostgres();
     this.createNetwork(server);
     this.createDatabases(server, credentials);
-    if (args.lock) this.lockFromDeleting(server);
 
     this.id = server.id;
     this.resourceName = server.name;
@@ -67,7 +66,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       administratorLogin,
       enableAzureADAdmin,
       enablePasswordAuth,
-      lock,
+      network,
     } = this.args;
 
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
@@ -81,7 +80,6 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         ...this.args,
         ...rsGroup,
 
-        version: this.args.version ?? postgresql.ServerVersion.ServerVersion_16,
         administratorLogin: adminLogin,
         administratorLoginPassword: password.value,
         storage: this.args.storage ?? { storageSizeGB: 32 },
@@ -130,13 +128,11 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
 
         network: {
-          publicNetworkAccess:
-            (this.args.network?.publicNetworkAccess ?? this.args.network?.privateLink) ? 'Disabled' : 'Enabled',
+          publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
         },
       },
       {
         ...this.opts,
-        protect: lock ?? this.opts?.protect,
         parent: this,
       },
     );
@@ -219,9 +215,26 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         { dependsOn: server, parent: this },
       );
 
-      //add connection string to vault
-      const conn = pulumi.interpolate`Host=${cred.host};Database=${d.name};User Id=${cred.username};Password=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
-      this.addSecret(`${this.name}-${d.name}-postgres-conn`, conn);
+      // Create connection strings in multiple formats for different platforms
+      const connStrings: { [key: string]: pulumi.Input<string> } = {};
+
+      // .NET / ADO.NET format
+      connStrings[`${this.name}-${d.name}-postgres-conn-dotnet`] = pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
+
+      // Node.js / JavaScript URI format
+      connStrings[`${this.name}-${d.name}-postgres-conn-nodejs`] = pulumi.interpolate`postgresql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?sslmode=require`;
+
+      // Python / psycopg2 format
+      //connStrings[`${this.name}-${d.name}-postgres-conn-python`] = pulumi.interpolate`postgresql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}`;
+
+      // JDBC / Java format
+      //connStrings[`${this.name}-${d.name}-postgres-conn-jdbc`] = pulumi.interpolate`jdbc:postgresql://${cred.host}:${cred.port}/${d.name}?user=${cred.username}&password=${cred.password}&sslmode=require`;
+
+      // Generic/standard format
+      connStrings[`${this.name}-${d.name}-postgres-conn`] = pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
+
+      // Add all connection strings at once
+      this.addSecrets(connStrings);
 
       return db;
     });

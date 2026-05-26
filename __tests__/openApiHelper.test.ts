@@ -34,7 +34,7 @@ describe('openApiHelper.getImportConfig', () => {
   });
 
   test('returns undefined when local file does not exist', async () => {
-    const value = await getImportConfig('/tmp/does-not-exist-open-api.json', 'v1');
+    const value = await getImportConfig(join(tmpdir(), 'does-not-exist-open-api.json'), 'v1');
     expect(value).toBeUndefined();
   });
 

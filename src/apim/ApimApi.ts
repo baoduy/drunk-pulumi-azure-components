@@ -109,7 +109,13 @@ export class ApimApi extends BaseResourceComponent<ApimApiArgs> {
 
         format: openSpecUrl ? apim.ContentFormat.Openapi_json : undefined,
         value: openSpecUrl
-          ? pulumi.output(openApi.getImportConfig(openSpecUrl, apiVersion)).apply((v) => v ?? '')
+          ? pulumi.output(openApi.getImportConfig(openSpecUrl, apiVersion)).apply((v) => {
+              if (v === undefined) {
+                console.error(`APIM-openApi: Not able to load spec from: ${openSpecUrl}`);
+              }
+              // ApiArgs.value does not allow undefined, so keep prior empty-string fallback behavior.
+              return v ?? '';
+            })
           : undefined,
       },
       {

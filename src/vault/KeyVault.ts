@@ -23,7 +23,7 @@ export interface KeyVaultArgs
     softDeleteRetentionInDays?: pulumi.Input<number>;
   };
 
-  aditionalSecrets?: { [key: string]: SecretItemArgs };
+  additionalSecrets?: { [key: string]: SecretItemArgs };
 }
 
 export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
@@ -120,8 +120,8 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
   }
 
   private addSecretsToVault(vault: keyvault.Vault) {
-    const { aditionalSecrets } = this.args;
-    if (!aditionalSecrets) return;
+    const { additionalSecrets } = this.args;
+    if (!additionalSecrets) return;
 
     return new VaultSecrets(
       `${this.name}-secrets`,
@@ -131,7 +131,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
           id: vault.id,
           resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
         },
-        secrets: aditionalSecrets,
+        secrets: additionalSecrets,
       },
       { dependsOn: vault, deletedWith: vault, parent: this },
     );

@@ -25,7 +25,7 @@ export class VaultSecrets extends BaseComponent<VaultSecretsArgs> {
     super(getComponentResourceType('VaultSecrets'), name, args, opts);
 
     Object.keys(args.secrets).forEach((key) => {
-      console.log(`Creating secret ${key} in vault ${args.vaultInfo.resourceName}`);
+      console.log(`Creating secret ${key} into Key Vault of ${name}`);
 
       const secret = new VaultSecret(
         key.includes(name) ? key : `${name}-${key}`,

@@ -1,0 +1,32 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+
+# --- Active exclusions ---
+
+# Build output (tsc target). Mirrors src/ — analyzing it doubles the graph
+# with redundant compiled nodes. Repopulated by `pnpm build`.
+bin/
+
+# Generated component docs (92 files, regenerable via `pnpm docs`). Redundant
+# with the source analysis they are derived from.
+doc/
+
+# Local tooling / scratch
+.gitnexus/
+.pnpm-store/
+.idea/
+.devcontainer/.env
+
+# --- Kept on purpose (do NOT exclude) ---
+# src/          — the library itself
+# __tests__/    — Jest tests (provides test-coverage edges)
+# pulumi-test/  — integration fixture / usage examples
+# Skills/       — hand-written domain guides (good tour material)
+
+# --- Optional: uncomment to exclude test code from the graph ---
+# *.test.*
+# *.spec.*

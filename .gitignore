@@ -5,3 +5,7 @@ bin
 .idea
 **/.DS_Store
 .gitnexus
+.understand-anything/intermediate/
+.understand-anything/tmp/
+.understand-anything/diff-overlay.json
+.understand-anything/.trash-*/

@@ -5,8 +5,16 @@ import { join } from 'node:path';
 import { getImportConfig } from '../src/apim/openApiHelper';
 
 describe('openApiHelper.getImportConfig', () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeAll(() => {
+    if (!globalThis.fetch) {
+      globalThis.fetch = async () => new Response(null, { status: 404 });
+    }
+  });
+
   afterEach(() => {
-    jest.restoreAllMocks();
+    globalThis.fetch = originalFetch;
   });
 
   test('reads OpenAPI spec from local file path', async () => {
@@ -52,15 +60,16 @@ describe('openApiHelper.getImportConfig', () => {
   });
 
   test('reads OpenAPI spec from HTTP URL', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        openapi: '3.0.0',
-        paths: {
-          '/v2/health': { get: { responses: { 200: { description: 'ok' } } } },
-        },
-      }),
-    } as Response);
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          openapi: '3.0.0',
+          paths: {
+            '/v2/health': { get: { responses: { 200: { description: 'ok' } } } },
+          },
+        }),
+        { status: 200 },
+      );
 
     const value = await getImportConfig(['https://example.com/openapi.json'], 'v2');
     expect(value).toBeDefined();
@@ -69,18 +78,14 @@ describe('openApiHelper.getImportConfig', () => {
   });
 
   test('returns undefined when HTTP request is not OK', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: false,
-      status: 404,
-      json: async () => ({}),
-    } as Response);
+    globalThis.fetch = async () => new Response('{}', { status: 404 });
 
     const value = await getImportConfig(['https://example.com/notfound.json'], 'v1');
     expect(value).toBeUndefined();
   });
 
   test('returns undefined when HTTP request fails', async () => {
-    jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network failed'));
+    globalThis.fetch = async () => { throw new Error('network failed'); };
 
     const value = await getImportConfig(['https://example.com/error.json'], 'v1');
     expect(value).toBeUndefined();
@@ -115,11 +120,7 @@ describe('openApiHelper.getImportConfig', () => {
   });
 
   test('returns undefined when all URLs in array fail', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: false,
-      status: 404,
-      json: async () => ({}),
-    } as Response);
+    globalThis.fetch = async () => new Response('{}', { status: 404 });
 
     const value = await getImportConfig(
       [

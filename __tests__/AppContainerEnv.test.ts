@@ -1,4 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
+import { AppContainerEnv } from '../src/app/AppContainerEnv';
 
 pulumi.runtime.setMocks({
   newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: any } => {
@@ -21,16 +22,18 @@ pulumi.runtime.setMocks({
 
 describe('AppContainerEnv', () => {
   test('should create a basic managed environment', async () => {
-    const { AppContainerEnv } = await import('../src/app/AppContainerEnv');
-
     const env = new AppContainerEnv('test-env', {
       rsGroup: {
         resourceGroupName: 'test-rg',
         location: 'eastus',
       },
-      logAnalyticsWorkspace: {
-        id: 'workspace_id',
-        resourceName: 'workspace',
+      logs: {
+        workspace: {
+          id: 'workspace_id',
+          resourceName: 'workspace',
+          resourceGroupName: 'test-rg',
+          customerId: 'workspace-customer-id',
+        },
       },
     });
 
@@ -48,8 +51,6 @@ describe('AppContainerEnv', () => {
   });
 
   test('should create environment with VNet configuration', async () => {
-    const { AppContainerEnv } = await import('../src/app/AppContainerEnv');
-
     const env = new AppContainerEnv('test-vnet-env', {
       rsGroup: {
         resourceGroupName: 'test-rg',
@@ -63,9 +64,13 @@ describe('AppContainerEnv', () => {
         platformReservedCidr: '10.1.0.0/23',
         platformReservedDnsIP: '10.1.0.10',
       },
-      logAnalyticsWorkspace: {
-        id: 'workspace_id',
-        resourceName: 'workspace',
+      logs: {
+        workspace: {
+          id: 'workspace_id',
+          resourceName: 'workspace',
+          resourceGroupName: 'test-rg',
+          customerId: 'workspace-customer-id',
+        },
       },
       zoneRedundant: true,
     });
@@ -78,16 +83,18 @@ describe('AppContainerEnv', () => {
   });
 
   test('should create environment with Dapr configuration', async () => {
-    const { AppContainerEnv } = await import('../src/app/AppContainerEnv');
-
     const env = new AppContainerEnv('test-dapr-env', {
       rsGroup: {
         resourceGroupName: 'test-rg',
         location: 'eastus',
       },
-      logAnalyticsWorkspace: {
-        id: 'workspace_id',
-        resourceName: 'workspace',
+      logs: {
+        workspace: {
+          id: 'workspace_id',
+          resourceName: 'workspace',
+          resourceGroupName: 'test-rg',
+          customerId: 'workspace-customer-id',
+        },
       },
       dapr: {
         connectionString: 'InstrumentationKey=xxx',
@@ -103,16 +110,18 @@ describe('AppContainerEnv', () => {
   });
 
   test('should create environment with workload profiles', async () => {
-    const { AppContainerEnv } = await import('../src/app/AppContainerEnv');
-
     const env = new AppContainerEnv('test-workload-env', {
       rsGroup: {
         resourceGroupName: 'test-rg',
         location: 'eastus',
       },
-      logAnalyticsWorkspace: {
-        id: 'workspace_id',
-        resourceName: 'workspace',
+      logs: {
+        workspace: {
+          id: 'workspace_id',
+          resourceName: 'workspace',
+          resourceGroupName: 'test-rg',
+          customerId: 'workspace-customer-id',
+        },
       },
       workloadProfiles: [
         {

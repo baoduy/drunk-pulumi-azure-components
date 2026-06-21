@@ -26,27 +26,27 @@
   "license": "MIT",
   "dependencies": {
     "@azure/keyvault-certificates": "^4.10.3",
-    "@azure/keyvault-keys": "^4.10.0",
+    "@azure/keyvault-keys": "^4.10.2",
     "@azure/keyvault-secrets": "^4.11.2",
     "@drunk-pulumi/azure-providers": "^1.0.16",
-    "@pulumi/azure-native": "^3.18.0",
+    "@pulumi/azure-native": "^3.19.0",
     "@pulumi/azuread": "^6.9.1",
-    "@pulumi/pulumi": "^3.243.0",
+    "@pulumi/pulumi": "^3.247.0",
     "@pulumi/random": "^4.21.0",
     "lodash": "^4.18.1",
     "netmask": "^2.1.1",
-    "openpgp": "^6.3.0",
+    "openpgp": "^6.3.1",
     "typescript": "6.0.3"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.24",
     "@types/netmask": "^2.0.6",
-    "@types/node": "25.9.1",
+    "@types/node": "26.0.0",
     "cpy-cli": "^7.0.0",
     "cross-env": "^10.1.0",
     "jest": "^30.4.2",
-    "prettier": "^3.8.3",
+    "prettier": "^3.8.4",
     "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2"
   },
@@ -62,5 +62,5 @@
       "eslint --fix"
     ]
   },
-  "packageManager": "pnpm@11.3.0"
+  "packageManager": "pnpm@11.8.0"
 }

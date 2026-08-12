@@ -97,7 +97,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
               primaryUserAssignedIdentityId: uAssignedId.id,
               primaryKeyURI: encryptionKey.id,
             }
-          : { type: 'SystemManaged' },
+          : undefined,// { type: 'SystemManaged' },
 
         maintenanceWindow: this.args.maintenanceWindow ?? {
           customWindow: 'Enabled',

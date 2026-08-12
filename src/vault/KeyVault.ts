@@ -133,7 +133,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
         },
         secrets: additionalSecrets,
       },
-      { dependsOn: vault, deletedWith: vault, parent: this },
+      { dependsOn: vault, retainOnDelete: true, deletedWith: vault, parent: this },
     );
   }
 }

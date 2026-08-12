@@ -1,6 +1,8 @@
 # drunk-pulumi-azure-components
 
-Reusable Pulumi `ComponentResource` library targeting Azure (`@pulumi/azure-native` 3.x) and Azure AD. Published from `bin/` after build.
+Pulumi `ComponentResource` library that wraps upstream `@pulumi/azure-native` (3.x) / `@pulumi/azuread` resources into higher-level, config-driven components. The point is to let developers describe *intent* through a typed `Args` object — `ResourceBuilder` plus the domain components under `src/<domain>/` — instead of hand-wiring individual Azure resources; naming, tagging, and RBAC conventions come from `src/common/` so callers don't have to think about them, while every `Args` interface still exposes enough surface to override or opt out per resource.
+
+Hardening is real but **partial** — don't market it as blanket "secure by default" without checking the component. TLS 1.2, HTTPS-only, and Key Vault's RBAC-auth + soft-delete + purge-protection are hardcoded/defaulted secure. But `publicNetworkAccess` and network ACL `defaultAction` default to **`Enabled`/`Allow`** in `StorageAccount.ts`, `KeyVault.ts`, `AzSql.ts`, `MySql.ts`, `Postgres.ts`, and `Redis.ts` — private access only kicks in once the caller explicitly sets `network.privateLink: true` or `network.defaultAction`. Published from `bin/` after build.
 
 ## Project Layout
 

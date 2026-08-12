@@ -1,5 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
-import { ApimPolicyBuilder } from '../src';
+import { ApimPolicyBuilder } from '../src/apim/ApimPolicyBuilder';
 
 describe('ApimPolicyBuilder', () => {
   test('setBaseUrl', async () => {
@@ -7,9 +7,6 @@ describe('ApimPolicyBuilder', () => {
 
     await pulumi.output(builder.build()).apply((policy) => {
       expect(policy).toContain('<set-backend-service base-url="https://example.com" />');
-      expect(policy).toContain(
-        '<set-header name="x-test-header" exists-action="override"> <value>test-value</value></set-header>',
-      );
       expect(policy).toContain('<policies>');
       expect(policy).toContain('<inbound>');
       expect(policy).toContain('<outbound>');

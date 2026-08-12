@@ -6,7 +6,7 @@
 import { authorization } from '@pulumi/azure-native';
 import * as pulumi from '@pulumi/pulumi';
 import { getCountryCode, getRegionCode } from './Location';
-import { stack } from './stackEnv';
+import { stack, isTesting } from './stackEnv';
 
 /**
  * @enum {string}
@@ -29,7 +29,18 @@ const azEnv = JSON.parse(process.env.PULUMI_CONFIG ?? '{}');
  * @constant {Output} config
  * @description Azure client configuration output
  */
-const config = authorization.getClientConfigOutput();
+function getClientConfig() {
+  if (isTesting) {
+    return {
+      tenantId: pulumi.output(azEnv['azure-native:config:tenantId'] ?? ''),
+      subscriptionId: pulumi.output(azEnv['azure-native:config:subscriptionId'] ?? ''),
+      objectId: pulumi.output(''),
+    } as unknown as ReturnType<typeof authorization.getClientConfigOutput>;
+  }
+  return authorization.getClientConfigOutput();
+}
+
+const config = getClientConfig();
 
 /**
  * @constant {Output<string>} tenantId
@@ -123,18 +134,19 @@ function getCurrentEnv() {
  */
 export const currentEnv = getCurrentEnv();
 
-//Print and Check
-pulumi.all([subscriptionId, tenantId, currentPrincipal]).apply(([s, t, p]) => {
-  console.log(`Azure Environment:`, {
-    tenantId: t,
-    subscriptionId: s,
-    principalId: p,
-    currentRegionCode,
-    currentRegionName,
-    currentCountryCode,
-    currentEnv,
+if (!isTesting) {
+  pulumi.all([subscriptionId, tenantId, currentPrincipal]).apply(([s, t, p]) => {
+    console.log(`Azure Environment:`, {
+      tenantId: t,
+      subscriptionId: s,
+      principalId: p,
+      currentRegionCode,
+      currentRegionName,
+      currentCountryCode,
+      currentEnv,
+    });
   });
-});
+}
 
 export const entraIdAuthorityUrl = pulumi.interpolate`https://login.microsoftonline.com/${tenantId}/v2.0`;
 

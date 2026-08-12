@@ -1,0 +1,39 @@
+{
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-smart@reflexioai": true,
+    "context-mode@context-mode": true,
+    "learning-output-style@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "understand-anything@understand-anything": true
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "autoUpdate": true,
+      "source": {
+        "repo": "JuliusBrussee/caveman",
+        "source": "github"
+      }
+    },
+    "context-mode": {
+      "autoUpdate": true,
+      "source": {
+        "repo": "mksglu/context-mode",
+        "source": "github"
+      }
+    },
+    "reflexioai": {
+      "source": {
+        "repo": "ReflexioAI/claude-smart",
+        "source": "github"
+      }
+    },
+    "understand-anything": {
+      "source": {
+        "repo": "Egonex-AI/Understand-Anything",
+        "source": "github"
+      }
+    }
+  }
+}

@@ -33,7 +33,7 @@ export class VaultSecrets extends BaseComponent<VaultSecretsArgs> {
           ...args.secrets[key],
           vaultInfo: args.vaultInfo,
         },
-        opts,
+        { ...opts, retainOnDelete: true },
       );
 
       this.results[key] = {

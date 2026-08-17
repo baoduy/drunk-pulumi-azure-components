@@ -31,7 +31,7 @@
     "@drunk-pulumi/azure-providers": "^1.0.17",
     "@pulumi/azure-native": "^3.24.0",
     "@pulumi/azuread": "^6.10.0",
-    "@pulumi/pulumi": "^3.256.0",
+    "@pulumi/pulumi": "^3.257.0",
     "@pulumi/random": "^4.21.1",
     "lodash": "^4.18.1",
     "netmask": "^2.1.1",
@@ -42,13 +42,13 @@
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.25",
     "@types/netmask": "^2.0.6",
-    "@types/node": "26.1.2",
+    "@types/node": "26.2.0",
     "cpy-cli": "^7.0.0",
     "cross-env": "^10.1.0",
     "jest": "^30.4.2",
     "prettier": "^3.9.6",
     "ts-jest": "^29.4.12",
-    "tsx": "^4.23.6"
+    "tsx": "^4.23.12"
   },
   "prettier": {
     "semi": true,

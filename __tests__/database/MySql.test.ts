@@ -28,7 +28,6 @@ describe('MySql — availability zone defaulting', () => {
 
   test('prd with no engineer zone defaults to zone 3', async () => {
     const { pulumi, MySql, captured } = withStack('prd', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/MySql') = require('../../src/database/MySql');
       return { pulumi: p, MySql: mod.MySql };
     });
@@ -41,7 +40,6 @@ describe('MySql — availability zone defaulting', () => {
 
   test('outside prd with no engineer zone defaults to zone 1', async () => {
     const { pulumi, MySql, captured } = withStack('dev', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/MySql') = require('../../src/database/MySql');
       return { pulumi: p, MySql: mod.MySql };
     });
@@ -56,7 +54,6 @@ describe('MySql — availability zone defaulting', () => {
   // not be coerced to '3' by the old `(zone ?? isPrd) ? '3' : '1'` truthiness check.
   test('an engineer-supplied zone in prd is honoured verbatim, not forced to 3', async () => {
     const { pulumi, MySql, captured } = withStack('prd', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/MySql') = require('../../src/database/MySql');
       return { pulumi: p, MySql: mod.MySql };
     });
@@ -76,7 +73,6 @@ describe('MySql — network rules, managed identity, AD admin and databases (pre
 
   test('creates an allow-all firewall rule, its own managed identity, an AD admin and databases', async () => {
     const { pulumi, MySql, captured } = withStack('dev', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/MySql') = require('../../src/database/MySql');
       return { pulumi: p, MySql: mod.MySql };
     });
@@ -106,7 +102,6 @@ describe('MySql — network rules, managed identity, AD admin and databases (pre
 
   test('creates a firewall rule per supplied IP', async () => {
     const { pulumi, MySql, captured } = withStack('dev', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/MySql') = require('../../src/database/MySql');
       return { pulumi: p, MySql: mod.MySql };
     });

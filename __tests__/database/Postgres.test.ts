@@ -28,7 +28,6 @@ describe('Postgres — availability zone defaulting', () => {
 
   test('prd with no engineer zone defaults to zone 3', async () => {
     const { pulumi, Postgres, captured } = withStack('prd', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/Postgres') = require('../../src/database/Postgres');
       return { pulumi: p, Postgres: mod.Postgres };
     });
@@ -41,7 +40,6 @@ describe('Postgres — availability zone defaulting', () => {
 
   test('outside prd with no engineer zone defaults to zone 1', async () => {
     const { pulumi, Postgres, captured } = withStack('dev', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/Postgres') = require('../../src/database/Postgres');
       return { pulumi: p, Postgres: mod.Postgres };
     });
@@ -56,7 +54,6 @@ describe('Postgres — availability zone defaulting', () => {
   // not be coerced to '3' by the old `(zone ?? isPrd) ? '3' : '1'` truthiness check.
   test('an engineer-supplied zone in prd is honoured verbatim, not forced to 3', async () => {
     const { pulumi, Postgres, captured } = withStack('prd', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/Postgres') = require('../../src/database/Postgres');
       return { pulumi: p, Postgres: mod.Postgres };
     });
@@ -76,7 +73,6 @@ describe('Postgres — network rules, managed identity and databases (pre-existi
 
   test('creates an allow-all firewall rule, its own managed identity and databases', async () => {
     const { pulumi, Postgres, captured } = withStack('dev', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/Postgres') = require('../../src/database/Postgres');
       return { pulumi: p, Postgres: mod.Postgres };
     });
@@ -99,7 +95,6 @@ describe('Postgres — network rules, managed identity and databases (pre-existi
 
   test('creates a firewall rule per supplied IP', async () => {
     const { pulumi, Postgres, captured } = withStack('dev', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/database/Postgres') = require('../../src/database/Postgres');
       return { pulumi: p, Postgres: mod.Postgres };
     });

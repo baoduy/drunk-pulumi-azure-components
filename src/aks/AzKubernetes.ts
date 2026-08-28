@@ -6,7 +6,7 @@ import * as mid from '@pulumi/azure-native/managedidentity';
 
 import { AppRegistration, AzRole, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv, rsHelpers, zoneHelper } from '../helpers';
+import { azureEnv, computeHelper, rsHelpers, zoneHelper } from '../helpers';
 
 import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
@@ -15,7 +15,7 @@ import { getPrivateRecordSetOutput } from '../vnet/helpers';
 import * as azAd from '@pulumi/azuread';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
-  vmSize: pulumi.Input<string>;
+  vmSize?: pulumi.Input<string>;
   vnetSubnetID: pulumi.Input<string>;
   enableEncryptionAtHost: pulumi.Input<boolean>;
   osDiskSizeGB: pulumi.Input<number>;
@@ -97,6 +97,7 @@ export interface AzKubernetesArgs
     'networkMode' | 'networkPolicy' | 'networkPlugin' | 'loadBalancerSku' | 'loadBalancerProfile'
   > & {
     networkPolicy?: ccs.NetworkPolicy;
+    networkDataplane?: ccs.NetworkDataplane;
     outboundType?: ccs.OutboundType;
     loadBalancerProfile?: inputs.containerservice.ManagedClusterLoadBalancerProfileArgs & {
       backendPoolType?: ccs.BackendPoolType;
@@ -244,7 +245,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private createDiskEncryptionSet() {
     const { rsGroup, enableEncryption, features, diskEncryptionSet, groupRoles, defaultUAssignedId, vaultInfo } =
       this.args;
-    if (!enableEncryption || features.enableNodeAutoProvisioning) return undefined;
+    if (!enableEncryption || features.enableNodeAutoProvisioning === true) return undefined;
     if (diskEncryptionSet) return diskEncryptionSet;
 
     return new DiskEncryptionSet(
@@ -305,6 +306,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     // Add default zones for PRD environment to agent pools
     const poolsWithZones = agentPoolProfiles.map((pool) => ({
       ...pool,
+      vmSize: pool.vmSize ?? computeHelper.DEFAULT_ARM_VM_SIZE,
+      securityProfile: pool.securityProfile ?? { enableSecureBoot: true, enableVTPM: true },
       availabilityZones: zoneHelper.getDefaultZones(pool.availabilityZones),
     }));
 
@@ -369,12 +372,14 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           //privateDNSZone: privateDnsZone?.id,
         },
 
-        nodeProvisioningProfile: features?.enableNodeAutoProvisioning
-          ? {
-              defaultNodePools: 'Auto',
-              mode: 'Auto',
-            }
-          : undefined,
+        // NAP defaults on when unset; only reshape declared pools (defaultNodePools: 'Auto') when the engineer opted in explicitly
+        nodeProvisioningProfile:
+          features?.enableNodeAutoProvisioning === false
+            ? undefined
+            : {
+                defaultNodePools: features?.enableNodeAutoProvisioning === true ? 'Auto' : 'None',
+                mode: 'Auto',
+              },
 
         autoScalerProfile: autoScalerProfile ?? {
           balanceSimilarNodeGroups: 'false',
@@ -427,7 +432,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           //networkMode: ccs.NetworkMode.Transparent,
           networkPlugin: ccs.NetworkPlugin.Azure,
           networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
-          networkDataplane: network?.networkPolicy ?? ccs.NetworkDataplane.Cilium,
+          networkDataplane: network?.networkDataplane ?? ccs.NetworkDataplane.Cilium,
           networkPluginMode: ccs.NetworkPluginMode.Overlay,
 
           loadBalancerSku: ccs.LoadBalancerSku.Standard,
@@ -493,6 +498,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           {
             ...rsGroup,
             ...profile,
+            vmSize: profile.vmSize ?? computeHelper.DEFAULT_ARM_VM_SIZE,
+            securityProfile: profile.securityProfile ?? { enableSecureBoot: true, enableVTPM: true },
             availabilityZones: zoneHelper.getDefaultZones(profile.availabilityZones),
             resourceName: aks.name,
             agentPoolName: profile.name,

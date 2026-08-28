@@ -18,7 +18,6 @@ describe('zoneHelper.getDefaultZones — stack-driven defaulting', () => {
   function loadZoneHelper(stackName: string) {
     process.env.PULUMI_NODEJS_STACK = stackName;
     jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     return require('../../src/helpers/zoneHelper') as typeof import('../../src/helpers/zoneHelper');
   }
 

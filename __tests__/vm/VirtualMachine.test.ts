@@ -170,7 +170,6 @@ describe('VirtualMachine — availability zones', () => {
 
   test('in prd a machine with no engineer zone is placed in zone 1 and no other', () => {
     const { pulumiInstance, VirtualMachine: PrdVM, captured: prdCaptured } = withStack('prd', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/vm/VirtualMachine') = require('../../src/vm/VirtualMachine');
       return { pulumiInstance: p, VirtualMachine: mod.VirtualMachine };
     });
@@ -190,7 +189,6 @@ describe('VirtualMachine — availability zones', () => {
 
   test('in prd a machine stating zone 3 is placed in zone 3, verbatim', () => {
     const { pulumiInstance, VirtualMachine: PrdVM, captured: prdCaptured } = withStack('prd', (p) => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod: typeof import('../../src/vm/VirtualMachine') = require('../../src/vm/VirtualMachine');
       return { pulumiInstance: p, VirtualMachine: mod.VirtualMachine };
     });

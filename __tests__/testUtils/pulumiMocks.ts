@@ -18,7 +18,6 @@ export type Captured = { type: string; name: string; inputs: any };
 export function withStack<T>(stackName: string, load: (pulumi: typeof import('@pulumi/pulumi')) => T): T & { captured: Captured[] } {
   process.env.PULUMI_NODEJS_STACK = stackName;
   jest.resetModules();
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const pulumi: typeof import('@pulumi/pulumi') = require('@pulumi/pulumi');
 
   const captured: Captured[] = [];

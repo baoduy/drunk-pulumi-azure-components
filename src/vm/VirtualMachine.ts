@@ -6,7 +6,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
-import { computeHelper, rsHelpers, zoneHelper } from '../helpers';
+import { azureEnv, computeHelper, rsHelpers } from '../helpers';
 
 export type VmScheduleType = {
   /** The time zone ID: https://stackoverflow.com/questions/7908343/list-of-timezone-ids-for-use-with-findtimezonebyid-in-c */
@@ -135,7 +135,8 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
         ...props,
         ...rsGroup,
 
-        zones: zoneHelper.getDefaultZones(props.zones),
+        // A VM is a single-zone resource (unlike scale sets/AKS pools) — never default to 3 zones.
+        zones: props.zones ?? (azureEnv.isPrd ? ['1'] : undefined),
 
         hardwareProfile,
 

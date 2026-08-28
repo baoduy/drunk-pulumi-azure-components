@@ -203,6 +203,50 @@ describe('AzKubernetes — node auto-provisioning defaulting-on', () => {
     expect(cluster.inputs.autoScalerProfile).toBeUndefined();
   });
 
+  // Round-2 fix (DRK-794): the guard above only scanned agentPoolProfiles, so an autoscaling pool
+  // declared as an *extra* pool (a common shape — fixed system pool + autoscaling workload pool)
+  // slipped past it and still got mode: 'Auto', hitting the same Azure rejection option (b) exists
+  // to avoid.
+  test('an autoscaling pool declared as an extra pool also gets no NAP default', async () => {
+    const cluster = await createCluster({
+      agentPoolProfiles: [{ name: 'system', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128 }],
+      extraAgentPoolProfiles: [
+        { name: 'workload', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128, enableAutoScaling: true, minCount: 1, maxCount: 3 },
+      ],
+    });
+    expect(cluster.inputs.nodeProvisioningProfile).toBeUndefined();
+  });
+
+  // Second gap from the same review finding: enableAutoScaling is pulumi.Input<boolean>, so a
+  // computed (non-literal) value can't be compared `=== true`. "Can't tell" must suppress the
+  // default rather than apply it.
+  test('a non-literal enableAutoScaling value also suppresses the NAP default', async () => {
+    const pool = {
+      name: 'system',
+      vnetSubnetID: 'subnet_id',
+      enableEncryptionAtHost: false,
+      osDiskSizeGB: 128,
+      enableAutoScaling: pulumi.output(true),
+      minCount: 1,
+      maxCount: 3,
+    };
+    const cluster = await createCluster({ agentPoolProfiles: [pool] });
+    expect(cluster.inputs.nodeProvisioningProfile).toBeUndefined();
+  });
+
+  // An explicit engineer preference always wins, regardless of which pool list the autoscaling
+  // pool lives in.
+  test('an engineer who explicitly opts in to NAP gets it even with an autoscaling extra pool', async () => {
+    const cluster = await createCluster({
+      agentPoolProfiles: [{ name: 'system', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128 }],
+      extraAgentPoolProfiles: [
+        { name: 'workload', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128, enableAutoScaling: true, minCount: 1, maxCount: 3 },
+      ],
+      features: { enablePrivateCluster: false, enableNodeAutoProvisioning: true },
+    });
+    expect(cluster.inputs.nodeProvisioningProfile).toEqual({ defaultNodePools: 'Auto', mode: 'Auto' });
+  });
+
   // Review finding 1 related item: Azure rejects diskEncryptionSetID alongside mode: 'Auto'
   // (azure/aks#5345) — when the package (not the engineer) would default NAP on, a disk-encryption
   // set in play must suppress the NAP default rather than send the incompatible pair.

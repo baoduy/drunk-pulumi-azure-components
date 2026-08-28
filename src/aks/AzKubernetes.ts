@@ -312,11 +312,15 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     }));
 
     // NAP defaults on (mode: 'Auto') only when the engineer set no preference, no declared pool
-    // autoscales (an autoscaling pool is an engineer-supplied value the default must not reshape —
-    // Azure rejects mode: 'Auto' next to an autoscaling agent pool), and no disk-encryption set is
-    // in play (Azure also rejects mode: 'Auto' alongside diskEncryptionSetID: azure/aks#5345). An
-    // explicit engineer preference is always honoured verbatim, either way.
-    const hasAutoScalingPool = agentPoolProfiles.some((pool) => pool.enableAutoScaling === true);
+    // (cluster-created or extra) autoscales (an autoscaling pool is an engineer-supplied value the
+    // default must not reshape — Azure rejects mode: 'Auto' next to an autoscaling agent pool), and
+    // no disk-encryption set is in play (Azure also rejects mode: 'Auto' alongside
+    // diskEncryptionSetID: azure/aks#5345). An explicit engineer preference is always honoured
+    // verbatim, either way. `enableAutoScaling` is pulumi.Input<boolean>, so a non-literal value
+    // (an Output) can't be compared `=== true`/`=== false` — treat anything but a known `false` as
+    // "can't tell it doesn't autoscale", which suppresses the default rather than misapply it.
+    const autoScales = (pool: AgentPoolProfile) => pool.enableAutoScaling !== undefined && pool.enableAutoScaling !== false;
+    const hasAutoScalingPool = [...agentPoolProfiles, ...(extraAgentPoolProfiles ?? [])].some(autoScales);
     const nodeProvisioningProfile =
       features?.enableNodeAutoProvisioning === true
         ? { defaultNodePools: 'Auto' as const, mode: 'Auto' as const }

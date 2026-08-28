@@ -6,7 +6,7 @@ import * as mid from '@pulumi/azure-native/managedidentity';
 
 import { AppRegistration, AzRole, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv, rsHelpers, zoneHelper } from '../helpers';
+import { azureEnv, computeHelper, rsHelpers, zoneHelper } from '../helpers';
 
 import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
@@ -15,7 +15,7 @@ import { getPrivateRecordSetOutput } from '../vnet/helpers';
 import * as azAd from '@pulumi/azuread';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
-  vmSize: pulumi.Input<string>;
+  vmSize?: pulumi.Input<string>;
   vnetSubnetID: pulumi.Input<string>;
   enableEncryptionAtHost: pulumi.Input<boolean>;
   osDiskSizeGB: pulumi.Input<number>;
@@ -97,6 +97,7 @@ export interface AzKubernetesArgs
     'networkMode' | 'networkPolicy' | 'networkPlugin' | 'loadBalancerSku' | 'loadBalancerProfile'
   > & {
     networkPolicy?: ccs.NetworkPolicy;
+    networkDataplane?: ccs.NetworkDataplane;
     outboundType?: ccs.OutboundType;
     loadBalancerProfile?: inputs.containerservice.ManagedClusterLoadBalancerProfileArgs & {
       backendPoolType?: ccs.BackendPoolType;
@@ -244,7 +245,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   private createDiskEncryptionSet() {
     const { rsGroup, enableEncryption, features, diskEncryptionSet, groupRoles, defaultUAssignedId, vaultInfo } =
       this.args;
-    if (!enableEncryption || features.enableNodeAutoProvisioning) return undefined;
+    if (!enableEncryption || features.enableNodeAutoProvisioning === true) return undefined;
     if (diskEncryptionSet) return diskEncryptionSet;
 
     return new DiskEncryptionSet(
@@ -305,8 +306,27 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     // Add default zones for PRD environment to agent pools
     const poolsWithZones = agentPoolProfiles.map((pool) => ({
       ...pool,
+      vmSize: pool.vmSize ?? computeHelper.DEFAULT_ARM_VM_SIZE,
+      securityProfile: pool.securityProfile ?? { enableSecureBoot: true, enableVTPM: true },
       availabilityZones: zoneHelper.getDefaultZones(pool.availabilityZones),
     }));
+
+    // NAP defaults on (mode: 'Auto') only when the engineer set no preference, no declared pool
+    // (cluster-created or extra) autoscales (an autoscaling pool is an engineer-supplied value the
+    // default must not reshape — Azure rejects mode: 'Auto' next to an autoscaling agent pool), and
+    // no disk-encryption set is in play (Azure also rejects mode: 'Auto' alongside
+    // diskEncryptionSetID: azure/aks#5345). An explicit engineer preference is always honoured
+    // verbatim, either way. `enableAutoScaling` is pulumi.Input<boolean>, so a non-literal value
+    // (an Output) can't be compared `=== true`/`=== false` — treat anything but a known `false` as
+    // "can't tell it doesn't autoscale", which suppresses the default rather than misapply it.
+    const autoScales = (pool: AgentPoolProfile) => pool.enableAutoScaling !== undefined && pool.enableAutoScaling !== false;
+    const hasAutoScalingPool = [...agentPoolProfiles, ...(extraAgentPoolProfiles ?? [])].some(autoScales);
+    const nodeProvisioningProfile =
+      features?.enableNodeAutoProvisioning === true
+        ? { defaultNodePools: 'Auto' as const, mode: 'Auto' as const }
+        : features?.enableNodeAutoProvisioning === false || hasAutoScalingPool || diskEncryptionSet
+          ? undefined
+          : { defaultNodePools: 'None' as const, mode: 'Auto' as const };
 
     return new ccs.ManagedCluster(
       this.name,
@@ -369,32 +389,34 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           //privateDNSZone: privateDnsZone?.id,
         },
 
-        nodeProvisioningProfile: features?.enableNodeAutoProvisioning
-          ? {
-              defaultNodePools: 'Auto',
-              mode: 'Auto',
-            }
-          : undefined,
+        nodeProvisioningProfile,
 
-        autoScalerProfile: autoScalerProfile ?? {
-          balanceSimilarNodeGroups: 'false',
-          expander: 'random',
-          maxEmptyBulkDelete: '10',
-          maxGracefulTerminationSec: '600',
-          maxNodeProvisionTime: '15m',
-          maxTotalUnreadyPercentage: '45',
-          newPodScaleUpDelay: '0s',
-          okTotalUnreadyCount: '3',
-          scaleDownDelayAfterAdd: '10m',
-          scaleDownDelayAfterDelete: '10s',
-          scaleDownDelayAfterFailure: '3m',
-          scaleDownUnneededTime: '10m',
-          scaleDownUnreadyTime: '20m',
-          scaleDownUtilizationThreshold: '0.5',
-          scanInterval: '10s',
-          skipNodesWithLocalStorage: 'false',
-          skipNodesWithSystemPods: 'true',
-        },
+        // Cluster-autoscaler tuning is meaningless once NAP owns provisioning — suppress the
+        // default when NAP is on and the engineer supplied no autoScalerProfile of their own.
+        // An engineer-supplied autoScalerProfile is always passed through verbatim.
+        autoScalerProfile:
+          autoScalerProfile ??
+          (nodeProvisioningProfile
+            ? undefined
+            : {
+                balanceSimilarNodeGroups: 'false',
+                expander: 'random',
+                maxEmptyBulkDelete: '10',
+                maxGracefulTerminationSec: '600',
+                maxNodeProvisionTime: '15m',
+                maxTotalUnreadyPercentage: '45',
+                newPodScaleUpDelay: '0s',
+                okTotalUnreadyCount: '3',
+                scaleDownDelayAfterAdd: '10m',
+                scaleDownDelayAfterDelete: '10s',
+                scaleDownDelayAfterFailure: '3m',
+                scaleDownUnneededTime: '10m',
+                scaleDownUnreadyTime: '20m',
+                scaleDownUtilizationThreshold: '0.5',
+                scanInterval: '10s',
+                skipNodesWithLocalStorage: 'false',
+                skipNodesWithSystemPods: 'true',
+              }),
         agentPoolProfiles: poolsWithZones,
 
         autoUpgradeProfile: {
@@ -427,7 +449,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           //networkMode: ccs.NetworkMode.Transparent,
           networkPlugin: ccs.NetworkPlugin.Azure,
           networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
-          networkDataplane: network?.networkPolicy ?? ccs.NetworkDataplane.Cilium,
+          networkDataplane: network?.networkDataplane ?? ccs.NetworkDataplane.Cilium,
           networkPluginMode: ccs.NetworkPluginMode.Overlay,
 
           loadBalancerSku: ccs.LoadBalancerSku.Standard,
@@ -493,6 +515,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           {
             ...rsGroup,
             ...profile,
+            vmSize: profile.vmSize ?? computeHelper.DEFAULT_ARM_VM_SIZE,
+            securityProfile: profile.securityProfile ?? { enableSecureBoot: true, enableVTPM: true },
             availabilityZones: zoneHelper.getDefaultZones(profile.availabilityZones),
             resourceName: aks.name,
             agentPoolName: profile.name,

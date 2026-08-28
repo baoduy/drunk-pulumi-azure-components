@@ -115,7 +115,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
                 standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
               })
             : undefined,
-        availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
+        availabilityZone: this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1'),
 
         network: {
           publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',

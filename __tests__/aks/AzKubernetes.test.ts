@@ -179,6 +179,42 @@ describe('AzKubernetes — node auto-provisioning defaulting-on', () => {
     });
     expect(cluster.inputs.diskEncryptionSetID).toBeUndefined();
   });
+
+  // Review finding 1 (DRK-793), decided option (b): a declared autoscaling pool is an
+  // engineer-supplied value the NAP default must not reshape, so no NAP preference stated +
+  // an autoscaling pool means no default is emitted at all (cluster stays on the platform default).
+  test('a declared autoscaling pool with no NAP preference gets no NAP default', async () => {
+    const pool = { name: 'system', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128, enableAutoScaling: true, minCount: 1, maxCount: 3 };
+    const cluster = await createCluster({ agentPoolProfiles: [pool] });
+    expect(cluster.inputs.nodeProvisioningProfile).toBeUndefined();
+    // Cluster-autoscaler tuning still applies, since NAP is not on.
+    expect(cluster.inputs.autoScalerProfile).toBeDefined();
+  });
+
+  // An explicit engineer preference always wins, autoscaling pool or not.
+  test('an engineer who explicitly opts in to NAP gets it even with a declared autoscaling pool', async () => {
+    const pool = { name: 'system', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128, enableAutoScaling: true, minCount: 1, maxCount: 3 };
+    const cluster = await createCluster({
+      agentPoolProfiles: [pool],
+      features: { enablePrivateCluster: false, enableNodeAutoProvisioning: true },
+    });
+    expect(cluster.inputs.nodeProvisioningProfile).toEqual({ defaultNodePools: 'Auto', mode: 'Auto' });
+    // autoScalerProfile is meaningless once NAP owns provisioning.
+    expect(cluster.inputs.autoScalerProfile).toBeUndefined();
+  });
+
+  // Review finding 1 related item: Azure rejects diskEncryptionSetID alongside mode: 'Auto'
+  // (azure/aks#5345) — when the package (not the engineer) would default NAP on, a disk-encryption
+  // set in play must suppress the NAP default rather than send the incompatible pair.
+  test('encryption on with no NAP preference suppresses the NAP default, keeping the disk-encryption set', async () => {
+    const cluster = await createCluster({
+      agentPoolProfiles: [{ name: 'system', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128 }],
+      enableEncryption: true,
+      vaultInfo: { id: 'vault_id', resourceName: 'vault', resourceGroupName: 'rg' },
+    });
+    expect(cluster.inputs.nodeProvisioningProfile).toBeUndefined();
+    expect(cluster.inputs.diskEncryptionSetID).toBeDefined();
+  });
 });
 
 // Pre-existing behaviour, untouched by DRK-770, but this file is a touched class this cycle

@@ -311,6 +311,19 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       availabilityZones: zoneHelper.getDefaultZones(pool.availabilityZones),
     }));
 
+    // NAP defaults on (mode: 'Auto') only when the engineer set no preference, no declared pool
+    // autoscales (an autoscaling pool is an engineer-supplied value the default must not reshape —
+    // Azure rejects mode: 'Auto' next to an autoscaling agent pool), and no disk-encryption set is
+    // in play (Azure also rejects mode: 'Auto' alongside diskEncryptionSetID: azure/aks#5345). An
+    // explicit engineer preference is always honoured verbatim, either way.
+    const hasAutoScalingPool = agentPoolProfiles.some((pool) => pool.enableAutoScaling === true);
+    const nodeProvisioningProfile =
+      features?.enableNodeAutoProvisioning === true
+        ? { defaultNodePools: 'Auto' as const, mode: 'Auto' as const }
+        : features?.enableNodeAutoProvisioning === false || hasAutoScalingPool || diskEncryptionSet
+          ? undefined
+          : { defaultNodePools: 'None' as const, mode: 'Auto' as const };
+
     return new ccs.ManagedCluster(
       this.name,
       {
@@ -372,34 +385,34 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           //privateDNSZone: privateDnsZone?.id,
         },
 
-        // NAP defaults on when unset; only reshape declared pools (defaultNodePools: 'Auto') when the engineer opted in explicitly
-        nodeProvisioningProfile:
-          features?.enableNodeAutoProvisioning === false
+        nodeProvisioningProfile,
+
+        // Cluster-autoscaler tuning is meaningless once NAP owns provisioning — suppress the
+        // default when NAP is on and the engineer supplied no autoScalerProfile of their own.
+        // An engineer-supplied autoScalerProfile is always passed through verbatim.
+        autoScalerProfile:
+          autoScalerProfile ??
+          (nodeProvisioningProfile
             ? undefined
             : {
-                defaultNodePools: features?.enableNodeAutoProvisioning === true ? 'Auto' : 'None',
-                mode: 'Auto',
-              },
-
-        autoScalerProfile: autoScalerProfile ?? {
-          balanceSimilarNodeGroups: 'false',
-          expander: 'random',
-          maxEmptyBulkDelete: '10',
-          maxGracefulTerminationSec: '600',
-          maxNodeProvisionTime: '15m',
-          maxTotalUnreadyPercentage: '45',
-          newPodScaleUpDelay: '0s',
-          okTotalUnreadyCount: '3',
-          scaleDownDelayAfterAdd: '10m',
-          scaleDownDelayAfterDelete: '10s',
-          scaleDownDelayAfterFailure: '3m',
-          scaleDownUnneededTime: '10m',
-          scaleDownUnreadyTime: '20m',
-          scaleDownUtilizationThreshold: '0.5',
-          scanInterval: '10s',
-          skipNodesWithLocalStorage: 'false',
-          skipNodesWithSystemPods: 'true',
-        },
+                balanceSimilarNodeGroups: 'false',
+                expander: 'random',
+                maxEmptyBulkDelete: '10',
+                maxGracefulTerminationSec: '600',
+                maxNodeProvisionTime: '15m',
+                maxTotalUnreadyPercentage: '45',
+                newPodScaleUpDelay: '0s',
+                okTotalUnreadyCount: '3',
+                scaleDownDelayAfterAdd: '10m',
+                scaleDownDelayAfterDelete: '10s',
+                scaleDownDelayAfterFailure: '3m',
+                scaleDownUnneededTime: '10m',
+                scaleDownUnreadyTime: '20m',
+                scaleDownUtilizationThreshold: '0.5',
+                scanInterval: '10s',
+                skipNodesWithLocalStorage: 'false',
+                skipNodesWithSystemPods: 'true',
+              }),
         agentPoolProfiles: poolsWithZones,
 
         autoUpgradeProfile: {

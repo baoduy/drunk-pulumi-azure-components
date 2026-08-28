@@ -2,7 +2,6 @@
 
 ## 1. Code Style & Quality
 - Use TypeScript for all source code in `src/`.
-- Follow the existing ESLint configuration (`.eslintrc.json`).
 - Use consistent naming conventions: camelCase for variables/functions, PascalCase for classes/types.
 - Write clear, concise, and self-documenting code. Add comments only where necessary.
 - Keep functions and classes focused; prefer composition over inheritance.

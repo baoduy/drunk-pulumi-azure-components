@@ -73,5 +73,5 @@
     "logging": "Do not log secret outputs or credentials.",
     "encryption": "Use PGPGenerator and vault helpers for encryption needs."
   },
-  "futureEnhancements": ["Pulumi mocks for isolated component unit tests", "Automated TSDoc generation", "Stricter ESLint TS parser configuration"]
+  "futureEnhancements": ["Pulumi mocks for isolated component unit tests", "Automated TSDoc generation"]
 }

@@ -17,7 +17,8 @@ export const DEFAULT_X64_VM_SIZE = 'Standard_D4as_v6';
  */
 export function isArmSize(size?: string): boolean {
   if (!size) return true;
-  const match = size.match(/^Standard_[A-Z]+\d+([a-z]*)_v\d+/i);
+  // Case matters in a real Azure size string (`Standard_D4ps_v6`) — no `i` flag needed.
+  const match = size.match(/^Standard_[A-Z]+\d+([a-z]*)_v\d+/);
   return match?.[1]?.toLowerCase().includes('p') ?? false;
 }
 
@@ -46,3 +47,16 @@ export const DEFAULT_TRUSTED_LAUNCH: Pick<inputs.compute.SecurityProfileArgs, 's
   securityType: 'TrustedLaunch',
   uefiSettings: { secureBootEnabled: true, vTpmEnabled: true },
 };
+
+/**
+ * True when an engineer-supplied imageReference is exactly one of the package's own default
+ * images (which are always gen2). Compares publisher/offer/sku only — `version` is irrelevant.
+ */
+export function isPackageDefaultImage(ref?: { publisher?: string; offer?: string; sku?: string }): boolean {
+  if (!ref) return false;
+  const norm = (v?: unknown) => (typeof v === 'string' ? v.toLowerCase() : '');
+  const candidates = [getDefaultLinuxImage(DEFAULT_ARM_VM_SIZE), getDefaultLinuxImage(DEFAULT_X64_VM_SIZE), getDefaultWindowsImage()];
+  return candidates.some(
+    (c) => norm(c.publisher) === norm(ref.publisher) && norm(c.offer) === norm(ref.offer) && norm(c.sku) === norm(ref.sku),
+  );
+}

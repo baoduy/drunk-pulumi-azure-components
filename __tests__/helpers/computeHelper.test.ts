@@ -5,6 +5,7 @@ import {
   isArmSize,
   getDefaultLinuxImage,
   getDefaultWindowsImage,
+  isPackageDefaultImage,
 } from '../../src/helpers/computeHelper';
 
 // DRK-770 §3.2/§3.3: compute-size and OS-image defaults per architecture.
@@ -81,6 +82,36 @@ describe('computeHelper', () => {
         sku: 'win11-24h2-pro',
         version: 'latest',
       });
+    });
+  });
+
+  // Review finding 2 (DRK-793): an engineer spelling out the package's own default image must
+  // still be recognized as gen2-capable, even though its sku carries no `-g2`/`gen2` marker.
+  describe('isPackageDefaultImage', () => {
+    test('the Arm64 Ubuntu default is recognized', () => {
+      expect(isPackageDefaultImage({ publisher: 'canonical', offer: 'ubuntu-24_04-lts', sku: 'server-arm64' })).toBe(
+        true,
+      );
+    });
+
+    test('the x64 Ubuntu default is recognized', () => {
+      expect(isPackageDefaultImage({ publisher: 'canonical', offer: 'ubuntu-24_04-lts', sku: 'server' })).toBe(true);
+    });
+
+    test('the Windows default is recognized, case-insensitively', () => {
+      expect(
+        isPackageDefaultImage({ publisher: 'MicrosoftWindowsDesktop', offer: 'Windows-11', sku: 'Win11-24H2-Pro' }),
+      ).toBe(true);
+    });
+
+    test('a known gen1 image is not a package default', () => {
+      expect(
+        isPackageDefaultImage({ publisher: 'MicrosoftWindowsServer', offer: 'WindowsServer', sku: '2019-Datacenter' }),
+      ).toBe(false);
+    });
+
+    test('no ref is not a package default', () => {
+      expect(isPackageDefaultImage(undefined)).toBe(false);
     });
   });
 });

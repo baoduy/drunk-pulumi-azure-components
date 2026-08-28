@@ -111,22 +111,20 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       return isWindows ? computeHelper.getDefaultWindowsImage() : computeHelper.getDefaultLinuxImage(size);
     });
 
-    // Trusted launch requires a gen2 image. Package defaults are always gen2; only an engineer-supplied
-    // imageReference is checked (ref is resolved here — sku/offer are plain strings by this point).
+    // Trusted launch requires a gen2 image. No engineer-supplied ref means the package's own
+    // (always gen2) default image will be used. An engineer-supplied ref is gen2-capable when it
+    // carries a gen2 marker, or is exactly one of the package's own default images — anything else
+    // (a known gen1 image, or a reference this code can't classify, e.g. id-only) degrades safely
+    // instead of sending `securityType: 'TrustedLaunch'` for an image Azure will reject it on.
     const securityProfile = pulumi.all([storageProfile?.imageReference, props.securityProfile]).apply(([ref, sec]) => {
       if (sec) return sec;
       const sku = typeof ref?.sku === 'string' ? ref.sku.toLowerCase() : '';
       const offer = typeof ref?.offer === 'string' ? ref.offer.toLowerCase() : '';
-      const isKnownGen1Image =
-        Boolean(ref) &&
-        (sku !== '' || offer !== '') &&
-        !sku.includes('-g2') &&
-        !sku.includes('gen2') &&
-        !offer.includes('-g2') &&
-        !offer.includes('gen2');
-      return isKnownGen1Image
-        ? { encryptionAtHost: enableEncryption ? true : undefined }
-        : { ...computeHelper.DEFAULT_TRUSTED_LAUNCH, encryptionAtHost: enableEncryption ? true : undefined };
+      const hasGen2Marker = sku.includes('-g2') || sku.includes('gen2') || offer.includes('-g2') || offer.includes('gen2');
+      const isGen2Capable = !ref || hasGen2Marker || computeHelper.isPackageDefaultImage(ref);
+      return isGen2Capable
+        ? { ...computeHelper.DEFAULT_TRUSTED_LAUNCH, encryptionAtHost: enableEncryption ? true : undefined }
+        : { encryptionAtHost: enableEncryption ? true : undefined };
     });
 
     return new compute.VirtualMachine(

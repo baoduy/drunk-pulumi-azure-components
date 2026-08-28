@@ -126,6 +126,36 @@ describe('VirtualMachine — hardening defaults', () => {
     const vm = await createVm({ securityProfile: chosenProfile });
     expect(vm.inputs.securityProfile).toEqual(chosenProfile);
   });
+
+  // Review finding 2 (DRK-793): spelling out the package's own default image is not a gen1 image.
+  test('an engineer-supplied imageReference equal to the package default is still hardened', async () => {
+    const vm = await createVm({
+      storageProfile: {
+        imageReference: { publisher: 'canonical', offer: 'ubuntu-24_04-lts', sku: 'server-arm64', version: 'latest' },
+        osDisk: { createOption: 'FromImage' },
+      },
+    });
+    expect(vm.inputs.securityProfile).toEqual({
+      securityType: 'TrustedLaunch',
+      uefiSettings: { secureBootEnabled: true, vTpmEnabled: true },
+    });
+  });
+
+  // Review finding 3 (DRK-793): an id-only imageReference carries no gen2 marker and cannot be
+  // classified, so hardening must degrade (not send TrustedLaunch and risk a gen1 deploy failure).
+  test('an id-only imageReference is not hardened, but still honours enableEncryption', async () => {
+    const vm = await createVm({
+      enableEncryption: true,
+      vaultInfo: { id: 'vault_id', resourceName: 'vault', resourceGroupName: 'rg' },
+      storageProfile: {
+        imageReference: { id: '/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/images/my-image' },
+        osDisk: { createOption: 'FromImage' },
+      },
+    });
+    expect(vm.inputs.securityProfile.securityType).toBeUndefined();
+    expect(vm.inputs.securityProfile.uefiSettings).toBeUndefined();
+    expect(vm.inputs.securityProfile.encryptionAtHost).toBe(true);
+  });
 });
 
 describe('VirtualMachine — availability zones', () => {

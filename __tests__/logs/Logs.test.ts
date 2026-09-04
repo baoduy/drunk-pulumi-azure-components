@@ -40,52 +40,29 @@ describe('Logs.createStorage — log-archive storage shared-key toggle (DRK-1073
     expect(storageAccount(captured)).toBeUndefined();
   });
 
-  test('storage enabled with no allowSharedKeyAccess override stays byte-identical to the pre-change default', async () => {
+  test.each([
+    ['no allowSharedKeyAccess override stays byte-identical to the pre-change default', { enabled: true }, true, false],
+    ['explicit allowSharedKeyAccess: true behaves the same as the default', { enabled: true, allowSharedKeyAccess: true }, true, false],
+    [
+      'explicit allowSharedKeyAccess: false survives to the created storage account and flips OAuth-only default on',
+      { enabled: true, allowSharedKeyAccess: false },
+      false,
+      true,
+    ],
+  ])('storage enabled: %s', async (_name, storage, expectedSharedKey, expectedOAuth) => {
     const { pulumi, Logs, captured } = withStack('dev', (p) => {
       const mod: typeof import('../../src/logs/Logs') = require('../../src/logs/Logs');
       return { pulumi: p, Logs: mod.Logs };
     });
 
-    const logs = createLogs(Logs, { storage: { enabled: true } });
+    const logs = createLogs(Logs, { storage });
     await pulumi.output(logs.getOutputs()).promise();
     await settle();
 
     const stg = storageAccount(captured);
     expect(stg).toBeDefined();
-    expect(stg!.inputs.allowSharedKeyAccess).toBe(true);
-    expect(stg!.inputs.defaultToOAuthAuthentication).toBe(false);
-  });
-
-  test('explicit allowSharedKeyAccess: true behaves the same as the default', async () => {
-    const { pulumi, Logs, captured } = withStack('dev', (p) => {
-      const mod: typeof import('../../src/logs/Logs') = require('../../src/logs/Logs');
-      return { pulumi: p, Logs: mod.Logs };
-    });
-
-    const logs = createLogs(Logs, { storage: { enabled: true, allowSharedKeyAccess: true } });
-    await pulumi.output(logs.getOutputs()).promise();
-    await settle();
-
-    const stg = storageAccount(captured);
-    expect(stg).toBeDefined();
-    expect(stg!.inputs.allowSharedKeyAccess).toBe(true);
-    expect(stg!.inputs.defaultToOAuthAuthentication).toBe(false);
-  });
-
-  test('explicit allowSharedKeyAccess: false survives to the created storage account and flips OAuth-only default on', async () => {
-    const { pulumi, Logs, captured } = withStack('dev', (p) => {
-      const mod: typeof import('../../src/logs/Logs') = require('../../src/logs/Logs');
-      return { pulumi: p, Logs: mod.Logs };
-    });
-
-    const logs = createLogs(Logs, { storage: { enabled: true, allowSharedKeyAccess: false } });
-    await pulumi.output(logs.getOutputs()).promise();
-    await settle();
-
-    const stg = storageAccount(captured);
-    expect(stg).toBeDefined();
-    expect(stg!.inputs.allowSharedKeyAccess).toBe(false);
-    expect(stg!.inputs.defaultToOAuthAuthentication).toBe(true);
+    expect(stg!.inputs.allowSharedKeyAccess).toBe(expectedSharedKey);
+    expect(stg!.inputs.defaultToOAuthAuthentication).toBe(expectedOAuth);
   });
 });
 
@@ -100,27 +77,19 @@ describe('Logs — workspace and appInsight outputs (pre-existing behaviour)', (
   // server-assigned outputs, not echoed inputs — the shared withStack mock doesn't
   // fabricate them, so this setup adds them for the two resource types that need them.
   function setup() {
-    process.env.PULUMI_NODEJS_STACK = 'dev';
-    jest.resetModules();
-    const pulumi: typeof import('@pulumi/pulumi') = require('@pulumi/pulumi');
-    const captured: { type: string; name: string; inputs: any }[] = [];
-
-    pulumi.runtime.setMocks({
-      newResource: (args: any) => {
-        captured.push({ type: args.type, name: args.name, inputs: args.inputs });
-        const extra =
-          args.type === 'azure-native:operationalinsights:Workspace'
-            ? { customerId: `${args.name}-customer-id` }
-            : args.type === 'azure-native:applicationinsights:Component'
-              ? { instrumentationKey: `${args.name}-ikey`, connectionString: `${args.name}-conn` }
-              : {};
-        return { id: `${args.name}_id`, state: { ...args.inputs, name: args.name, ...extra } };
+    return withStack(
+      'dev',
+      (pulumi) => {
+        const mod: typeof import('../../src/logs/Logs') = require('../../src/logs/Logs');
+        return { pulumi, Logs: mod.Logs };
       },
-      call: (args: any) => args.inputs,
-    });
-
-    const mod: typeof import('../../src/logs/Logs') = require('../../src/logs/Logs');
-    return { pulumi, Logs: mod.Logs, captured };
+      (args) =>
+        args.type === 'azure-native:operationalinsights:Workspace'
+          ? { customerId: `${args.name}-customer-id` }
+          : args.type === 'azure-native:applicationinsights:Component'
+            ? { instrumentationKey: `${args.name}-ikey`, connectionString: `${args.name}-conn` }
+            : {},
+    );
   }
 
   test('workspace enabled exposes workspace outputs and queues the customerId secret', async () => {

@@ -15,7 +15,11 @@ export type Captured = { type: string; name: string; inputs: any };
  * (which must `require()` the pulumi module and the component(s) under test) and returns
  * whatever it returns, plus the array of resources captured by the mock `newResource` callback.
  */
-export function withStack<T>(stackName: string, load: (pulumi: typeof import('@pulumi/pulumi')) => T): T & { captured: Captured[] } {
+export function withStack<T>(
+  stackName: string,
+  load: (pulumi: typeof import('@pulumi/pulumi')) => T,
+  extraState?: (args: { type: string; name: string; inputs: any }) => object,
+): T & { captured: Captured[] } {
   process.env.PULUMI_NODEJS_STACK = stackName;
   jest.resetModules();
   const pulumi: typeof import('@pulumi/pulumi') = require('@pulumi/pulumi');
@@ -32,6 +36,7 @@ export function withStack<T>(stackName: string, load: (pulumi: typeof import('@p
           // Convenience defaults so components that unconditionally read these fields
           // (e.g. AzKubernetes reading `cluster.identity.principalId`) don't throw.
           identity: { principalId: `${args.name}_principal`, type: 'SystemAssigned' },
+          ...extraState?.(args),
         },
       };
     },

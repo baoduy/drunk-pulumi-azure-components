@@ -15,6 +15,8 @@ export class CustomRoles extends BaseComponent<CustomRoleArgs> {
     if (args.enableJustInTimeRemoteRole) {
       this.createJustInTimeRemoteRole();
     }
+
+    this.registerOutputs();
   }
 
   public getOutputs() {

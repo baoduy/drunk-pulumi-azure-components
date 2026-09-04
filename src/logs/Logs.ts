@@ -20,7 +20,16 @@ export interface LogsArgs extends BaseArgs, types.WithResourceGroupInputs {
     enableLogAccessUsingOnlyResourcePermissions?: pulumi.Input<boolean>;
     immediatePurgeDataOn30Days?: pulumi.Input<boolean>;
   };
-  storage?: { enabled: boolean };
+  storage?: {
+    enabled: boolean;
+    /**
+     * Whether the log-archive storage account allows shared-key authorization.
+     * Set `false` to flip `defaultToOAuthAuthentication` to `true` on the created
+     * account, restricting data-plane access to Entra ID / managed identity only.
+     * Omit to keep the documented default (see the call-site comment in `createStorage()`).
+     */
+    allowSharedKeyAccess?: pulumi.Input<boolean>;
+  };
 }
 
 export type LogsOutputs = {
@@ -140,7 +149,16 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
       {
         rsGroup,
         vaultInfo,
-        allowSharedKeyAccess: true,
+        // Default kept `true`: whether every diagnostic-setting log-archive writer can
+        // authenticate to the destination storage account via managed identity/Entra ID
+        // instead of the account key is resource-dependent, not guaranteed platform-wide
+        // (see https://learn.microsoft.com/azure/storage/common/shared-key-authorization-prevent
+        // and https://learn.microsoft.com/azure/azure-monitor/essentials/create-diagnostic-settings —
+        // "the selection of the authentication method depends on the specific resource ...
+        // and the capabilities of that resource"). Flipping this default risks silently
+        // breaking diagnostic settings for callers whose log source can't yet use
+        // managed identity, so it stays caller-controlled instead.
+        allowSharedKeyAccess: storage?.allowSharedKeyAccess ?? true,
         policies: {
           defaultManagementPolicyRules: [
             {

@@ -122,7 +122,8 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         },
       },
       {
-        ...this.opts,
+        dependsOn:this.opts?.dependsOn,
+        ignoreChanges:this.opts?.ignoreChanges,
         parent: this,
       },
     );

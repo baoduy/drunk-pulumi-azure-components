@@ -19,6 +19,7 @@ type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileAr
   vnetSubnetID: pulumi.Input<string>;
   enableEncryptionAtHost: pulumi.Input<boolean>;
   osDiskSizeGB: pulumi.Input<number>;
+  retainOnDelete?: boolean;
 } & { name: string };
 
 type LegacyMaintenanceArgs = Pick<ccs.MaintenanceConfigurationArgs, 'timeInWeek' | 'notAllowedTime'>;
@@ -219,7 +220,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         ],
         optionalClaims: extensions?.argoCd ? { enableGroup: true, accessTokens: ['email'] } : undefined,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 
@@ -236,7 +237,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         vaultInfo,
         password,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
 
     return { userName, sshPublicKey: ssh.publicKey };
@@ -258,7 +259,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         enableResourceIdentity: true,
         encryptionType: 'EncryptionAtRestWithPlatformAndCustomerKeys',
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     ).getOutputs();
   }
 
@@ -270,7 +271,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         preventDuplicateNames: true,
         description: `The Admin Group for AKS Cluster ${this.name}`,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
     this.addMemberToGroupRole('readOnly', aksAdminGroup.group.objectId);
 
@@ -319,7 +320,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     // verbatim, either way. `enableAutoScaling` is pulumi.Input<boolean>, so a non-literal value
     // (an Output) can't be compared `=== true`/`=== false` — treat anything but a known `false` as
     // "can't tell it doesn't autoscale", which suppresses the default rather than misapply it.
-    const autoScales = (pool: AgentPoolProfile) => pool.enableAutoScaling !== undefined && pool.enableAutoScaling !== false;
+    const autoScales = (pool: AgentPoolProfile) =>
+      pool.enableAutoScaling !== undefined && pool.enableAutoScaling !== false;
     const hasAutoScalingPool = [...agentPoolProfiles, ...(extraAgentPoolProfiles ?? [])].some(autoScales);
     const nodeProvisioningProfile =
       features?.enableNodeAutoProvisioning === true
@@ -497,7 +499,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         //enablePodSecurityPolicy: true,
       },
       {
-        ...this.opts,
+        ...this.childOpts,
+        ignoreChanges: ['agentPoolProfiles', ...(this?.opts?.ignoreChanges || [])],
         dependsOn: appID,
         parent: this,
       },
@@ -521,7 +524,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             resourceName: aks.name,
             agentPoolName: profile.name,
           },
-          { dependsOn: aks, deletedWith: aks, parent: this },
+          { dependsOn: aks, retainOnDelete: profile.retainOnDelete, parent: this },
         ),
     );
   }

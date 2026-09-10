@@ -339,7 +339,7 @@ export class AppRegistration extends BaseComponent<AppRegistrationArgs> {
         vaultInfo: this.args.vaultInfo,
         secrets,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
     this.vaultSecrets = secret.getOutputs();
     return secret;

@@ -122,7 +122,8 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
         },
       },
       {
-        ...this.opts,
+        dependsOn: this.opts?.dependsOn,
+        ignoreChanges: this.opts?.ignoreChanges,
         parent: this,
       },
     );
@@ -230,13 +231,16 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
       const connStrings: { [key: string]: pulumi.Input<string> } = {};
 
       // .NET / ADO.NET format
-      connStrings[`${this.name}-${d.name}-mysql-conn-dotnet`] = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+      connStrings[`${this.name}-${d.name}-mysql-conn-dotnet`] =
+        pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
 
       // Node.js / JavaScript format
-      connStrings[`${this.name}-${d.name}-mysql-conn-nodejs`] = pulumi.interpolate`mysql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?ssl=true&tls=true`;
+      connStrings[`${this.name}-${d.name}-mysql-conn-nodejs`] =
+        pulumi.interpolate`mysql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?ssl=true&tls=true`;
 
       // Generic/standard format
-      connStrings[`${this.name}-${d.name}-mysql-conn`] = pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
+      connStrings[`${this.name}-${d.name}-mysql-conn`] =
+        pulumi.interpolate`Server=${cred.host};Database=${d.name};Uid=${cred.username};Pwd=${cred.password};SslMode=Require;Encrypt=True;TrustServerCertificate=true`;
 
       // Add all connection strings at once
       this.addSecrets(connStrings);
@@ -252,7 +256,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     return new UserAssignedIdentity(
       this.name,
       { rsGroup, vaultInfo, memberof: groupRoles ? [groupRoles.readOnly] : undefined },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 }

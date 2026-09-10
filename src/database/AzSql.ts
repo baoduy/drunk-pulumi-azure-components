@@ -123,7 +123,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         preventDuplicateNames: true,
         description: `The Admin Group for Azure SQL ${this.name}`,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
     this.addMemberToGroupRole('readOnly', aksAdminGroup.group.objectId);
 

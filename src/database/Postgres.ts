@@ -14,10 +14,7 @@ export interface PostgresArgs
     types.WithNetworkArgs,
     Pick<postgresql.ServerArgs, 'administratorLogin'>,
     Partial<
-      Pick<
-        postgresql.ServerArgs,
-         'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'
-      >
+      Pick<postgresql.ServerArgs, 'storage' | 'maintenanceWindow' | 'backup' | 'highAvailability' | 'availabilityZone'>
     > {
   version: pulumi.Input<string | postgresql.PostgresMajorVersion>;
   sku: {
@@ -97,7 +94,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
               primaryUserAssignedIdentityId: uAssignedId.id,
               primaryKeyURI: encryptionKey.id,
             }
-          : undefined,// { type: 'SystemManaged' },
+          : undefined, // { type: 'SystemManaged' },
 
         maintenanceWindow: this.args.maintenanceWindow ?? {
           customWindow: 'Enabled',
@@ -219,10 +216,12 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       const connStrings: { [key: string]: pulumi.Input<string> } = {};
 
       // .NET / ADO.NET format
-      connStrings[`${this.name}-${d.name}-postgres-conn-dotnet`] = pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
+      connStrings[`${this.name}-${d.name}-postgres-conn-dotnet`] =
+        pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
 
       // Node.js / JavaScript URI format
-      connStrings[`${this.name}-${d.name}-postgres-conn-nodejs`] = pulumi.interpolate`postgresql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?sslmode=require`;
+      connStrings[`${this.name}-${d.name}-postgres-conn-nodejs`] =
+        pulumi.interpolate`postgresql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}?sslmode=require`;
 
       // Python / psycopg2 format
       //connStrings[`${this.name}-${d.name}-postgres-conn-python`] = pulumi.interpolate`postgresql://${cred.username}:${cred.password}@${cred.host}:${cred.port}/${d.name}`;
@@ -231,7 +230,8 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
       //connStrings[`${this.name}-${d.name}-postgres-conn-jdbc`] = pulumi.interpolate`jdbc:postgresql://${cred.host}:${cred.port}/${d.name}?user=${cred.username}&password=${cred.password}&sslmode=require`;
 
       // Generic/standard format
-      connStrings[`${this.name}-${d.name}-postgres-conn`] = pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
+      connStrings[`${this.name}-${d.name}-postgres-conn`] =
+        pulumi.interpolate`Host=${cred.host};Database=${d.name};Username=${cred.username};Password=${cred.password};SslMode=Require;Ssl=true;TrustServerCertificate=true`;
 
       // Add all connection strings at once
       this.addSecrets(connStrings);
@@ -247,7 +247,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     return new UserAssignedIdentity(
       this.name,
       { rsGroup, vaultInfo, memberof: groupRoles ? [groupRoles.readOnly] : undefined },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 }

@@ -97,9 +97,7 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
 
         identity: enableResourceIdentity
           ? {
-              type: defaultUAssignedId
-                ? 'UserAssigned'
-                : 'SystemAssigned',
+              type: defaultUAssignedId ? 'UserAssigned' : 'SystemAssigned',
               userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
             }
           : undefined,

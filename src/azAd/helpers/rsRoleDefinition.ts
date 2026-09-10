@@ -17,7 +17,7 @@ const rsRoles = {
       'Azure Kubernetes Service RBAC Reader',
     ],
     contributor: ['Azure Arc Kubernetes Writer', 'Azure Kubernetes Service RBAC Writer'],
-    admin: ['Azure Arc Kubernetes Admin', 'Azure Kubernetes Service RBAC Admin'],
+    admin: ['Azure Arc Kubernetes Admin', 'Azure Kubernetes Service RBAC Admin','Azure Kubernetes Service Agent Pool Manager Role'],
   },
   iotHub: {
     readOnly: ['IoT Hub Data Reader'],

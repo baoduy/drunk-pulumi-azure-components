@@ -37,7 +37,7 @@ export class VaultSecret extends BaseComponent<VaultSecretArgs> {
         contentType: args.contentType,
         tags: args.tags,
       },
-      opts,
+      { ...opts, parent: this },
     );
 
     this.id = secret.id;

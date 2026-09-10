@@ -48,7 +48,7 @@ export class RandomString extends BaseComponent<RandomStringArgs> {
             },
             { ...opts, parent: this },
           )
-        : new random.RandomUuid(name, {}, opts);
+        : new random.RandomUuid(name, {}, { ...opts, parent: this });
 
     if (args.vaultInfo) {
       new VaultSecret(

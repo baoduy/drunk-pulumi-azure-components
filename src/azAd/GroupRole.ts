@@ -33,7 +33,7 @@ export class GroupRole extends BaseComponent<GroupRoleArgs> {
             members: args[role]?.members,
             preventDuplicateNames: args.preventDuplicateNames,
           },
-          { ...this.opts, parent: this, deletedWith: this },
+          { ...this.childOpts, parent: this, deletedWith: this },
         ),
       ]),
     );

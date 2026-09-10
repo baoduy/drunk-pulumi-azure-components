@@ -47,6 +47,8 @@ export class NetworkPeering extends pulumi.ComponentResource<NetworkPeeringArgs>
       this.createPeering(first, second);
       if (direction === 'Bidirectional') this.createPeering(second, first);
     });
+
+    this.registerOutputs({});
   }
 
   private createPeering(from: types.ResourceType, to: types.ResourceType) {

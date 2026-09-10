@@ -58,7 +58,12 @@ export class IpAddresses extends BaseResourceComponent<IpAddressesArgs> {
           publicIPAllocationMethod: network.IPAllocationMethod.Static,
           zones: zoneHelper.getDefaultZones(ip.zones ?? defaultConfig?.zones),
         },
-        { ...opts, dependsOn: prefix ? prefix : opts?.dependsOn, parent: this, ignoreChanges: ['natGateway'] },
+        {
+          ...this.childOpts,
+          dependsOn: prefix ? prefix : opts?.dependsOn,
+          parent: this,
+          ignoreChanges: ['natGateway'],
+        },
       );
 
       this.ipAddresses[ip.name] = {

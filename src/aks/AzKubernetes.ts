@@ -499,10 +499,8 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         //enablePodSecurityPolicy: true,
       },
       {
+        ...this.childOpts,
         ignoreChanges: ['agentPoolProfiles', ...(this?.opts?.ignoreChanges || [])],
-        replaceOnChanges: this.opts?.replaceOnChanges,
-        replaceWith: this.opts?.replaceWith,
-        retainOnDelete: this.opts?.retainOnDelete,
         dependsOn: appID,
         parent: this,
       },

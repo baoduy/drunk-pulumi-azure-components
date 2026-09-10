@@ -45,8 +45,8 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
    * `import`, `aliases`, `deleteBeforeReplace` or `protect` must not be duplicated onto every child.
    */
   protected get childOpts(): pulumi.ResourceOptions {
-    const { dependsOn, ignoreChanges, retainOnDelete, replaceOnChanges, deletedWith } = this.opts ?? {};
-    return { dependsOn, ignoreChanges, retainOnDelete, replaceOnChanges, deletedWith };
+    const { dependsOn, ignoreChanges, retainOnDelete, replaceOnChanges, deletedWith,replaceWith,parent,protect, } = this.opts ?? {};
+    return { dependsOn, ignoreChanges, retainOnDelete, replaceOnChanges, deletedWith, replaceWith, parent, protect };
   }
 
   protected getNameOrHash(name: string, length: number = 55): string {

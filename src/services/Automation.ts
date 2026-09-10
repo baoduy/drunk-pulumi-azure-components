@@ -74,7 +74,7 @@ export class Automation extends BaseResourceComponent<AutomationArgs> {
     return new UserAssignedIdentity(
       `${this.name}-auto`,
       { rsGroup, vaultInfo, federations, memberof: groupRoles ? [groupRoles[memberof ?? 'contributor']] : undefined },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 }

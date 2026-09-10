@@ -200,7 +200,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     return new EncryptionKey(
       name ? `${this.name}-${name}` : this.name,
       { vaultInfo: vault, keySize },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 
@@ -261,7 +261,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
         vaultInfo,
         secrets: se,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
 
     this.vaultSecrets = Object.keys(rs.results).map((k) => pulumi.output(k));

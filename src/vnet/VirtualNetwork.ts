@@ -213,7 +213,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         ...props,
         securityRules,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 
@@ -235,7 +235,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         ...routeProps,
         routes,
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 
@@ -258,7 +258,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
       `${this.name}-ip`,
       { ...ipCreate, rsGroup },
       {
-        ...this.opts,
+        ...this.childOpts,
         parent: this,
         retainOnDelete: true,
       },
@@ -279,7 +279,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         `${this.name}-mag-ip`,
         { sku: { name: 'Standard', tier: 'Regional' }, ipAddresses: [{ name: 'mag-ip' }], rsGroup },
         {
-          dependsOn: this.opts?.dependsOn,
+          ...this.childOpts,
           parent: this,
         },
       )).ipAddresses['mag-ip'];
@@ -303,7 +303,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
             : zoneHelper.getDefaultZones(natGatewayCreate.zones),
         publicIpAddresses: ipAddresses,
       },
-      { ...this.opts, dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, dependsOn: this.ipAddressInstance ?? this.opts?.dependsOn, parent: this },
     );
   }
 
@@ -319,7 +319,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         rsGroup,
         subnetId: vpnSubnet.id,
       },
-      { ...this.opts, dependsOn: vpnSubnet, parent: this },
+      { ...this.childOpts, dependsOn: vpnSubnet, parent: this },
     );
   }
 
@@ -363,7 +363,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
             ],
       },
       {
-        ...this.opts,
+        ...this.childOpts,
         dependsOn: firewallManageSubnet ? [firewallManageSubnet, firewallSubnet] : firewallSubnet,
         parent: this,
       },
@@ -383,7 +383,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         subnetId: basionSubnet.id,
         network: { ...basion.network },
       },
-      { ...this.opts, dependsOn: basionSubnet, parent: this },
+      { ...this.childOpts, dependsOn: basionSubnet, parent: this },
     );
   }
 
@@ -557,7 +557,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
         },
         secondVnet: peeringCreate.vnet,
       },
-      { ...this.opts, dependsOn: vnet, parent: this },
+      { ...this.childOpts, dependsOn: vnet, parent: this },
     );
   }
 
@@ -578,7 +578,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
             registrationEnabled: false,
             virtualNetwork: { id: vnet.id },
           },
-          { ...this.opts, dependsOn: vnet, deletedWith: vnet, parent: this },
+          { ...this.childOpts, dependsOn: vnet, deletedWith: vnet, parent: this },
         );
       }),
     );

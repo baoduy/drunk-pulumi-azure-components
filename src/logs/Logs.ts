@@ -111,7 +111,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
         retentionInDays: sku === az.operationalinsights.WorkspaceSkuNameEnum.Free ? 7 : (retentionInDays ?? 30),
         sku: { name: sku },
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 
@@ -180,7 +180,7 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
           ],
         },
       },
-      { dependsOn: this.opts?.dependsOn, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 }

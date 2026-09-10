@@ -39,6 +39,16 @@ export abstract class BaseComponent<TArgs extends pulumi.Inputs> extends pulumi.
    */
   public abstract getOutputs(): pulumi.Inputs | pulumi.Output<pulumi.Inputs>;
 
+  /**
+   * The subset of this component's options that is safe to propagate to its child resources.
+   * Only the primary resource of a component should spread `this.opts` in full - options such as
+   * `import`, `aliases`, `deleteBeforeReplace` or `protect` must not be duplicated onto every child.
+   */
+  protected get childOpts(): pulumi.ResourceOptions {
+    const { dependsOn, ignoreChanges, retainOnDelete, replaceOnChanges, deletedWith } = this.opts ?? {};
+    return { dependsOn, ignoreChanges, retainOnDelete, replaceOnChanges, deletedWith };
+  }
+
   protected getNameOrHash(name: string, length: number = 55): string {
     if (name.length <= 55) return name;
     return crypto.createHash('sha256').update(name).digest('hex').slice(-55);

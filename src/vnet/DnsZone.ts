@@ -105,7 +105,7 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
         location: group.location,
         zoneName: this.name,
       },
-      { ...this.opts, dependsOn: parent ? parent : this.opts?.dependsOn, parent: this },
+      parent ? { ...this.childOpts, dependsOn: parent, parent: this } : { ...this.opts, parent: this },
     );
 
     if (records) {

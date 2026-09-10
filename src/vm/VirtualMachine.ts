@@ -120,7 +120,8 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
       if (sec) return sec;
       const sku = typeof ref?.sku === 'string' ? ref.sku.toLowerCase() : '';
       const offer = typeof ref?.offer === 'string' ? ref.offer.toLowerCase() : '';
-      const hasGen2Marker = sku.includes('-g2') || sku.includes('gen2') || offer.includes('-g2') || offer.includes('gen2');
+      const hasGen2Marker =
+        sku.includes('-g2') || sku.includes('gen2') || offer.includes('-g2') || offer.includes('gen2');
       const isGen2Capable = !ref || hasGen2Marker || computeHelper.isPackageDefaultImage(ref);
       return isGen2Capable
         ? { ...computeHelper.DEFAULT_TRUSTED_LAUNCH, encryptionAtHost: enableEncryption ? true : undefined }
@@ -284,7 +285,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
         ipConfigurations: [{ name: 'ipconfig', subnet: { id: network.subnetId }, primary: true }],
         nicType: network.nicType ?? nw.NetworkInterfaceNicType.Standard,
       },
-      { ...this.opts, parent: this },
+      { ...this.childOpts, parent: this },
     );
   }
 

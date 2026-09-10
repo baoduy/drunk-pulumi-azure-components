@@ -37,10 +37,12 @@ export interface AppResourcesArgs
   logicApp?: types.WithName & Partial<LogicAppArgs> & Pick<LogicAppArgs, 'integrationAccount' | 'workflow'>;
   signalR?: types.WithName & Partial<SignalRArgs> & Pick<SignalRArgs, 'sku'>;
   azSql?: types.WithName & Partial<AzSqlArgs> & Pick<AzSqlArgs, 'administrators'>;
-  mySql?: types.WithName & Partial<MySqlArgs> & Pick<MySqlArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'|'version'>;
+  mySql?: types.WithName &
+    Partial<MySqlArgs> &
+    Pick<MySqlArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin' | 'version'>;
   postgres?: types.WithName &
     Partial<PostgresArgs> &
-    Pick<PostgresArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin'|'version'>;
+    Pick<PostgresArgs, 'sku' | 'administratorLogin' | 'enableAzureADAdmin' | 'version'>;
   redis?: types.WithName & Partial<RedisArgs> & Pick<RedisArgs, 'sku' | 'disableAccessKeyAuthentication'>;
 }
 
@@ -85,14 +87,18 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
 
     this.vaultInfo = this.createVault();
     this.apim = apim
-      ? new Apim(apim.name ?? name, { ...others, ...apim, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      ? new Apim(
+          apim.name ?? name,
+          { ...others, ...apim, vaultInfo: this.vaultInfo },
+          { ...this.childOpts, parent: this },
+        )
       : undefined;
 
     this.storage = storageAccount
       ? new StorageAccount(
           storageAccount.name ?? name,
           { ...others, ...storageAccount, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
@@ -100,7 +106,7 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ? new ServiceBus(
           serviceBus.name ?? name,
           { ...others, ...serviceBus, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
@@ -108,7 +114,7 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ? new Automation(
           automation.name ?? name,
           { ...others, ...automation, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
@@ -116,7 +122,7 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ? new AzSearch(
           azSearch.name ?? name,
           { ...others, ...azSearch, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
@@ -124,7 +130,7 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ? new AppCert(
           appCert.name ?? name,
           { ...others, ...appCert, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
@@ -132,7 +138,7 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ? new AppConfig(
           appConfig.name ?? name,
           { ...others, ...appConfig, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
@@ -140,19 +146,23 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ? new AppContainerEnv(
           appContainerEnv.name ?? name,
           { ...others, ...appContainerEnv, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
     this.iotHub = iotHub
-      ? new IoTHub(iotHub.name ?? name, { ...others, ...iotHub, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      ? new IoTHub(
+          iotHub.name ?? name,
+          { ...others, ...iotHub, vaultInfo: this.vaultInfo },
+          { ...this.childOpts, parent: this },
+        )
       : undefined;
 
     this.logicApp = logicApp
       ? new LogicApp(
           logicApp.name ?? name,
           { ...others, ...logicApp, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
@@ -160,28 +170,40 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       ? new SignalR(
           signalR.name ?? name,
           { ...others, ...signalR, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
     this.azSql = azSql
-      ? new AzSql(azSql.name ?? name, { ...others, ...azSql, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      ? new AzSql(
+          azSql.name ?? name,
+          { ...others, ...azSql, vaultInfo: this.vaultInfo },
+          { ...this.childOpts, parent: this },
+        )
       : undefined;
 
     this.mySql = mySql
-      ? new MySql(mySql.name ?? name, { ...others, ...mySql, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      ? new MySql(
+          mySql.name ?? name,
+          { ...others, ...mySql, vaultInfo: this.vaultInfo },
+          { ...this.childOpts, parent: this },
+        )
       : undefined;
 
     this.postgres = postgres
       ? new Postgres(
           postgres.name ?? name,
           { ...others, ...postgres, vaultInfo: this.vaultInfo },
-          { ...opts, parent: this },
+          { ...this.childOpts, parent: this },
         )
       : undefined;
 
     this.redis = redis
-      ? new Redis(redis.name ?? name, { ...others, ...redis, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
+      ? new Redis(
+          redis.name ?? name,
+          { ...others, ...redis, vaultInfo: this.vaultInfo },
+          { ...this.childOpts, parent: this },
+        )
       : undefined;
 
     this.registerOutputs();
@@ -222,7 +244,7 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
       vaultCreate.name ?? this.name,
       { network, ...vaultCreate, rsGroup: rsGroup, groupRoles: groupRoles },
       {
-        ...this.opts,
+        ...this.childOpts,
         parent: this,
       },
     ).getOutputs();

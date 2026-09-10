@@ -6,7 +6,7 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import * as types from '../types';
-import { rsHelpers } from '../helpers';
+import { azureEnv, computeHelper, rsHelpers } from '../helpers';
 
 export type VmScheduleType = {
   /** The time zone ID: https://stackoverflow.com/questions/7908343/list-of-timezone-ids-for-use-with-findtimezonebyid-in-c */
@@ -29,7 +29,7 @@ export interface VirtualMachineArgs
       'osProfile' | 'storageProfile' | 'identity' | 'networkProfile' | 'resourceGroupName' | 'location'
     > {
   osProfile?: Omit<inputs.compute.OSProfileArgs, 'adminPassword' | 'adminUsername'>;
-  storageProfile: Partial<
+  storageProfile?: Partial<
     Pick<inputs.compute.StorageProfileArgs, 'imageReference' | 'alignRegionalDisksToVMZone' | 'diskControllerType'>
   > & {
     osDisk: Omit<inputs.compute.OSDiskArgs, 'encryptionSettings'>;
@@ -94,14 +94,49 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     const nic = this.createNetworkInterface();
     const credential = this.createCredentials();
 
+    const isWindows = Boolean(osProfile?.windowsConfiguration);
+    const defaultVmSize = isWindows ? computeHelper.DEFAULT_X64_VM_SIZE : computeHelper.DEFAULT_ARM_VM_SIZE;
+
+    // hardwareProfile/imageReference/securityProfile are pulumi.Input<T> on the base args type, so their
+    // sub-fields (vmSize/sku/offer) can only be read inside .apply() — never synchronously.
+    const hardwareProfile = pulumi.output(props.hardwareProfile ?? {}).apply((hp) => ({
+      ...hp,
+      vmSize: hp.vmSize ?? defaultVmSize,
+    }));
+
+    const imageReference = pulumi.all([props.hardwareProfile, storageProfile?.imageReference]).apply(([hp, ref]) => {
+      if (ref) return ref;
+      // hp.vmSize is already resolved here (pulumi.all unwraps nested Outputs); isArmSize just needs a string.
+      const size = typeof hp?.vmSize === 'string' ? hp.vmSize : defaultVmSize;
+      return isWindows ? computeHelper.getDefaultWindowsImage() : computeHelper.getDefaultLinuxImage(size);
+    });
+
+    // Trusted launch requires a gen2 image. No engineer-supplied ref means the package's own
+    // (always gen2) default image will be used. An engineer-supplied ref is gen2-capable when it
+    // carries a gen2 marker, or is exactly one of the package's own default images — anything else
+    // (a known gen1 image, or a reference this code can't classify, e.g. id-only) degrades safely
+    // instead of sending `securityType: 'TrustedLaunch'` for an image Azure will reject it on.
+    const securityProfile = pulumi.all([storageProfile?.imageReference, props.securityProfile]).apply(([ref, sec]) => {
+      if (sec) return sec;
+      const sku = typeof ref?.sku === 'string' ? ref.sku.toLowerCase() : '';
+      const offer = typeof ref?.offer === 'string' ? ref.offer.toLowerCase() : '';
+      const hasGen2Marker = sku.includes('-g2') || sku.includes('gen2') || offer.includes('-g2') || offer.includes('gen2');
+      const isGen2Capable = !ref || hasGen2Marker || computeHelper.isPackageDefaultImage(ref);
+      return isGen2Capable
+        ? { ...computeHelper.DEFAULT_TRUSTED_LAUNCH, encryptionAtHost: enableEncryption ? true : undefined }
+        : { encryptionAtHost: enableEncryption ? true : undefined };
+    });
+
     return new compute.VirtualMachine(
       this.name,
       {
         ...props,
         ...rsGroup,
 
-        //VM is not supported in all zones
-        //zones: zoneHelper.getDefaultZones(props.zones),
+        // A VM is a single-zone resource (unlike scale sets/AKS pools) — never default to 3 zones.
+        zones: props.zones ?? (azureEnv.isPrd ? ['1'] : undefined),
+
+        hardwareProfile,
 
         identity: enableResourceIdentity
           ? {
@@ -116,11 +151,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
           networkInterfaces: [{ id: nic.id, primary: true }],
         },
         //az feature register --name EncryptionAtHost  --namespace Microsoft.Compute
-        securityProfile: enableEncryption
-          ? (props.securityProfile ?? {
-              encryptionAtHost: true,
-            })
-          : undefined,
+        securityProfile,
         osProfile: {
           ...osProfile,
           adminUsername: credential.login,
@@ -154,8 +185,9 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
         },
         storageProfile: {
           ...storageProfile,
+          imageReference,
           osDisk: {
-            ...storageProfile.osDisk,
+            ...(storageProfile?.osDisk ?? { createOption: compute.DiskCreateOptionTypes.FromImage }),
 
             encryptionSettings:
               diskEncryption && keyEncryption
@@ -188,17 +220,17 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                     }
                   : undefined,
 
-              securityProfile: storageProfile.securityEncryptionType
+              securityProfile: storageProfile?.securityEncryptionType
                 ? {
                     diskEncryptionSet: enableEncryption && diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
                     securityEncryptionType: storageProfile.securityEncryptionType,
                   }
                 : undefined,
-              storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
+              storageAccountType: storageProfile?.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
             },
           },
 
-          dataDisks: storageProfile.dataDisks
+          dataDisks: storageProfile?.dataDisks
             ? storageProfile.dataDisks.map((d) => ({
                 ...d,
                 managedDisk: {
@@ -208,14 +240,14 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                           id: diskEncryptionSet.id,
                         }
                       : undefined,
-                  securityProfile: storageProfile.securityEncryptionType
+                  securityProfile: storageProfile?.securityEncryptionType
                     ? {
                         diskEncryptionSet:
                           enableEncryption && diskEncryptionSet ? { id: diskEncryptionSet.id } : undefined,
                         securityEncryptionType: storageProfile.securityEncryptionType,
                       }
                     : undefined,
-                  storageAccountType: storageProfile.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
+                  storageAccountType: storageProfile?.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
                 },
               }))
             : [],

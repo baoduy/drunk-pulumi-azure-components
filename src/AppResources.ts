@@ -183,6 +183,8 @@ export class AppResources extends BaseComponent<AppResourcesArgs> {
     this.redis = redis
       ? new Redis(redis.name ?? name, { ...others, ...redis, vaultInfo: this.vaultInfo }, { ...opts, parent: this })
       : undefined;
+
+    this.registerOutputs();
   }
 
   getOutputs() {

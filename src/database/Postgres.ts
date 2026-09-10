@@ -125,7 +125,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
               })
             : undefined,
 
-        availabilityZone: (this.args.availabilityZone ?? azureEnv.isPrd) ? '3' : '1',
+        availabilityZone: this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1'),
 
         network: {
           publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',

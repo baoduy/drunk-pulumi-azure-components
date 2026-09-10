@@ -5,6 +5,7 @@ name: build-publish
 permissions:
   contents: write
   packages: write
+  id-token: write
 
 on:
   workflow_dispatch: {}

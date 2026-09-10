@@ -88,7 +88,6 @@ See `pulumi-test/samples/` for more usage examples.
 ### Project Scripts
 
 - `pnpm build` – Compile TypeScript sources
-- `pnpm lint` – Run ESLint
 - `pnpm test` – Run tests (if available)
 
 ### Directory Reference

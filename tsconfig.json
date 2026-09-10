@@ -86,6 +86,7 @@
     "src/helpers/autoTags.ts",
     "src/helpers/azureEnv.ts",
     "src/helpers/certHelpers.ts",
+    "src/helpers/computeHelper.ts",
     "src/helpers/configHelper.ts",
     "src/helpers/index.ts",
     "src/helpers/rsHelpers.ts",

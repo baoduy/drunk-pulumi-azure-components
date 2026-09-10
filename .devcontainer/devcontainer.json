@@ -7,7 +7,6 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "openai.openai-chatgpt-adhoc",
         "Continue.continue",

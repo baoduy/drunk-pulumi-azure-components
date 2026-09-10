@@ -6,6 +6,7 @@ import * as vault from '../vault';
 import * as vnet from '../vnet';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { azureEnv } from '../helpers';
 
 export interface StorageAccountArgs
   extends
@@ -234,18 +235,19 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
   private createLifeCycleManagement(stg: storage.StorageAccount) {
     const { rsGroup, policies } = this.args;
 
-    if (policies?.blob) {
-      new storage.BlobServiceProperties(
-        `${this.name}-blob-properties`,
-        {
-          ...rsGroup,
-          accountName: stg.name,
-          blobServicesName: 'default',
-          ...policies.blob,
-        },
-        { dependsOn: stg, deletedWith: stg, parent: this },
-      );
-    }
+    new storage.BlobServiceProperties(
+      `${this.name}-blob-properties`,
+      {
+        ...rsGroup,
+        accountName: stg.name,
+        blobServicesName: 'default',
+        deleteRetentionPolicy: { enabled: azureEnv.isPrd, days: 7 },
+        containerDeleteRetentionPolicy: { enabled: azureEnv.isPrd, days: 7 },
+        isVersioningEnabled: azureEnv.isPrd,
+        ...policies?.blob,
+      },
+      { dependsOn: stg, deletedWith: stg, parent: this },
+    );
 
     if (policies?.defaultManagementPolicyRules) {
       return new storage.ManagementPolicy(

@@ -14,11 +14,13 @@ export type Captured = { type: string; name: string; inputs: any };
  * Resets the module registry and points PULUMI_NODEJS_STACK at `stackName`, then runs `load`
  * (which must `require()` the pulumi module and the component(s) under test) and returns
  * whatever it returns, plus the array of resources captured by the mock `newResource` callback.
+ * `extraCall` optionally answers a Pulumi invoke by token; return `undefined` to keep the default.
  */
 export function withStack<T>(
   stackName: string,
   load: (pulumi: typeof import('@pulumi/pulumi')) => T,
   extraState?: (args: { type: string; name: string; inputs: any }) => object,
+  extraCall?: (args: { token: string; inputs: any }) => object | undefined,
 ): T & { captured: Captured[] } {
   process.env.PULUMI_NODEJS_STACK = stackName;
   jest.resetModules();
@@ -43,7 +45,8 @@ export function withStack<T>(
     call: (args: any) => {
       // AKS's getExtraAksOutputs() fetches a client token through this Pulumi invoke.
       if (args.token === 'azure-native:authorization:getClientToken') return { token: 'mock-token' };
-      return args.inputs;
+      // Optional per-test invoke answer (e.g. listStorageAccountKeys); falls through to the default when it returns undefined.
+      return extraCall?.(args) ?? args.inputs;
     },
   });
 

@@ -79,9 +79,20 @@ export interface AzSqlArgs
   network?: Omit<types.NetworkArgs, 'bypass' | 'defaultAction' | 'vnetRules'> & {
     subnets?: pulumi.Input<Array<{ id: string }>>;
   };
+  /**
+   * Microsoft-managed (express) SQL vulnerability assessment plus the server security alert policy.
+   * Express results appear in Microsoft Defender for Cloud and need Microsoft Defender for Azure SQL
+   * enabled on the subscription. Express replaces (switches off) any classic, storage-backed assessment.
+   * On by default in PRD; outside PRD it is on only when this block is supplied.
+   */
   vulnerabilityAssessment?: {
-    logStorage: types.ResourceWithGroupInputs;
-    alertEmails: pulumi.Input<string[]>;
+    /** Turn the assessment and alert policy on or off. Default: `true` in PRD or when this block is supplied. */
+    enabled?: boolean;
+    /** Optional storage account for alert logs and the server blob auditing policy. No audit policy without it. */
+    logStorage?: types.ResourceWithGroupInputs;
+    /** Extra alert recipients; subscription admins are always emailed. */
+    alertEmails?: pulumi.Input<string[]>;
+    /** Retention for alert and audit logs, used as given, including `0`. Default: 30 in PRD, else 7. */
     retentionDays?: number;
   };
   databases?: Record<string, AzSqlDbType>;
@@ -328,18 +339,12 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   private createVulnerabilityAssessment(server: sql.Server) {
-    const { rsGroup, vulnerabilityAssessment, vaultInfo } = this.args;
-    if (!vulnerabilityAssessment) return undefined;
+    const { rsGroup, vulnerabilityAssessment: va, vaultInfo } = this.args;
+    if (!(va?.enabled ?? (azureEnv.isPrd || va !== undefined))) return undefined;
 
-    //this will allow SQL server to be able to write log into the storage account
-    // if (enableResourceIdentity)
-    //   this.addMemberToGroupRole(
-    //     'contributor',
-    //     server.identity.apply((id) => id?.principalId),
-    //   );
-
-    const stgEndpoints = storageHelpers.getStorageEndpointsOutputs(vulnerabilityAssessment.logStorage);
-    const storageKey = getStorageAccessKeyOutputs(vulnerabilityAssessment.logStorage, vaultInfo);
+    const retentionDays = va?.retentionDays ?? (azureEnv.isPrd ? 30 : 7);
+    const stgEndpoints = va?.logStorage ? storageHelpers.getStorageEndpointsOutputs(va.logStorage) : undefined;
+    const storageKey = va?.logStorage ? getStorageAccessKeyOutputs(va.logStorage, vaultInfo) : undefined;
 
     const alert = new sql.ServerSecurityAlertPolicy(
       `${this.name}-alert`,
@@ -348,15 +353,28 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         securityAlertPolicyName: 'default',
         serverName: server.name,
         emailAccountAdmins: true,
-        emailAddresses: vulnerabilityAssessment.alertEmails,
-        retentionDays: (vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd) ? 30 : 7,
-
+        emailAddresses: va?.alertEmails,
+        retentionDays,
         storageAccountAccessKey: storageKey,
-        storageEndpoint: stgEndpoints.blob,
+        storageEndpoint: stgEndpoints?.blob,
         state: 'Enabled',
       },
       { dependsOn: server, parent: this },
     );
+
+    //Microsoft-managed (express) vulnerability assessment, no storage account needed.
+    new sql.SqlVulnerabilityAssessmentsSetting(
+      `${this.name}-sqlVa`,
+      {
+        resourceGroupName: rsGroup.resourceGroupName,
+        serverName: server.name,
+        vulnerabilityAssessmentName: 'default',
+        state: 'Enabled',
+      },
+      { dependsOn: alert, parent: this },
+    );
+
+    if (!stgEndpoints) return undefined;
 
     //Server Audit
     new sql.ExtendedServerBlobAuditingPolicy(
@@ -374,33 +392,13 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         isStorageSecondaryKeyInUse: false,
         predicateExpression: "object_name = 'SensitiveData'",
         queueDelayMs: 4000,
-        retentionDays: (vulnerabilityAssessment.retentionDays ?? azureEnv.isPrd) ? 30 : 7,
+        retentionDays,
         state: 'Enabled',
         isDevopsAuditEnabled: true,
 
         storageAccountAccessKey: storageKey,
         storageAccountSubscriptionId: azureEnv.subscriptionId,
         storageEndpoint: stgEndpoints.blob,
-      },
-      { dependsOn: alert, parent: this },
-    );
-
-    //ServerVulnerabilityAssessment
-    new sql.ServerVulnerabilityAssessment(
-      `${this.name}-assessment`,
-      {
-        ...rsGroup,
-        vulnerabilityAssessmentName: this.name,
-        serverName: server.name,
-
-        recurringScans: {
-          isEnabled: true,
-          emailSubscriptionAdmins: true,
-          emails: vulnerabilityAssessment.alertEmails,
-        },
-
-        storageContainerPath: pulumi.interpolate`${stgEndpoints.blob}/${server.name}`,
-        storageAccountAccessKey: storageKey,
       },
       { dependsOn: alert, parent: this },
     );

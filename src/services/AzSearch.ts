@@ -1,6 +1,7 @@
 import * as search from '@pulumi/azure-native/search';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { azureEnv } from '../helpers';
 import * as types from '../types';
 import * as vault from '../vault';
 import { PrivateEndpoint } from '../vnet';
@@ -30,6 +31,8 @@ export class AzSearch extends BaseResourceComponent<AzSearchArgs> {
         ...props,
         ...rsGroup,
         sku: { name: props.sku },
+        // PRD paid SKUs default to 3 replicas for the read-write SLA; Free and non-PRD keep the Azure default.
+        replicaCount: props.replicaCount ?? (azureEnv.isPrd && props.sku !== search.SkuName.Free ? 3 : undefined),
 
         encryptionWithCmk: enableEncryption
           ? {

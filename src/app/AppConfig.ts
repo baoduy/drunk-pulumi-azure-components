@@ -33,6 +33,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
       enableEncryption,
       vaultInfo,
       network,
+      sku,
       ...props
     } = args;
     const encryptionKey = args.enableEncryption ? this.getEncryptionKey() : undefined;
@@ -41,7 +42,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
       {
         ...args.rsGroup,
         ...props,
-        sku: { name: 'Standard' },
+        sku: { name: sku ?? 'Standard' },
 
         publicNetworkAccess: !network?.publicNetworkAccess
           ? appConfig.PublicNetworkAccess.Enabled

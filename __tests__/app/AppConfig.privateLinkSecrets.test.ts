@@ -6,8 +6,6 @@ import { withStack, restoreStack } from '../testUtils/pulumiMocks';
  * coverage and mutation bar.
  */
 
-jest.setTimeout(30_000);
-
 const STORE_TYPE = 'azure-native:appconfiguration:ConfigurationStore';
 const PRIVATE_ENDPOINT_TYPE = 'drunk:azure:PrivateEndpoint';
 const VAULT_SECRETS_TYPE = 'drunk:azure:VaultSecrets';

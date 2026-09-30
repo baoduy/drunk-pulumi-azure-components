@@ -4,116 +4,132 @@ import { withStack, restoreStack } from '../testUtils/pulumiMocks';
  * DRK-1822 S2 — SKU classification behind the AzSql tier defaults (programmer tests, DRK-1858).
  * Pins the SKU families the acceptance tests do not reach: BusinessCritical, DTU Premium,
  * DTU Standard, tier-only Hyperscale, case-insensitive tiers and unresolved `Input` SKU names.
+ *
+ * Each row names the stack, the AzSql args, and the expected inputs per resource type
+ * (`Database`, `ElasticPool`). An expected `undefined` means the field is not sent.
  */
 
-jest.setTimeout(30_000);
+type Expected = Partial<Record<'Database' | 'ElasticPool', Record<string, unknown>>>;
 
-const DB_TYPE = 'azure-native:sql:Database';
-const POOL_TYPE = 'azure-native:sql:ElasticPool';
+const standalone = (sku: Record<string, unknown>) => ({ databases: { app: { sku } } });
+const noZoneDefault = { zoneRedundant: undefined, requestedBackupStorageRedundancy: 'Geo', autoPauseDelay: undefined };
 
-const baseArgs = {
-  rsGroup: { resourceGroupName: 'rg', location: 'eastus' },
-  administrators: { azureAdOnlyAuthentication: true },
-};
+const cases: Array<[string, 'prd' | 'dev', Record<string, unknown>, Expected]> = [
+  [
+    'prd BC_Gen5_2 name is zone-redundant',
+    'prd',
+    standalone({ name: 'BC_Gen5_2' }),
+    { Database: { zoneRedundant: true } },
+  ],
+  ['prd DTU P1 name is zone-redundant', 'prd', standalone({ name: 'P1' }), { Database: { zoneRedundant: true } }],
+  ['prd DTU P15 name is zone-redundant', 'prd', standalone({ name: 'P15' }), { Database: { zoneRedundant: true } }],
+  [
+    'prd lower-case businesscritical tier is zone-redundant',
+    'prd',
+    standalone({ name: 'custom', tier: 'businesscritical' }),
+    { Database: { zoneRedundant: true } },
+  ],
+  [
+    'prd Premium tier is zone-redundant',
+    'prd',
+    standalone({ name: 'custom', tier: 'Premium' }),
+    { Database: { zoneRedundant: true } },
+  ],
+  [
+    'prd DTU S0 name gets no zone-redundancy default',
+    'prd',
+    standalone({ name: 'S0', tier: 'Standard' }),
+    { Database: noZoneDefault },
+  ],
+  [
+    'prd P1 prefix of a longer name gets no zone-redundancy default',
+    'prd',
+    standalone({ name: 'P1X' }),
+    { Database: noZoneDefault },
+  ],
+  [
+    'prd GP_ not at the start of the name gets no zone-redundancy default',
+    'prd',
+    standalone({ name: 'XGP_Gen5_2' }),
+    { Database: noZoneDefault },
+  ],
+  [
+    'prd database with only a Hyperscale tier gets no backup default',
+    'prd',
+    standalone({ name: 'custom', tier: 'Hyperscale' }),
+    { Database: { zoneRedundant: undefined, requestedBackupStorageRedundancy: undefined } },
+  ],
+  [
+    'dev database with no sku still gets local backups and no other default',
+    'dev',
+    { databases: { app: {} } },
+    { Database: { requestedBackupStorageRedundancy: 'Local', zoneRedundant: undefined, autoPauseDelay: undefined } },
+  ],
+  [
+    'prd database with an unresolved Input sku name gets no sku-based default',
+    'prd',
+    standalone({ name: Promise.resolve('GP_S_Gen5_1') }),
+    { Database: noZoneDefault },
+  ],
+  [
+    'dev database in a serverless pool takes the pool sku for auto-pause',
+    'dev',
+    { elasticPoolCreate: { sku: { name: 'GP_S_Gen5_1' } }, databases: { app: { sku: { name: 'Basic' } } } },
+    {
+      ElasticPool: { zoneRedundant: false },
+      Database: { autoPauseDelay: 60, zoneRedundant: undefined, requestedBackupStorageRedundancy: 'Local' },
+    },
+  ],
+  [
+    'prd DTU Standard elastic pool gets neither a zone-redundancy nor an auto-pause default',
+    'prd',
+    { elasticPoolCreate: { sku: { name: 'StandardPool', tier: 'Standard' } } },
+    { ElasticPool: { zoneRedundant: undefined, autoPauseDelay: undefined } },
+  ],
+  [
+    'dev database keeps a caller zoneRedundant: true and requestedBackupStorageRedundancy: Geo',
+    'dev',
+    { databases: { app: { sku: { name: 'S0' }, zoneRedundant: true, requestedBackupStorageRedundancy: 'Geo' } } },
+    { Database: { zoneRedundant: true, requestedBackupStorageRedundancy: 'Geo' } },
+  ],
+];
 
-async function deploy(stackName: string, args: Record<string, unknown>) {
-  const { pulumi, AzSql, captured } = withStack(stackName, (p) => ({
+/**
+ * Reloads AzSql under `stack`, deploys `args`, and waits until every expected resource type is
+ * registered. Returns the captured inputs keyed by the last segment of the resource type.
+ */
+async function inputsByType(stack: string, args: Record<string, unknown>, types: string[]) {
+  const { pulumi, AzSql, captured } = withStack(stack, (p) => ({
     pulumi: p,
     AzSql: require('../../src/database/AzSql').AzSql,
   }));
 
-  // The cases send raw SKU shapes, including an unresolved Input name, so the args stay untyped.
-  const sqlServer = new AzSql('sql-sku', { ...baseArgs, ...args } as any);
-  await pulumi.output(sqlServer.id).promise();
-  await new Promise((resolve) => setTimeout(resolve, 50));
+  const server = new AzSql('sql-sku', {
+    rsGroup: { resourceGroupName: 'rg', location: 'eastus' },
+    administrators: { azureAdOnlyAuthentication: true },
+    ...args,
+  });
+  await pulumi.output(server.id).promise();
 
-  return {
-    pulumi,
-    db: captured.find((c) => c.type === DB_TYPE)?.inputs,
-    pool: captured.find((c) => c.type === POOL_TYPE)?.inputs,
-  };
+  const byType = () => Object.fromEntries(captured.map((c) => [c.type.split(':').pop(), c.inputs]));
+  for (let i = 0; i < 200 && !types.every((t) => t in byType()); i++) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  return byType();
 }
-
-const standalone = (sku: Record<string, unknown>) => ({ databases: { app: { sku } } });
 
 describe('AzSql SKU classification for tier defaults', () => {
   const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
   afterEach(() => restoreStack(ORIGINAL_STACK));
 
-  test.each([
-    ['BC_Gen5_2 name', { name: 'BC_Gen5_2' }],
-    ['DTU P1 name', { name: 'P1' }],
-    ['DTU P15 name', { name: 'P15' }],
-    ['lower-case businesscritical tier', { name: 'custom', tier: 'businesscritical' }],
-    ['Premium tier', { name: 'custom', tier: 'Premium' }],
-  ])('prd standalone %s is zone-redundant', async (_, sku) => {
-    const { db } = await deploy('prd', standalone(sku));
+  test.each(cases)('%s', async (_, stack, args, expected) => {
+    const inputs = await inputsByType(stack, args, Object.keys(expected));
 
-    expect(db.zoneRedundant).toBe(true);
-  });
-
-  test.each([
-    ['DTU S0 name', { name: 'S0', tier: 'Standard' }],
-    ['P1 prefix of a longer name', { name: 'P1X' }],
-    ['GP_ not at the start of the name', { name: 'XGP_Gen5_2' }],
-  ])('prd standalone %s gets no zone-redundancy default', async (_, sku) => {
-    const { db } = await deploy('prd', standalone(sku));
-
-    expect(db.zoneRedundant).toBeUndefined();
-    expect(db.requestedBackupStorageRedundancy).toBe('Geo');
-    expect(db.autoPauseDelay).toBeUndefined();
-  });
-
-  test('prd database with only a Hyperscale tier gets no backup default', async () => {
-    const { db } = await deploy('prd', standalone({ name: 'custom', tier: 'Hyperscale' }));
-
-    expect(db.zoneRedundant).toBeUndefined();
-    expect(db.requestedBackupStorageRedundancy).toBeUndefined();
-  });
-
-  test('dev database with no sku still gets local backups and no other default', async () => {
-    const { db } = await deploy('dev', { databases: { app: {} } });
-
-    expect(db.requestedBackupStorageRedundancy).toBe('Local');
-    expect(db.zoneRedundant).toBeUndefined();
-    expect(db.autoPauseDelay).toBeUndefined();
-  });
-
-  test('prd database with an unresolved Input sku name gets no sku-based default', async () => {
-    const { db } = await deploy('prd', {
-      databases: { app: { sku: { name: Promise.resolve('GP_S_Gen5_1') } } },
-    });
-
-    expect(db.zoneRedundant).toBeUndefined();
-    expect(db.autoPauseDelay).toBeUndefined();
-    expect(db.requestedBackupStorageRedundancy).toBe('Geo');
-  });
-
-  test('dev database in a serverless pool takes the pool sku for auto-pause', async () => {
-    const { db, pool } = await deploy('dev', {
-      elasticPoolCreate: { sku: { name: 'GP_S_Gen5_1' } },
-      databases: { app: { sku: { name: 'Basic' } } },
-    });
-
-    expect(pool.zoneRedundant).toBe(false);
-    expect(db.autoPauseDelay).toBe(60);
-    expect(db.zoneRedundant).toBeUndefined();
-    expect(db.requestedBackupStorageRedundancy).toBe('Local');
-  });
-
-  test('prd DTU Standard elastic pool gets neither a zone-redundancy nor an auto-pause default', async () => {
-    const { pool } = await deploy('prd', { elasticPoolCreate: { sku: { name: 'StandardPool', tier: 'Standard' } } });
-
-    expect(pool.zoneRedundant).toBeUndefined();
-    expect(pool.autoPauseDelay).toBeUndefined();
-  });
-
-  test('dev database keeps a caller zoneRedundant: true and requestedBackupStorageRedundancy: Geo', async () => {
-    const { db } = await deploy('dev', {
-      databases: { app: { sku: { name: 'S0' }, zoneRedundant: true, requestedBackupStorageRedundancy: 'Geo' } },
-    });
-
-    expect(db.zoneRedundant).toBe(true);
-    expect(db.requestedBackupStorageRedundancy).toBe('Geo');
+    for (const [type, fields] of Object.entries(expected)) {
+      // Presence first, so an expected `undefined` cannot pass on a resource that was never created.
+      expect(Object.keys(inputs)).toContain(type);
+      const actual = Object.fromEntries(Object.keys(fields!).map((key) => [key, inputs[type]?.[key]]));
+      expect({ [type]: actual }).toEqual({ [type]: fields });
+    }
   });
 });

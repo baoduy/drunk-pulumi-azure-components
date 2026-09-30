@@ -8,6 +8,7 @@ import { withStack, restoreStack, Captured } from '../testUtils/pulumiMocks';
 
 const SERVICE = 'azure-native:apimanagement:ApiManagementService';
 
+// `props` carries partial mocks (sku-less additional locations, stub appInsight and identity), so it stays untyped.
 async function createApim(stackName: string, props: any): Promise<Captured[]> {
   const { pulumi, service, captured } = withStack(stackName, (p) => {
     const mod: typeof import('../../src/apim/Apim') = require('../../src/apim/Apim');
@@ -110,7 +111,7 @@ describe('AppContainerEnv — caller zoneRedundant wins outside PRD (DRK-1822 R5
       const env = new mod.AppContainerEnv('ace1', {
         rsGroup: { resourceGroupName: 'rg', location: 'southeastasia' },
         zoneRedundant: true,
-      } as any);
+      });
       return { pulumi: p, env };
     });
     await pulumi.output(env.id).promise();

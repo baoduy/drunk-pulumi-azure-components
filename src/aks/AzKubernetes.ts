@@ -335,10 +335,15 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       {
         ...props,
         ...rsGroup,
-        // PRD defaults to the Standard (SLA-backed) tier, non-PRD to Free; an explicit tier always wins.
+        // An explicit tier always wins. Otherwise PRD and every Automatic cluster (Azure preconfigures
+        // Automatic to Standard) get the Standard (SLA-backed) tier, and everything else gets Free.
         sku: {
           ...sku,
-          tier: sku.tier ?? (azureEnv.isPrd ? ccs.ManagedClusterSKUTier.Standard : ccs.ManagedClusterSKUTier.Free),
+          tier:
+            sku.tier ??
+            (azureEnv.isPrd || sku.name === ccs.ManagedClusterSKUName.Automatic
+              ? ccs.ManagedClusterSKUTier.Standard
+              : ccs.ManagedClusterSKUTier.Free),
         },
         aadProfile: groupRoles
           ? {

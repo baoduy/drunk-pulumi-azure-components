@@ -1,6 +1,7 @@
 import * as appConfig from '@pulumi/azure-native/appconfiguration';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { networkGuard } from '../helpers';
 import * as types from '../types';
 import * as vault from '../vault';
 import { PrivateEndpoint } from '../vnet';
@@ -22,6 +23,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
 
   constructor(name: string, args: AppConfigArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AppConfig', name, args, opts);
+    networkGuard.assertPrdNetworkRestricted('AppConfig', name, args.network, { privateLinkOnly: true });
 
     const {
       rsGroup,
@@ -41,9 +43,9 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
         ...props,
         sku: { name: 'Standard' },
 
-        publicNetworkAccess: !network?.publicNetworkAccess
+        publicNetworkAccess: network?.publicNetworkAccess
           ? appConfig.PublicNetworkAccess.Enabled
-          : network.privateLink
+          : network?.privateLink
             ? appConfig.PublicNetworkAccess.Disabled
             : appConfig.PublicNetworkAccess.Enabled,
 

@@ -6,7 +6,7 @@ import * as vault from '../vault';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 import { PrivateEndpoint } from '../vnet';
-import { azureEnv, zoneHelper } from '../helpers';
+import { azureEnv, networkGuard, zoneHelper } from '../helpers';
 
 const defaultQueueOptions: Partial<bus.QueueArgs> = {
   //duplicateDetectionHistoryTimeWindow: 'P10M',
@@ -84,6 +84,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
 
   constructor(name: string, args: ServiceBusArgs, opts?: pulumi.ComponentResourceOptions) {
     super('ServiceBus', name, args, opts);
+    networkGuard.assertPrdNetworkRestricted('ServiceBus', name, args.network);
 
     const service = this.createBusNamespace();
     this.createNetwork(service);
@@ -177,7 +178,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
       {
         ...rsGroup,
         namespaceName: service.name,
-        defaultAction: network.defaultAction ? network.defaultAction : 'Allow',
+        defaultAction: networkGuard.hasNetworkRules(network) ? 'Deny' : (network.defaultAction ?? 'Allow'),
         trustedServiceAccessEnabled: true,
 
         ipRules: network.ipRules

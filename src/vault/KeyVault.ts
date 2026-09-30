@@ -7,7 +7,7 @@ import * as types from '../types';
 import { PrivateEndpoint } from '../vnet';
 import { SecretItemArgs } from './VaultSecret';
 import { VaultSecrets } from './VaultSecrets';
-import { azureEnv } from '../helpers';
+import { azureEnv, networkGuard } from '../helpers';
 
 export interface KeyVaultArgs
   extends BaseArgs, types.WithResourceGroupInputs, types.WithNetworkArgs, Partial<Pick<keyvault.VaultArgs, 'tags'>> {
@@ -32,6 +32,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
 
   constructor(name: string, args: KeyVaultArgs, opts?: pulumi.ComponentResourceOptions) {
     super('KeyVault', name, args, opts);
+    networkGuard.assertPrdNetworkRestricted('KeyVault', name, args.network);
 
     const vault = new keyvault.Vault(
       name,
@@ -60,7 +61,9 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
 
           networkAcls: {
             bypass: args.network?.bypass,
-            defaultAction: args.network?.defaultAction,
+            defaultAction: networkGuard.hasNetworkRules(args.network)
+              ? 'Deny'
+              : (args.network?.defaultAction ?? 'Allow'),
 
             ipRules: args.network?.ipRules
               ? pulumi.output(args.network.ipRules).apply((ips) => ips.map((i) => ({ value: i })))

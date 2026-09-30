@@ -100,10 +100,28 @@ describe('Firewall — caller-supplied Args reach the deployed resources (DRK-18
       expect(firewall.threatIntelMode).toBe('Alert');
     });
 
+    test("Basic tier, threatIntelMode 'Alert' on the firewall: AzureFirewall threatIntelMode is 'Alert'", async () => {
+      const { firewall } = await deploy({ sku: BASIC, policy: {}, threatIntelMode: 'Alert' });
+
+      expect(firewall.threatIntelMode).toBe('Alert');
+    });
+
     test("unset on Standard tier: AzureFirewall threatIntelMode is 'Deny'", async () => {
       const { firewall } = await deploy({ sku: STANDARD, policy: {} });
 
       expect(firewall.threatIntelMode).toBe('Deny');
+    });
+
+    test('unset on Basic tier: AzureFirewall threatIntelMode is undefined', async () => {
+      const { firewall } = await deploy({ sku: BASIC, policy: {} });
+
+      expect(firewall.threatIntelMode).toBeUndefined();
+    });
+
+    test('unset on an AZFW_Hub Standard firewall: AzureFirewall threatIntelMode is undefined', async () => {
+      const { firewall } = await deploy({ sku: { name: 'AZFW_Hub', tier: 'Standard' }, policy: {} });
+
+      expect(firewall.threatIntelMode).toBeUndefined();
     });
   });
 

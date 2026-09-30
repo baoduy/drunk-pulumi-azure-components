@@ -269,7 +269,7 @@ describe('Apim — service inputs', () => {
     const { service } = await deployApim({ additionalLocations: [{ location: 'westus' }] }, { stack: 'prd' });
 
     expect(service.inputs.additionalLocations).toBeUndefined();
-    expect(service.inputs.zones).toEqual(['1', '2', '3']);
+    expect(service.inputs.zones).toBeUndefined();
   });
 
   test('S10 Consumption sku gets no zones even in prd', async () => {

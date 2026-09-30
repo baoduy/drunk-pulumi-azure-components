@@ -77,11 +77,14 @@ describe('AppConfig — private endpoint and vault secrets (DRK-1822 Build)', ()
     expect(listKeyCalls).toEqual([{ configStoreName: 'appcfg1', resourceGroupName: 'rg' }]);
     const vaultSecrets = byType(VAULT_SECRETS_TYPE);
     expect(vaultSecrets).toHaveLength(1);
-    expect(Object.keys(vaultSecrets[0].inputs.secrets)).toEqual(['appcfg1-primary-conn', 'appcfg1-secondary-conn']);
-    expect(vaultSecrets[0].inputs.secrets['appcfg1-primary-conn'].contentType).toBe(
+    expect(Object.keys(vaultSecrets[0].inputs.secrets.value)).toEqual([
+      'appcfg1-primary-conn',
+      'appcfg1-secondary-conn',
+    ]);
+    expect(vaultSecrets[0].inputs.secrets.value['appcfg1-primary-conn'].contentType).toBe(
       'AppConfig primary connectionString',
     );
-    expect(vaultSecrets[0].inputs.secrets['appcfg1-secondary-conn'].contentType).toBe(
+    expect(vaultSecrets[0].inputs.secrets.value['appcfg1-secondary-conn'].contentType).toBe(
       'AppConfig secondary connectionString',
     );
   });

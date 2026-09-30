@@ -78,6 +78,10 @@ export interface ServiceBusArgs
   >;
 }
 
+/** `Disabled` when private link is set and public access is not requested; shared by the namespace and its rule set. */
+const getPublicNetworkAccess = (network?: types.NetworkArgs) =>
+  network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled';
+
 export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
@@ -151,7 +155,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
             }
           : undefined,
 
-        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: getPublicNetworkAccess(network),
       },
       {
         ...this.opts,
@@ -179,6 +183,8 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
         ...rsGroup,
         namespaceName: service.name,
         defaultAction: networkGuard.hasNetworkRules(network) ? 'Deny' : (network.defaultAction ?? 'Allow'),
+        // The rule set carries its own publicNetworkAccess (SDK default Enabled); keep it in step with the namespace.
+        publicNetworkAccess: getPublicNetworkAccess(network),
         trustedServiceAccessEnabled: true,
 
         ipRules: network.ipRules

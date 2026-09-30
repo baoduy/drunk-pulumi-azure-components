@@ -100,7 +100,11 @@ describe('ServiceBus', () => {
     await settle();
 
     expect(named('azure-native:servicebus:Namespace', 'sb-pl').publicNetworkAccess).toBe('Disabled');
-    expect(named('azure-native:servicebus:NamespaceNetworkRuleSet', 'sb-pl').defaultAction).toBe('Allow');
+    // R2: no rules, so defaultAction stays Allow; the rule set's own publicNetworkAccess (SDK default Enabled)
+    // must match the namespace, or it reopens the private-link-only bus (DRK-1842 B1).
+    const ruleSet = named('azure-native:servicebus:NamespaceNetworkRuleSet', 'sb-pl');
+    expect(ruleSet.defaultAction).toBe('Allow');
+    expect(ruleSet.publicNetworkAccess).toBe('Disabled');
     expect(ofType('azure-native:network:PrivateEndpoint').length).toBe(1);
   });
 
@@ -115,5 +119,23 @@ describe('ServiceBus', () => {
     await settle();
 
     expect(named('azure-native:servicebus:Namespace', 'sb-pub').publicNetworkAccess).toBe('Enabled');
+    expect(named('azure-native:servicebus:NamespaceNetworkRuleSet', 'sb-pub').publicNetworkAccess).toBe('Enabled');
+  });
+
+  test('with ipRules only it keeps public access enabled on the namespace and its rule set', async () => {
+    const bus = new ServiceBus('sb-ip', {
+      rsGroup,
+      disableLocalAuth: true,
+      sku: premium,
+      network: { ipRules: ['1.2.3.4'] },
+    } as any);
+    await pulumi.output(bus.id).promise();
+    await settle();
+
+    expect(named('azure-native:servicebus:Namespace', 'sb-ip').publicNetworkAccess).toBe('Enabled');
+    const ruleSet = named('azure-native:servicebus:NamespaceNetworkRuleSet', 'sb-ip');
+    expect(ruleSet.publicNetworkAccess).toBe('Enabled');
+    expect(ruleSet.defaultAction).toBe('Deny');
+    expect(ruleSet.trustedServiceAccessEnabled).toBe(true);
   });
 });

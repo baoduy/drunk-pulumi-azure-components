@@ -6,10 +6,18 @@ export const hasNetworkRules = (network?: Pick<NetworkArgs, 'ipRules' | 'vnetRul
   Boolean(network?.ipRules || network?.vnetRules);
 
 /**
+ * True when a rules input restricts access. A plain empty array does not: Azure lets all traffic in when
+ * `defaultAction` is `Deny` with zero rules. An unresolved `Output`/`Promise` cannot be inspected at
+ * construction, so it counts as a restriction.
+ */
+const isRestriction = (rules: unknown) => (Array.isArray(rules) ? rules.length > 0 : Boolean(rules));
+
+/**
  * Production guard (PULUMI-SEC-006): in a prd stack a resource must not be reachable from the
  * public internet. It is accepted only when it is private-link-only (`privateLink` set and
- * `publicNetworkAccess` not `true`) or, unless `privateLinkOnly`, restricted by `ipRules` /
- * `vnetRules`. Anything else throws, naming the component type and resource name.
+ * `publicNetworkAccess` not `true`) or, unless `privateLinkOnly`, restricted by a non-empty `ipRules` /
+ * `vnetRules` (an empty plain array is not a restriction; an unresolved `Output` counts as one).
+ * Anything else throws, naming the component type and resource name.
  * Outside prd this is a no-op.
  *
  * Breaking since DRK-1817: prd AppConfig, KeyVault and ServiceBus without one of these shapes
@@ -30,7 +38,8 @@ export function assertPrdNetworkRestricted(
   if (!isPrd) return;
 
   const privateOnly = Boolean(network?.privateLink) && !network?.publicNetworkAccess;
-  if (privateOnly || (!options.privateLinkOnly && hasNetworkRules(network))) return;
+  const restricted = isRestriction(network?.ipRules) || isRestriction(network?.vnetRules);
+  if (privateOnly || (!options.privateLinkOnly && restricted)) return;
 
   const accepted = options.privateLinkOnly
     ? '`network.privateLink` without `publicNetworkAccess: true`'

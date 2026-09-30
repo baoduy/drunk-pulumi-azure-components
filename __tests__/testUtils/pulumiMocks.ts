@@ -10,15 +10,23 @@
 
 export type Captured = { type: string; name: string; inputs: any };
 
+// Pulumi's wire envelope for a secret-marked value; a plain value would arrive as the bare string.
+export const asSecret = (value: unknown) => ({
+  '4dabf18193072939515e22adb298388d': '1b47061264138c4ac30d75fd1eb44270',
+  value,
+});
+
 /**
  * Resets the module registry and points PULUMI_NODEJS_STACK at `stackName`, then runs `load`
  * (which must `require()` the pulumi module and the component(s) under test) and returns
  * whatever it returns, plus the array of resources captured by the mock `newResource` callback.
+ * `call` answers a Pulumi invoke; returning `undefined` falls through to the default answer.
  */
 export function withStack<T>(
   stackName: string,
   load: (pulumi: typeof import('@pulumi/pulumi')) => T,
   extraState?: (args: { type: string; name: string; inputs: any }) => object,
+  call?: (args: { token: string; inputs: any }) => object | undefined,
 ): T & { captured: Captured[] } {
   process.env.PULUMI_NODEJS_STACK = stackName;
   jest.resetModules();
@@ -41,6 +49,8 @@ export function withStack<T>(
       };
     },
     call: (args: any) => {
+      const answer = call?.(args);
+      if (answer !== undefined) return answer;
       // AKS's getExtraAksOutputs() fetches a client token through this Pulumi invoke.
       if (args.token === 'azure-native:authorization:getClientToken') return { token: 'mock-token' };
       return args.inputs;
@@ -49,6 +59,33 @@ export function withStack<T>(
 
   const result = load(pulumi);
   return Object.assign(result as object, { captured }) as T & { captured: Captured[] };
+}
+
+/** Awaits `id`, then drains the event loop so every pending child registration reaches the mocks. */
+export async function settle(pulumi: typeof import('@pulumi/pulumi'), id: import('@pulumi/pulumi').Output<string>) {
+  await pulumi.output(id).promise();
+  for (let i = 0; i < 50; i++) await new Promise((resolve) => setImmediate(resolve));
+}
+
+/** Inputs of the one captured resource with this type and name; fails the test on zero or several. */
+export function registrationOf(captured: Captured[], type: string, name: string) {
+  const found = captured.filter((c) => c.type === type && c.name === name);
+  expect(found).toHaveLength(1);
+  return found[0].inputs;
+}
+
+/** Silences `console.log` per test and restores PULUMI_NODEJS_STACK afterwards; call inside `describe`. */
+export function quietStackHooks() {
+  const originalStack = process.env.PULUMI_NODEJS_STACK;
+  let logSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    logSpy.mockRestore();
+    restoreStack(originalStack);
+  });
 }
 
 /** Restore PULUMI_NODEJS_STACK to whatever it was before the test file overrode it. */

@@ -1,4 +1,4 @@
-import { restoreStack } from '../testUtils/pulumiMocks';
+import { asSecret, quietStackHooks, registrationOf, settle, withStack } from '../testUtils/pulumiMocks';
 
 /**
  * DRK-1864 acceptance tests S1–S5: a secret `value` handed to `VaultSecret` / `VaultSecrets` must reach the
@@ -11,67 +11,23 @@ const VAULT_SECRET_COMPONENT_TYPE = 'drunk:azure:VaultSecret';
 const VAULT_SECRETS_COMPONENT_TYPE = 'drunk:azure:VaultSecrets';
 const VAULT_SECRET_RESOURCE_TYPE = 'drunk-pulumi:vault:VaultSecretResourceMock';
 
-// Pulumi's wire envelope for a secret-marked value; a plain value would arrive as the bare string.
-const asSecret = (value: unknown) => ({
-  '4dabf18193072939515e22adb298388d': '1b47061264138c4ac30d75fd1eb44270',
-  value,
-});
-
 const vaultInfo = { resourceGroupName: 'rg-vault', resourceName: 'kv1', id: 'kv1_id' };
-
-type Registration = { type: string; name: string; inputs: any };
-type VaultModules = {
-  pulumi: typeof import('@pulumi/pulumi');
-  VaultSecret: typeof import('../../src/vault/VaultSecret').VaultSecret;
-  VaultSecrets: typeof import('../../src/vault/VaultSecrets').VaultSecrets;
-};
 
 /** Loads a fresh Pulumi runtime and the vault components, recording every resource registration. */
 function loadVault(config?: Record<string, string>) {
-  process.env.PULUMI_NODEJS_STACK = 'dev';
-  jest.resetModules();
-  const pulumi: typeof import('@pulumi/pulumi') = require('@pulumi/pulumi');
-
-  const registrations: Registration[] = [];
-  pulumi.runtime.setMocks({
-    newResource: (args: any) => {
-      registrations.push({ type: args.type, name: args.name, inputs: args.inputs });
-      return { id: `${args.name}_id`, state: { ...args.inputs } };
-    },
-    call: (args: any) => args.inputs,
+  const { captured, ...modules } = withStack('dev', (pulumi) => {
+    if (config) pulumi.runtime.setAllConfig(config, Object.keys(config));
+    const VaultSecret: typeof import('../../src/vault/VaultSecret').VaultSecret =
+      require('../../src/vault/VaultSecret').VaultSecret;
+    const VaultSecrets: typeof import('../../src/vault/VaultSecrets').VaultSecrets =
+      require('../../src/vault/VaultSecrets').VaultSecrets;
+    return { pulumi, VaultSecret, VaultSecrets };
   });
-  if (config) pulumi.runtime.setAllConfig(config, Object.keys(config));
-
-  const modules: VaultModules = {
-    pulumi,
-    VaultSecret: require('../../src/vault/VaultSecret').VaultSecret,
-    VaultSecrets: require('../../src/vault/VaultSecrets').VaultSecrets,
-  };
-  return { ...modules, registrations };
-}
-
-async function settle(pulumi: typeof import('@pulumi/pulumi'), id: import('@pulumi/pulumi').Output<string>) {
-  await pulumi.output(id).promise();
-  for (let i = 0; i < 50; i++) await new Promise((resolve) => setImmediate(resolve));
-}
-
-function registrationOf(registrations: Registration[], type: string, name: string) {
-  const found = registrations.filter((r) => r.type === type && r.name === name);
-  expect(found).toHaveLength(1);
-  return found[0].inputs;
+  return { ...modules, registrations: captured };
 }
 
 describe('VaultSecret / VaultSecrets — secret marking of component inputs (DRK-1864)', () => {
-  const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
-  let logSpy: jest.SpyInstance;
-
-  beforeEach(() => {
-    logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-  });
-  afterEach(() => {
-    logSpy.mockRestore();
-    restoreStack(ORIGINAL_STACK);
-  });
+  quietStackHooks();
 
   test('S1 — VaultSecret with a plain value registers the value secret-marked', async () => {
     const { pulumi, VaultSecret, registrations } = loadVault();

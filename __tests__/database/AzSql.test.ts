@@ -116,15 +116,21 @@ describe('AzSql — vulnerability assessment defaults and retention', () => {
   test('S5 storage opt-in adds audit, PRD retention default', async () => {
     const { registered, inputsOf } = await build('prd', { logStorage, alertEmails: ['sec@example.com'] });
 
+    // The storage access key must reach both policies as a Pulumi secret; the mock monitor keeps a
+    // secret input wrapped in the runtime's secret envelope instead of the plain string.
+    const { specialSigKey, specialSecretSig } = require('@pulumi/pulumi').runtime;
+    const secretKey = { [specialSigKey]: specialSecretSig, value: 'stg-key' };
+
     const [alert] = inputsOf(ALERT_POLICY);
     expect(alert.storageEndpoint).toBe('https://stglogs.blob.core.windows.net');
-    expect(alert.storageAccountAccessKey).toBe('stg-key');
+    expect(alert.storageAccountAccessKey).toEqual(secretKey);
     expect(alert.retentionDays).toBe(30);
 
     expect(registered(AUDIT_POLICY)).toHaveLength(1);
     const [audit] = inputsOf(AUDIT_POLICY);
     expect(audit.retentionDays).toBe(30);
     expect(audit.storageEndpoint).toBe('https://stglogs.blob.core.windows.net');
+    expect(audit.storageAccountAccessKey).toEqual(secretKey);
 
     expect(registered(CLASSIC_VA)).toHaveLength(0);
   });

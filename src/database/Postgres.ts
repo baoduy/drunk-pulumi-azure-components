@@ -39,6 +39,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
 
     const { server, credentials } = this.createPostgres();
     this.createNetwork(server);
+    this.enableADAdmin(server);
     this.createDatabases(server, credentials);
 
     this.id = server.id;
@@ -144,7 +145,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     this.addSecrets({
       [`${this.name}-postgres-host`]: credentials.host,
       [`${this.name}-postgres-port`]: credentials.port,
-      [`${this.name}-postgres-login`]: this.args.administratorLogin!,
+      [`${this.name}-postgres-login`]: credentials.username,
       [`${this.name}-postgres-pass`]: credentials.password,
     });
 
@@ -195,6 +196,25 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         { dependsOn: server, parent: this },
       );
     }
+  }
+
+  /** Registers `groupRoles.admin` as the server's Microsoft Entra administrator when Entra auth is enabled. */
+  private enableADAdmin(server: postgresql.Server) {
+    const { rsGroup, groupRoles, enableAzureADAdmin } = this.args;
+    if (!enableAzureADAdmin || !groupRoles) return undefined;
+
+    return new postgresql.AdministratorsMicrosoftEntra(
+      this.name,
+      {
+        ...rsGroup,
+        serverName: server.name,
+        objectId: groupRoles.admin.objectId,
+        principalName: groupRoles.admin.displayName,
+        principalType: postgresql.PrincipalType.Group,
+        tenantId: azureEnv.tenantId,
+      },
+      { dependsOn: server, parent: this },
+    );
   }
 
   private createDatabases(server: postgresql.Server, cred: types.DbCredentialsType) {

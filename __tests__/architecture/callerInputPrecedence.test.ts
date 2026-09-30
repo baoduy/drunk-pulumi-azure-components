@@ -23,8 +23,6 @@ const srcDir = path.resolve(__dirname, '../../src');
 const KNOWN_VIOLATIONS: Record<string, number> = {
   // DRK-1812 [A1812-3] — vulnerabilityAssessment.retentionDays (alert policy + audit policy)
   'database/AzSql.ts': 2,
-  // DRK-1812 [A1812-8] — policy dnsSettings, policy threatIntelMode, firewall threatIntelMode
-  'vnet/Firewall.ts': 3,
 };
 
 const walk = (dir: string): string[] =>

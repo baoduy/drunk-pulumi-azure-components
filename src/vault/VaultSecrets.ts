@@ -22,15 +22,22 @@ export class VaultSecrets extends BaseComponent<VaultSecretsArgs> {
   } = {};
 
   constructor(name: string, args: VaultSecretsArgs, opts?: pulumi.ComponentResourceOptions) {
-    super(getComponentResourceType('VaultSecrets'), name, args, opts);
+    // Secret-mark every caller value before the map becomes a component input.
+    const secrets = Object.fromEntries(
+      Object.entries(args.secrets).map(([key, item]) => [
+        key,
+        item.value == null ? item : { ...item, value: pulumi.secret(item.value) },
+      ]),
+    );
+    super(getComponentResourceType('VaultSecrets'), name, { ...args, secrets }, opts);
 
-    Object.keys(args.secrets).forEach((key) => {
+    Object.keys(secrets).forEach((key) => {
       console.log(`Creating secret ${key} into Key Vault of ${name}`);
 
       const secret = new VaultSecret(
         key.includes(name) ? key : `${name}-${key}`,
         {
-          ...args.secrets[key],
+          ...secrets[key],
           vaultInfo: args.vaultInfo,
         },
         { ...this.childOpts, parent: this, retainOnDelete: true },

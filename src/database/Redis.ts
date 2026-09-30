@@ -36,7 +36,8 @@ export interface RedisArgs
   additionalUserAssignedIds?: Array<{
     name: string;
     accessPolicy: 'Data Owner' | 'Data Contributor' | 'Data Reader';
-    clientId: pulumi.Input<string>;
+    /** The principal object ID of the identity, not its client ID. */
+    principalId: pulumi.Input<string>;
   }>;
   network?: Omit<types.NetworkArgs, 'vnetRules'> & {
     subnetId?: pulumi.Input<string>;
@@ -115,8 +116,8 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
           ...rsGroup,
           accessPolicyName: 'Data Contributor',
           cacheName: server.name,
-          objectId: defaultUAssignedId.clientId,
-          objectIdAlias: defaultUAssignedId.clientId,
+          objectId: defaultUAssignedId.principalId,
+          objectIdAlias: defaultUAssignedId.resourceName,
         },
         { dependsOn: server, deletedWith: server, parent: this },
       );
@@ -129,8 +130,8 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
             ...rsGroup,
             accessPolicyName: u.accessPolicy,
             cacheName: server.name,
-            objectId: u.clientId,
-            objectIdAlias: u.clientId,
+            objectId: u.principalId,
+            objectIdAlias: u.name,
           },
           { dependsOn: server, deletedWith: server, parent: this },
         );

@@ -20,10 +20,7 @@ import * as path from 'node:path';
 
 const srcDir = path.resolve(__dirname, '../../src');
 
-const KNOWN_VIOLATIONS: Record<string, number> = {
-  // DRK-1812 [A1812-3] — vulnerabilityAssessment.retentionDays (alert policy + audit policy)
-  'database/AzSql.ts': 2,
-};
+const KNOWN_VIOLATIONS: Record<string, number> = {};
 
 const walk = (dir: string): string[] =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

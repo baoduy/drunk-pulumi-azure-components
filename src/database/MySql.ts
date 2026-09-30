@@ -67,6 +67,7 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
     const adminLogin = administratorLogin ?? pulumi.interpolate`${this.name}-admin-${this.createRandomString().value}`;
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
+    const availabilityZone = this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1');
 
     const server = new mysql.Server(
       this.name,
@@ -110,12 +111,16 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
 
         highAvailability:
           this.args.sku.tier !== 'Burstable'
-            ? (this.args.highAvailability ?? {
-                mode: azureEnv.isPrd ? 'ZoneRedundant' : 'SameZone',
-                standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
-              })
+            ? (this.args.highAvailability ??
+              (azureEnv.isPrd
+                ? {
+                    mode: 'ZoneRedundant',
+                    // The standby must sit in a different zone from the primary.
+                    standbyAvailabilityZone: pulumi.output(availabilityZone).apply((z) => (z === '1' ? '2' : '1')),
+                  }
+                : undefined))
             : undefined,
-        availabilityZone: this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1'),
+        availabilityZone,
 
         network: {
           publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',

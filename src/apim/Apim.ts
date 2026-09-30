@@ -192,10 +192,13 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             }
           : undefined,
 
+        //PRD default zones only on the tiers Azure supports zones on; other tiers keep the caller's zones
         zones:
           sku.name == apim.SkuType.Basic || sku.name == apim.SkuType.Consumption
             ? undefined
-            : zoneHelper.getDefaultZones(zones),
+            : ['Premium', 'StandardV2', 'PremiumV2'].includes(sku.name as string)
+              ? zoneHelper.getDefaultZones(zones)
+              : zones,
 
         //Only available for Premium
         additionalLocations:

@@ -156,7 +156,7 @@ export class AppContainerEnv extends BaseResourceComponent<AppContainerEnvArgs> 
         // Dapr telemetry
         daprAIConnectionString: dapr?.connectionString ?? this.args.daprAIConnectionString,
         daprAIInstrumentationKey: dapr?.instrumentationKey ?? this.args.daprAIInstrumentationKey,
-        zoneRedundant: zoneRedundant ?? azureEnv.isPrd,
+        zoneRedundant: zoneRedundant ?? (azureEnv.isPrd && !!vnetConfiguration),
 
         appLogsConfiguration: logs?.workspace
           ? {

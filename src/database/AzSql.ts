@@ -70,7 +70,12 @@ export interface AzSqlArgs
   elasticPoolCreate?: Partial<
     Pick<
       sql.ElasticPoolArgs,
-      'autoPauseDelay' | 'availabilityZone' | 'highAvailabilityReplicaCount' | 'licenseType' | 'perDatabaseSettings'
+      | 'autoPauseDelay'
+      | 'availabilityZone'
+      | 'highAvailabilityReplicaCount'
+      | 'licenseType'
+      | 'perDatabaseSettings'
+      | 'zoneRedundant'
     >
   > & {
     maxSizeGB?: number;
@@ -100,6 +105,23 @@ export interface AzSqlArgs
   };
   databases?: Record<string, AzSqlDbType>;
 }
+
+/** Only plain-string SKU values are classified; an unresolved `Input` counts as unknown. */
+const plain = (value: unknown) => (typeof value === 'string' ? value.toUpperCase() : '');
+
+/** vCore GeneralPurpose/BusinessCritical and DTU Premium support zone redundancy. */
+const supportsZoneRedundancy = (sku?: AzSqlSkuType) =>
+  ['GENERALPURPOSE', 'BUSINESSCRITICAL', 'PREMIUM'].includes(plain(sku?.tier)) ||
+  /^(GP_|BC_|P\d+$)/.test(plain(sku?.name));
+
+/** Hyperscale backup redundancy is set at creation only, so it gets no default. */
+const isHyperscale = (sku?: AzSqlSkuType) => plain(sku?.tier) === 'HYPERSCALE' || plain(sku?.name).startsWith('HS_');
+
+/** Serverless vCore SKUs carry `_S_` in the name, e.g. `GP_S_Gen5_1`. */
+const isServerless = (sku?: AzSqlSkuType) => plain(sku?.name).includes('_S_');
+
+/** Serverless never pauses in PRD and pauses after 60 minutes elsewhere; provisioned SKUs get no default. */
+const defaultAutoPauseDelay = (sku?: AzSqlSkuType) => (isServerless(sku) ? (azureEnv.isPrd ? -1 : 60) : undefined);
 
 export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   public readonly id: pulumi.Output<string>;
@@ -298,7 +320,10 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       {
         ...elasticPoolCreate,
         ...rsGroup,
-        //autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
+        zoneRedundant:
+          elasticPoolCreate.zoneRedundant ??
+          (supportsZoneRedundancy(elasticPoolCreate.sku) ? azureEnv.isPrd : undefined),
+        autoPauseDelay: elasticPoolCreate.autoPauseDelay ?? defaultAutoPauseDelay(elasticPoolCreate.sku),
         preferredEnclaveType: sql.AlwaysEncryptedEnclaveType.VBS,
 
         serverName: server.name,
@@ -414,13 +439,21 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     return Object.keys(databases).map((k) => {
       const props = databases[k];
       const name = props.databaseName ?? k;
+      const sku = elasticPool ? this.args.elasticPoolCreate?.sku : props.sku;
 
       const db = new sql.Database(
         `${this.name}-${name}`,
         {
           ...props,
           ...rsGroup,
-          //autoPauseDelay: props.autoPauseDelay ?? azureEnv.isPrd ? -1 : 10,
+          //A pooled database inherits zone redundancy from its pool.
+          zoneRedundant: elasticPool
+            ? props.zoneRedundant
+            : (props.zoneRedundant ?? (supportsZoneRedundancy(sku) ? azureEnv.isPrd : undefined)),
+          requestedBackupStorageRedundancy:
+            props.requestedBackupStorageRedundancy ??
+            (isHyperscale(sku) ? undefined : azureEnv.isPrd ? 'Geo' : 'Local'),
+          autoPauseDelay: props.autoPauseDelay ?? defaultAutoPauseDelay(sku),
           preferredEnclaveType: sql.AlwaysEncryptedEnclaveType.VBS,
 
           elasticPoolId: elasticPool?.id,

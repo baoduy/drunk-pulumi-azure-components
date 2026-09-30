@@ -86,7 +86,10 @@ export interface AzSqlArgs
    * On by default in PRD; outside PRD it is on only when this block is supplied.
    */
   vulnerabilityAssessment?: {
-    /** Turn the assessment and alert policy on or off. Default: `true` in PRD or when this block is supplied. */
+    /**
+     * Turn the assessment and alert policy on or off. `false` also skips the blob audit policy, even when
+     * `logStorage` is set. Default: `true` in PRD or when this block is supplied.
+     */
     enabled?: boolean;
     /** Optional storage account for alert logs and the server blob auditing policy. No audit policy without it. */
     logStorage?: types.ResourceWithGroupInputs;

@@ -31,14 +31,10 @@ export function getStorageEndpointsOutputs(storage: types.ResourceInputs) {
 /** Get storage access key. If vault is provided it will get the secrets from the vault if not it will get from storage directly. */
 export function getStorageAccessKeyOutputs(stg: types.ResourceWithGroupInputs, vaultInfo?: types.ResourceInputs) {
   if (vaultInfo) {
-    try {
-      return pulumi.output([vaultInfo.resourceName, stg.resourceName]).apply(async ([vaultName, stgName]) => {
-        const vault = KeyVaultBase(vaultName);
-        return (await vault.getSecret(vaultHelpers.getSecretName(`${stgName}-key1`)))?.value!;
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    return pulumi.output([vaultInfo.resourceName, stg.resourceName]).apply(async ([vaultName, stgName]) => {
+      const vault = KeyVaultBase(vaultName);
+      return (await vault.getSecret(vaultHelpers.getSecretName(`${stgName}-key1`)))?.value!;
+    });
   }
 
   return pulumi.output(stg).apply(async (s) => {

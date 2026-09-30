@@ -33,7 +33,7 @@ const defaultTopicOptions: Partial<bus.TopicArgs> = {
 };
 
 const defaultSubOptions: Partial<bus.SubscriptionArgs> = {
-  duplicateDetectionHistoryTimeWindow: 'P10M',
+  duplicateDetectionHistoryTimeWindow: 'PT10M',
   //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
   defaultMessageTimeToLive: azureEnv.isPrd ? 'P14D' : 'P5D',
   enableBatchedOperations: true,
@@ -147,7 +147,8 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
               keySource: bus.KeySource.Microsoft_KeyVault,
               keyVaultProperties: [
                 {
-                  ...encryptionKey,
+                  keyName: encryptionKey.keyName,
+                  keyVaultUri: encryptionKey.vaultUrl,
                   identity: defaultUAssignedId ? { userAssignedIdentity: defaultUAssignedId.id } : undefined,
                 },
               ],
@@ -333,7 +334,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
             topicName: topicName,
             namespaceName: service.name,
             subscriptionName: k,
-            ...defaultTopicOptions,
+            ...defaultSubOptions,
             ...subOps,
           },
           { dependsOn: [service, topic], parent: this },

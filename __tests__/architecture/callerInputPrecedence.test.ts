@@ -20,10 +20,7 @@ import * as path from 'node:path';
 
 const srcDir = path.resolve(__dirname, '../../src');
 
-const KNOWN_VIOLATIONS: Record<string, number> = {
-  // DRK-1812 [A1812-8] — policy dnsSettings, policy threatIntelMode, firewall threatIntelMode
-  'vnet/Firewall.ts': 3,
-};
+const KNOWN_VIOLATIONS: Record<string, number> = {};
 
 const walk = (dir: string): string[] =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

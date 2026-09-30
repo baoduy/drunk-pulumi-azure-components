@@ -51,6 +51,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
   public vaultSecrets?: pulumi.Output<string>[];
   private _secrets: { [key: string]: pulumi.Input<string> } = {};
   private _vaultSecretsCreated: boolean = false;
+  private _outputsRegistered: boolean = false;
 
   /**
    * Creates a new instance of BaseResourceComponent
@@ -165,8 +166,10 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    * Can be called multiple times to add different secrets
    * @param name - The name of the secret
    * @param value - The value to be stored in the secret
+   * @throws Error when called after registerOutputs(), as the secret would never reach the vault
    */
   protected addSecret(name: string, value: pulumi.Input<string>) {
+    this.ensureSecretsOpen([name]);
     this._secrets[name] = value;
   }
 
@@ -174,8 +177,10 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    * Adds multiple secrets to the component at once
    * Should only be called once as it replaces existing secrets
    * @param secrets - Object containing secret name-value pairs
+   * @throws Error when called after registerOutputs(), as the secrets would never reach the vault
    */
   protected addSecrets(secrets: { [key: string]: pulumi.Input<string> }) {
+    this.ensureSecretsOpen(Object.keys(secrets));
     this._secrets = { ...this._secrets, ...secrets };
   }
 
@@ -184,6 +189,7 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
    */
   protected registerOutputs(): void {
     this.postCreated();
+    this._outputsRegistered = true;
     super.registerOutputs();
   }
 
@@ -238,6 +244,13 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
         { dependsOn: this, parent: this, retainOnDelete: true },
       );
     });
+  }
+
+  private ensureSecretsOpen(keys: string[]) {
+    if (!this._outputsRegistered) return;
+    throw new Error(
+      `Secret(s) "${keys.join('", "')}" added to "${this.type}:${this.name}" after registerOutputs(); add secrets before registerOutputs() so they reach the vault.`,
+    );
   }
 
   private createVaultSecrets() {

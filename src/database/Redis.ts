@@ -214,43 +214,38 @@ export class Redis extends BaseResourceComponent<RedisArgs> {
     const { rsGroup, vaultInfo, disableAccessKeyAuthentication } = this.args;
     if (!vaultInfo) return;
 
-    return server.hostName.apply(async (h) => {
-      if (!h) return;
+    // Secrets must be collected synchronously: registerOutputs() flushes them to the vault once.
+    const h = server.hostName;
+    const secrets: { [key: string]: pulumi.Input<string> } = {
+      [`${this.name}-redis-host`]: h,
+      [`${this.name}-redis-port`]: '6380',
+    };
 
-      const keys = redis.listRedisKeysOutput({
-        name: server.name,
-        resourceGroupName: rsGroup.resourceGroupName,
-      });
+    if (disableAccessKeyAuthentication) {
+      secrets[`${this.name}-redis-conn-nodejs`] = pulumi.interpolate`rediss://${h}:6380`;
+      secrets[`${this.name}-redis-conn-dotnet`] = pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`;
+      secrets[`${this.name}-redis-conn-python`] = pulumi.interpolate`rediss://${h}:6380`;
+      secrets[`${this.name}-redis-conn`] = pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`;
+    } else {
+      const key = pulumi.secret(
+        redis.listRedisKeysOutput({
+          name: server.name,
+          resourceGroupName: rsGroup.resourceGroupName,
+        }).primaryKey,
+      );
 
-      // Create connection strings in multiple formats for different platforms
-      const secrets: { [key: string]: pulumi.Input<string> } = {
-        [`${this.name}-redis-host`]: h,
-        [`${this.name}-redis-pass`]: keys.primaryKey,
-        [`${this.name}-redis-port`]: '6380',
-      };
-
+      secrets[`${this.name}-redis-pass`] = key;
       // Node.js / JavaScript format
-      secrets[`${this.name}-redis-conn-nodejs`] = disableAccessKeyAuthentication
-        ? pulumi.interpolate`rediss://${h}:6380`
-        : pulumi.interpolate`rediss://:${keys.primaryKey}@${h}:6380`;
-
+      secrets[`${this.name}-redis-conn-nodejs`] = pulumi.interpolate`rediss://:${key}@${h}:6380`;
       // .NET / StackExchange.Redis format
-      secrets[`${this.name}-redis-conn-dotnet`] = disableAccessKeyAuthentication
-        ? pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`
-        : pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`;
-
+      secrets[`${this.name}-redis-conn-dotnet`] =
+        pulumi.interpolate`${h}:6380,password=${key},ssl=True,abortConnect=False`;
       // Python format
-      secrets[`${this.name}-redis-conn-python`] = disableAccessKeyAuthentication
-        ? pulumi.interpolate`rediss://${h}:6380`
-        : pulumi.interpolate`rediss://:${keys.primaryKey}@${h}:6380`;
-
+      secrets[`${this.name}-redis-conn-python`] = pulumi.interpolate`rediss://:${key}@${h}:6380`;
       // Generic format
-      secrets[`${this.name}-redis-conn`] = disableAccessKeyAuthentication
-        ? pulumi.interpolate`${h}:6380,ssl=True,abortConnect=False`
-        : pulumi.interpolate`${h}:6380,password=${keys.primaryKey},ssl=True,abortConnect=False`;
+      secrets[`${this.name}-redis-conn`] = pulumi.interpolate`${h}:6380,password=${key},ssl=True,abortConnect=False`;
+    }
 
-      // Add all secrets at once
-      this.addSecrets(secrets);
-    });
+    this.addSecrets(secrets);
   }
 }

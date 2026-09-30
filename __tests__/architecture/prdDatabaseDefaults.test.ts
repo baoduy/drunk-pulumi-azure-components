@@ -77,7 +77,7 @@ describe('PULUMI-WAF-001 — prd zone-redundant HA puts the standby in a differe
    * KNOWN_VIOLATIONS is today's offenders (DRK-1812 [A1812-5]) and MUST ONLY SHRINK. Fixing a
    * component deletes its entry; the second test enforces that.
    */
-  const KNOWN_VIOLATIONS: ServerKind[] = ['MySql', 'Postgres'];
+  const KNOWN_VIOLATIONS: ServerKind[] = [];
 
   const standbySharesPrimaryZone = async (kind: ServerKind) => {
     const inputs = await serverInputs(kind, 'prd');

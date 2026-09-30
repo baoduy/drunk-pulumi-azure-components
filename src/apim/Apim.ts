@@ -36,6 +36,10 @@ export interface ApimArgs
       | 'publisherEmail'
       | 'customProperties'
     > {
+  network?: types.NetworkArgs & {
+    /** Inject the service into the VNet in Internal mode instead of External. */
+    internal?: boolean;
+  };
   publisherEmail?: pulumi.Input<string>;
   publisherName?: pulumi.Input<string>;
   customProperties?: string[];
@@ -185,10 +189,10 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             : apim.PublicNetworkAccess.Enabled,
 
         //NATGateway
-        virtualNetworkType: 'None',
-        virtualNetworkConfiguration: network?.vnetRules
+        virtualNetworkType: network?.vnetRules?.length ? (network.internal ? 'Internal' : 'External') : 'None',
+        virtualNetworkConfiguration: network?.vnetRules?.length
           ? {
-              subnetResourceId: network?.vnetRules[0].subnetId,
+              subnetResourceId: network.vnetRules[0].subnetId,
             }
           : undefined,
 

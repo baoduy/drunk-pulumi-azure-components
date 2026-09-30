@@ -421,7 +421,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
               }),
         agentPoolProfiles: poolsWithZones,
 
-        autoUpgradeProfile: {
+        autoUpgradeProfile: props.autoUpgradeProfile ?? {
           nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,
           upgradeChannel: ccs.UpgradeChannel.Stable,
         },

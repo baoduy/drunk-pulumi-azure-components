@@ -1,5 +1,9 @@
 import { withStack, restoreStack, mockAksFetch } from '../testUtils/pulumiMocks';
 
+// Each case reloads the AKS module graph through `withStack`; under a parallel full-suite run that
+// load alone can exceed Jest's 5 s default.
+jest.setTimeout(30000);
+
 /**
  * DRK-1815 (PULUMI-SEC-010): PRD AKS clusters default to Defender for Containers (when a log
  * workspace is given), the Azure Policy add-on and the `Standard` SKU tier; non-PRD defaults to
@@ -52,7 +56,18 @@ beforeAll(() => {
   restoreFetch = mockAksFetch();
 });
 afterAll(() => restoreFetch());
-afterEach(() => restoreStack(ORIGINAL_STACK));
+// Each fresh `@pulumi/pulumi` copy that `withStack` loads adds its promise-leak detector as a process
+// `exit` listener; drop the ones a case added so 15 reloads don't pile up past Node's 10-listener limit.
+let exitListeners: Function[] = [];
+beforeEach(() => {
+  exitListeners = process.listeners('exit');
+});
+afterEach(() => {
+  restoreStack(ORIGINAL_STACK);
+  for (const listener of process.listeners('exit')) {
+    if (!exitListeners.includes(listener)) process.removeListener('exit', listener as (code: number) => void);
+  }
+});
 
 describe('DRK-1815 Enforcement — PRD security and SLA defaults', () => {
   test('a prd cluster that sets none of these values gets Defender, Azure Policy and the Standard tier', async () => {

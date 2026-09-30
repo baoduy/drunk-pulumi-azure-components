@@ -1,6 +1,7 @@
 import * as az from '@pulumi/azure-native';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseArgs, BaseResourceComponent } from '../base';
+import { azureEnv } from '../helpers';
 import { StorageAccount } from '../storage';
 import * as types from '../types';
 
@@ -92,8 +93,13 @@ export class Logs extends BaseResourceComponent<LogsArgs> {
     const { workspace, rsGroup, retentionInDays } = this.args;
     if (!workspace?.enabled) return undefined;
 
-    const sku = workspace.sku || az.operationalinsights.WorkspaceSkuNameEnum.Free;
-    const dailyQuotaGb = workspace.dailyQuotaGb || 0.1;
+    const sku =
+      workspace.sku ??
+      (azureEnv.isPrd
+        ? az.operationalinsights.WorkspaceSkuNameEnum.PerGB2018
+        : az.operationalinsights.WorkspaceSkuNameEnum.Free);
+    // PRD sends an explicit unlimited cap (-1) so ingestion never stops mid-day and an existing cap is lifted.
+    const dailyQuotaGb = workspace.dailyQuotaGb ?? (azureEnv.isPrd ? -1 : 0.1);
 
     return new az.operationalinsights.Workspace(
       `${this.name}-wp`,

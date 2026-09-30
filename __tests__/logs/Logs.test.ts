@@ -119,3 +119,80 @@ describe('Logs — workspace and appInsight outputs (pre-existing behaviour)', (
     expect(key).toBe('logs1-ais-ikey');
   });
 });
+
+/**
+ * DRK-1822 S3 — Log Analytics workspace environment tiering (acceptance tests, DRK-1863).
+ *
+ * PRD workspaces default to `PerGB2018` with an explicit unlimited cap (`-1`), so ingestion never
+ * stops mid-day and an existing 0.1 GB/day cap is lifted. Non-PRD keeps the cheap defaults: `Free`
+ * (no capping, 7-day retention), and a paid SKU without a quota is capped at 0.1 GB/day.
+ * A caller `sku` / `dailyQuotaGb` always wins — a caller `0` is a value.
+ */
+describe('Logs.createWorkspace — PRD PerGB2018 uncapped, non-PRD cheap defaults (DRK-1822)', () => {
+  const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
+  afterEach(() => restoreStack(ORIGINAL_STACK));
+
+  async function deployWorkspace(stackName: string, workspace: Record<string, unknown>) {
+    const { pulumi, Logs, captured } = withStack(
+      stackName,
+      (p) => {
+        const mod: typeof import('../../src/logs/Logs') = require('../../src/logs/Logs');
+        return { pulumi: p, Logs: mod.Logs };
+      },
+      (args) =>
+        args.type === 'azure-native:operationalinsights:Workspace' ? { customerId: `${args.name}-customer-id` } : {},
+    );
+
+    const logs = createLogs(Logs, { workspace });
+    await pulumi.output(logs.getOutputs()).promise();
+    await settle();
+
+    return captured.find((c) => c.type === 'azure-native:operationalinsights:Workspace')!.inputs;
+  }
+
+  test('S3: prd workspace with no caller sku is PerGB2018, uncapped (-1), 30-day retention (R3)', async () => {
+    const inputs = await deployWorkspace('prd', { enabled: true });
+
+    expect(inputs.sku).toEqual({ name: 'PerGB2018' });
+    expect(inputs.workspaceCapping).toEqual({ dailyQuotaGb: -1 });
+    expect(inputs.retentionInDays).toBe(30);
+  });
+
+  describe('S4: non-PRD keeps the cheap defaults (R3)', () => {
+    test('dev workspace with no caller sku is Free, no capping, 7-day retention', async () => {
+      const inputs = await deployWorkspace('dev', { enabled: true });
+
+      expect(inputs.sku).toEqual({ name: 'Free' });
+      expect(inputs.workspaceCapping).toBeUndefined();
+      expect(inputs.retentionInDays).toBe(7);
+    });
+
+    test('dev PerGB2018 workspace without a quota is capped at 0.1 GB/day', async () => {
+      const inputs = await deployWorkspace('dev', { enabled: true, sku: 'PerGB2018' });
+
+      expect(inputs.sku).toEqual({ name: 'PerGB2018' });
+      expect(inputs.workspaceCapping).toEqual({ dailyQuotaGb: 0.1 });
+    });
+  });
+
+  describe('S5: caller sku / dailyQuotaGb win in prd (R1)', () => {
+    test('prd workspace with caller dailyQuotaGb: 5 is capped at 5', async () => {
+      const inputs = await deployWorkspace('prd', { enabled: true, dailyQuotaGb: 5 });
+
+      expect(inputs.workspaceCapping).toEqual({ dailyQuotaGb: 5 });
+    });
+
+    test('prd workspace with caller dailyQuotaGb: 0 is capped at 0', async () => {
+      const inputs = await deployWorkspace('prd', { enabled: true, dailyQuotaGb: 0 });
+
+      expect(inputs.workspaceCapping).toEqual({ dailyQuotaGb: 0 });
+    });
+
+    test('prd workspace with caller sku: Free stays Free with no capping', async () => {
+      const inputs = await deployWorkspace('prd', { enabled: true, sku: 'Free' });
+
+      expect(inputs.sku).toEqual({ name: 'Free' });
+      expect(inputs.workspaceCapping).toBeUndefined();
+    });
+  });
+});

@@ -92,8 +92,13 @@ const ZONE_REDUNDANT_MIN_CAPACITY = 2;
  * In PRD, `siteConfig.alwaysOn` and the plan's `zoneRedundant` default to `true` where the plan SKU supports them.
  * A value the caller sets always wins.
  *
- * Breaking: basic-auth (publish-profile) FTP and SCM publishing is disabled on every web app by default.
- * Deployments that rely on publish-profile credentials must set `allowBasicPublishing: true` on that web app.
+ * Breaking:
+ * - Basic-auth (publish-profile) FTP and SCM publishing is disabled on every web app by default.
+ *   SCM (Kudu/zip) deploys with publish-profile credentials need `allowBasicPublishing: true` on that web app.
+ * - `siteConfig.ftpsState` defaults to `'Disabled'`, which turns FTP off on its own. FTP deploys need both
+ *   `allowBasicPublishing: true` and `siteConfig.ftpsState: 'FtpsOnly'` (or `'AllAllowed'`) on that web app.
+ * - Existing PRD plans on a zone-capable tier with `sku.capacity` of 2 or more get `zoneRedundant: true` on their
+ *   next `up`. Set `zoneRedundant: false` to keep the current state.
  */
 export interface AppServiceArgs
   extends CommonBaseArgs, Omit<web.AppServicePlanArgs, 'resourceGroupName' | 'location' | 'name' | 'kind'> {
@@ -105,6 +110,8 @@ export interface AppServiceArgs
       /**
        * Re-enables basic-auth (publish-profile username/password) publishing over FTP and SCM (Kudu/zip deploy)
        * for this web app. Default `false`: both are disabled.
+       * On its own this flag restores SCM only. FTP also stays off while `siteConfig.ftpsState` is `'Disabled'`
+       * (the default); set `siteConfig.ftpsState` to `'FtpsOnly'` or `'AllAllowed'` as well to restore FTP.
        */
       allowBasicPublishing?: boolean;
     }

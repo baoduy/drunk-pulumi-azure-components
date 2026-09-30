@@ -175,7 +175,8 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
 
   /**
    * Adds multiple secrets to the component at once
-   * Should only be called once as it replaces existing secrets
+   * The given secrets merge into the existing set; a key already present is overwritten
+   * May be called more than once, but every call must come before registerOutputs()
    * @param secrets - Object containing secret name-value pairs
    * @throws Error when called after registerOutputs(), as the secrets would never reach the vault
    */

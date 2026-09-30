@@ -19,6 +19,12 @@ const QUERY_KEY_0 = { key: 'QK-SECRET-0', name: 'label-0' };
 const QUERY_KEY_1 = { key: 'QK-SECRET-1', name: 'label-1' };
 const MOCKED_KEY_VALUES = [QUERY_KEY_0.key, QUERY_KEY_1.key];
 
+// Pulumi's wire envelope for a secret-marked value (pulumi.runtime.specialSigKey / specialSecretSig).
+// The mock monitor hands secret inputs to `newResource` in this shape; a plain value arrives bare.
+const SECRET_SIG_KEY = '4dabf18193072939515e22adb298388d';
+const SECRET_SIG = '1b47061264138c4ac30d75fd1eb44270';
+const asSecret = (value: string) => ({ [SECRET_SIG_KEY]: SECRET_SIG, value });
+
 const vaultInfo = { resourceGroupName: 'rg-vault', resourceName: 'kv1', id: 'kv1_id' };
 const baseArgs = { rsGroup: { resourceGroupName: 'rg' }, sku: 'basic' };
 
@@ -75,18 +81,18 @@ describe('AzSearch — query keys stored in Key Vault by index (PULUMI-SEC-009)'
     restoreStack(ORIGINAL_STACK);
   });
 
-  test('S1 — two query keys: each secret value is the query key value, never its label', async () => {
+  test('S1 — two query keys: each secret value is the query key value, secret-marked, never its label', async () => {
     const { captured } = await deployAndSettle([QUERY_KEY_0, QUERY_KEY_1], { vaultInfo });
 
     const secrets = vaultSecrets(captured).map((s) => ({ name: s.inputs.name, value: s.inputs.value }));
     expect(secrets).toHaveLength(2);
     expect(secrets).toEqual(
       expect.arrayContaining([
-        { name: 'az1-query-key-0', value: 'QK-SECRET-0' },
-        { name: 'az1-query-key-1', value: 'QK-SECRET-1' },
+        { name: 'az1-query-key-0', value: asSecret('QK-SECRET-0') },
+        { name: 'az1-query-key-1', value: asSecret('QK-SECRET-1') },
       ]),
     );
-    secrets.forEach((s) => expect(['label-0', 'label-1']).not.toContain(s.value));
+    secrets.forEach((s) => expect(['label-0', 'label-1']).not.toContain(s.value?.value));
   });
 
   test('S2 — no secret name, resource name, contentType or log line contains a query key value', async () => {
@@ -107,11 +113,11 @@ describe('AzSearch — query keys stored in Key Vault by index (PULUMI-SEC-009)'
     }
   });
 
-  test('S3 — one query key: exactly one secret is created and nothing throws', async () => {
+  test('S3 — one query key: exactly one secret-marked secret is created and nothing throws', async () => {
     const { captured } = await deployAndSettle([QUERY_KEY_0], { vaultInfo });
 
     const secrets = vaultSecrets(captured).map((s) => ({ name: s.inputs.name, value: s.inputs.value }));
-    expect(secrets).toEqual([{ name: 'az1-query-key-0', value: 'QK-SECRET-0' }]);
+    expect(secrets).toEqual([{ name: 'az1-query-key-0', value: asSecret('QK-SECRET-0') }]);
   });
 
   test('S4 — zero query keys: no secret is created and nothing throws', async () => {

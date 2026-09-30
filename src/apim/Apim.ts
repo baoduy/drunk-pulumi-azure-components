@@ -196,7 +196,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         zones:
           sku.name == apim.SkuType.Basic || sku.name == apim.SkuType.Consumption
             ? undefined
-            : ['Premium', 'StandardV2', 'PremiumV2'].includes(sku.name as string)
+            : ['Premium', 'StandardV2', 'PremiumV2'].includes(sku.name)
               ? zoneHelper.getDefaultZones(zones)
               : zones,
 

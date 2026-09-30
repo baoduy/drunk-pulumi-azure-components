@@ -108,7 +108,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         })
       : [];
 
-    return { ...caCerts, ...rootCerts };
+    return [...caCerts, ...rootCerts];
   }
 
   private createApim() {

@@ -28,20 +28,24 @@ export function getStorageEndpointsOutputs(storage: types.ResourceInputs) {
   };
 }
 
-/** Get storage access key. If vault is provided it will get the secrets from the vault if not it will get from storage directly. */
+/** Get storage access key as a Pulumi secret. If vault is provided it will get the secrets from the vault if not it will get from storage directly. */
 export function getStorageAccessKeyOutputs(stg: types.ResourceWithGroupInputs, vaultInfo?: types.ResourceInputs) {
   if (vaultInfo) {
-    return pulumi.output([vaultInfo.resourceName, stg.resourceName]).apply(async ([vaultName, stgName]) => {
-      const vault = KeyVaultBase(vaultName);
-      return (await vault.getSecret(vaultHelpers.getSecretName(`${stgName}-key1`)))?.value!;
-    });
+    return pulumi.secret(
+      pulumi.output([vaultInfo.resourceName, stg.resourceName]).apply(async ([vaultName, stgName]) => {
+        const vault = KeyVaultBase(vaultName);
+        return (await vault.getSecret(vaultHelpers.getSecretName(`${stgName}-key1`)))?.value!;
+      }),
+    );
   }
 
-  return pulumi.output(stg).apply(async (s) => {
-    const keys = await storage.listStorageAccountKeys({
-      resourceGroupName: s.rsGroup.resourceGroupName,
-      accountName: s.resourceName,
-    });
-    return keys.keys[0].value!;
-  });
+  return pulumi.secret(
+    pulumi.output(stg).apply(async (s) => {
+      const keys = await storage.listStorageAccountKeys({
+        resourceGroupName: s.rsGroup.resourceGroupName,
+        accountName: s.resourceName,
+      });
+      return keys.keys[0].value!;
+    }),
+  );
 }

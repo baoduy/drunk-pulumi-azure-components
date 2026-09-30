@@ -168,7 +168,11 @@ describe('AzSql — vulnerability assessment policy inputs', () => {
     expect(audit.queueDelayMs).toBe(4000);
     expect(audit.state).toBe('Enabled');
     expect(audit.isDevopsAuditEnabled).toBe(true);
-    expect(audit.storageAccountAccessKey).toBe('stg-key');
+    // The key reaches the mock monitor as a Pulumi secret envelope, not a plain string.
+    expect(audit.storageAccountAccessKey).toEqual({
+      [pulumi.runtime.specialSigKey]: pulumi.runtime.specialSecretSig,
+      value: 'stg-key',
+    });
     expect(parentOf('azure-native:sql:ExtendedServerBlobAuditingPolicy')).toBe(server);
   });
 });

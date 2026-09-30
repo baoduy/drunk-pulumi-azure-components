@@ -65,7 +65,7 @@ describe('DnsZone — untouched branches (DRK-1852 coverage)', () => {
 
   test('root zone records land in the root zone with a 3600 ttl', () => {
     const cname = recordSets().find((c) => c.inputs.recordType === 'CNAME' && c.inputs.zoneName === 'contoso.com')!;
-    expect(cname.name).toBe('contoso-com-contoso.com-www-aRecord-CNAME');
+    expect(cname.name).toBe('contoso-com-www-aRecord-CNAME');
     expect(cname.inputs).toEqual({
       recordType: 'CNAME',
       cnameRecord: { cname: 'contoso.azurewebsites.net' },
@@ -87,7 +87,7 @@ describe('DnsZone — untouched branches (DRK-1852 coverage)', () => {
   test('the same record name in the root and a child zone: two record sets, same relative name, distinct resource names', () => {
     const cnames = recordSets().filter((c) => c.inputs.recordType === 'CNAME');
     expect(cnames.map((c) => [c.name, c.inputs.zoneName, c.inputs.relativeRecordSetName])).toEqual([
-      ['contoso-com-contoso.com-www-aRecord-CNAME', 'contoso.com', 'www'],
+      ['contoso-com-www-aRecord-CNAME', 'contoso.com', 'www'],
       ['contoso-com-api-www-aRecord-CNAME', 'api', 'www'],
     ]);
   });

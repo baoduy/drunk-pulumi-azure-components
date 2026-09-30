@@ -127,7 +127,7 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
 
     if (records) {
       records.map((record) => {
-        this.addRecordSet(zone, record.name, record, name);
+        this.addRecordSet(zone, record.name, record, parent ? name : undefined);
       });
     }
 

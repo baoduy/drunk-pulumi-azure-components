@@ -18,12 +18,18 @@ jest.setTimeout(30_000);
 const STORE_TYPE = 'azure-native:appconfiguration:ConfigurationStore';
 
 async function deploy(stackName: string, extra: Partial<AppConfigArgs> = {}) {
-  const { pulumi, AppConfig, captured } = withStack(stackName, (p) => ({
-    pulumi: p,
-    AppConfig: require('../../src/app/AppConfig').AppConfig,
-  }));
+  const { pulumi, AppConfig, captured } = withStack(
+    stackName,
+    (p) => ({ pulumi: p, AppConfig: require('../../src/app/AppConfig').AppConfig }),
+    // PrivateEndpoint reads customDnsConfigs[].ipAddresses back off its own resource state.
+    (args) =>
+      args.type === 'azure-native:network:PrivateEndpoint' ? { customDnsConfigs: [{ ipAddresses: ['10.0.0.4'] }] } : {},
+  );
 
-  const args: AppConfigArgs = { rsGroup: { resourceGroupName: 'rg', location: 'eastus' }, ...extra };
+  // The prd network guard (PULUMI-SEC-006) only accepts a private-link-only AppConfig in prd.
+  const network: AppConfigArgs['network'] =
+    stackName === 'prd' ? { privateLink: { subnetInfo: { subnetId: 'pe-subnet' } } } : undefined;
+  const args: AppConfigArgs = { rsGroup: { resourceGroupName: 'rg', location: 'eastus' }, network, ...extra };
   const store = new AppConfig('appcfg-tier', args);
   await pulumi.output(store.id).promise();
   // Let the store settle before the next `withStack` swaps the mock monitor.

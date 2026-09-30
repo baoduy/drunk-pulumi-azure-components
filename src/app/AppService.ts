@@ -70,6 +70,7 @@ export interface AppServiceArgs
     Omit<web.WebAppArgs, 'resourceGroupName' | 'location' | 'serverFarmId' | 'kind' | 'name'> & {
       name: string;
       kind?: AppKind;
+      allowBasicPublishing?: boolean;
     }
   >;
 }

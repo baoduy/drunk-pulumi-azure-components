@@ -1,4 +1,9 @@
-import { withStack, restoreStack } from '../testUtils/pulumiMocks';
+import { restoreStack } from '../testUtils/pulumiMocks';
+import { ServerKind, components, serverInputs } from '../testUtils/flexibleServer';
+
+// Each case reloads the component and the Azure SDK modules through `withStack`. The first case in
+// the file pays the cold load, which exceeds Jest's 5 s default when the full suite runs in parallel.
+jest.setTimeout(30000);
 
 /**
  * Architecture tests for the prd / non-prd defaults of the Flexible Server components
@@ -8,38 +13,6 @@ import { withStack, restoreStack } from '../testUtils/pulumiMocks';
  * stack name through `withStack`. The args are a General Purpose server — not Burstable — because
  * Burstable skips the high-availability block entirely and would hide the HA defaults.
  */
-
-type ServerKind = 'MySql' | 'Postgres';
-
-const components: Record<ServerKind, { modulePath: string; serverType: string }> = {
-  MySql: { modulePath: '../../src/database/MySql', serverType: 'azure-native:dbformysql:Server' },
-  Postgres: { modulePath: '../../src/database/Postgres', serverType: 'azure-native:dbforpostgresql:Server' },
-};
-
-const generalPurposeArgs = {
-  rsGroup: { resourceGroupName: 'rg', location: 'eastus' },
-  administratorLogin: 'admin',
-  version: '16',
-  sku: { name: 'Standard_D2ds_v4', tier: 'GeneralPurpose' },
-  enableAzureADAdmin: false,
-  // Supplying this avoids the component creating its own UserAssignedIdentity child resource.
-  defaultUAssignedId: { id: 'uid_id', clientId: 'c', objectId: 'o', resourceName: 'uid', resourceGroupName: 'rg' },
-};
-
-async function serverInputs(kind: ServerKind, stackName: string) {
-  const { modulePath, serverType } = components[kind];
-  const { pulumi, Component, captured } = withStack(stackName, (p) => ({
-    pulumi: p,
-    Component: require(modulePath)[kind],
-  }));
-
-  const db = new Component(`arch-${kind.toLowerCase()}`, { ...generalPurposeArgs } as any);
-  await pulumi.output(db.id).promise();
-  // Let the component's own registerOutputs() and fire-and-forget children settle before the next
-  // `withStack` swaps the mock monitor out from under them.
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  return captured.find((c) => c.type === serverType)!.inputs;
-}
 
 describe('PULUMI-WAF-001 / PULUMI-WAF-002 — Flexible Server backup defaults follow the environment', () => {
   const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
@@ -77,7 +50,7 @@ describe('PULUMI-WAF-001 — prd zone-redundant HA puts the standby in a differe
    * KNOWN_VIOLATIONS is today's offenders (DRK-1812 [A1812-5]) and MUST ONLY SHRINK. Fixing a
    * component deletes its entry; the second test enforces that.
    */
-  const KNOWN_VIOLATIONS: ServerKind[] = ['MySql', 'Postgres'];
+  const KNOWN_VIOLATIONS: ServerKind[] = [];
 
   const standbySharesPrimaryZone = async (kind: ServerKind) => {
     const inputs = await serverInputs(kind, 'prd');

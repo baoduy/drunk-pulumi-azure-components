@@ -107,6 +107,13 @@ describe('R1 — SKU tier defaults by environment, explicit tier wins', () => {
       tier: 'Standard',
     });
   });
+
+  test('a dev Automatic cluster without a tier runs on Standard, the tier Azure preconfigures for Automatic', async () => {
+    expect((await clusterInputs('dev', { sku: { name: 'Automatic' } })).sku).toEqual({
+      name: 'Automatic',
+      tier: 'Standard',
+    });
+  });
 });
 
 describe('R2 — Azure Policy add-on defaults by environment, explicit flag wins', () => {

@@ -94,24 +94,15 @@ export class AzSearch extends BaseResourceComponent<AzSearchArgs> {
         resourceGroupName: rgName,
       });
 
-      new vault.VaultSecrets(
-        this.name,
-        {
-          vaultInfo,
-          secrets: {
-            [`${this.name}-${keys.value[0].key}`]: {
-              value: keys.value[0].name,
-              contentType: `AzSearch ${keys.value[0].key}`,
-            },
-
-            [`${this.name}-${keys.value[1].key}`]: {
-              value: keys.value[1].name,
-              contentType: `AzSearch ${keys.value[1].key}`,
-            },
-          },
-        },
-        { dependsOn: service, parent: this },
+      // Named by index: the key itself is the secret value and must never leak into a name or contentType.
+      const secrets = Object.fromEntries(
+        keys.value.map((k, i) => [
+          `${this.name}-query-key-${i}`,
+          { value: pulumi.secret(k.key), contentType: 'AzSearch query key' },
+        ]),
       );
+
+      new vault.VaultSecrets(this.name, { vaultInfo, secrets }, { dependsOn: service, parent: this });
     });
   }
 }

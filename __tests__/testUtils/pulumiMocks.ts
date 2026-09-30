@@ -10,24 +10,24 @@
 
 export type Captured = { type: string; name: string; inputs: any };
 
-/**
- * Resets the module registry and points PULUMI_NODEJS_STACK at `stackName`, then runs `load`
- * (which must `require()` the pulumi module and the component(s) under test) and returns
- * whatever it returns, plus the array of resources captured by the mock `newResource` callback.
- */
-export function withStack<T>(
-  stackName: string,
-  load: (pulumi: typeof import('@pulumi/pulumi')) => T,
-  extraState?: (args: { type: string; name: string; inputs: any }) => object,
-): T & { captured: Captured[] } {
-  process.env.PULUMI_NODEJS_STACK = stackName;
-  jest.resetModules();
-  const pulumi: typeof import('@pulumi/pulumi') = require('@pulumi/pulumi');
+// Pulumi's wire envelope for a secret-marked value; a plain value would arrive as the bare string.
+export const asSecret = (value: unknown) => ({
+  '4dabf18193072939515e22adb298388d': '1b47061264138c4ac30d75fd1eb44270',
+  value,
+});
 
-  const captured: Captured[] = [];
-  pulumi.runtime.setMocks({
+/**
+ * The Pulumi mock monitor every harness here installs: records each new resource into `sink()`, echoes its
+ * inputs back as state (plus `extraState`), and answers invokes (`extraCall` first, then the defaults).
+ */
+export function mockMonitor(
+  sink: () => Captured[],
+  extraState?: (args: { type: string; name: string; inputs: any }) => object,
+  extraCall?: (args: { token: string; inputs: any }) => object | undefined,
+) {
+  return {
     newResource: (args: any) => {
-      captured.push({ type: args.type, name: args.name, inputs: args.inputs });
+      sink().push({ type: args.type, name: args.name, inputs: args.inputs });
       return {
         id: `${args.name}_id`,
         state: {
@@ -43,12 +43,60 @@ export function withStack<T>(
     call: (args: any) => {
       // AKS's getExtraAksOutputs() fetches a client token through this Pulumi invoke.
       if (args.token === 'azure-native:authorization:getClientToken') return { token: 'mock-token' };
-      return args.inputs;
+      // Optional per-test invoke answer (e.g. listStorageAccountKeys); falls through to the default when it returns undefined.
+      return extraCall?.(args) ?? args.inputs;
     },
-  });
+  };
+}
+
+/**
+ * Resets the module registry and points PULUMI_NODEJS_STACK at `stackName`, then runs `load`
+ * (which must `require()` the pulumi module and the component(s) under test) and returns
+ * whatever it returns, plus the array of resources captured by the mock `newResource` callback.
+ * `extraCall` optionally answers a Pulumi invoke by token; return `undefined` to keep the default.
+ */
+export function withStack<T>(
+  stackName: string,
+  load: (pulumi: typeof import('@pulumi/pulumi')) => T,
+  extraState?: (args: { type: string; name: string; inputs: any }) => object,
+  extraCall?: (args: { token: string; inputs: any }) => object | undefined,
+): T & { captured: Captured[] } {
+  process.env.PULUMI_NODEJS_STACK = stackName;
+  jest.resetModules();
+  const pulumi: typeof import('@pulumi/pulumi') = require('@pulumi/pulumi');
+
+  const captured: Captured[] = [];
+  pulumi.runtime.setMocks(mockMonitor(() => captured, extraState, extraCall));
 
   const result = load(pulumi);
   return Object.assign(result as object, { captured }) as T & { captured: Captured[] };
+}
+
+/** Awaits `id`, then drains the event loop so every pending child registration reaches the mocks. */
+export async function settle(pulumi: typeof import('@pulumi/pulumi'), id: import('@pulumi/pulumi').Output<string>) {
+  await pulumi.output(id).promise();
+  for (let i = 0; i < 50; i++) await new Promise((resolve) => setImmediate(resolve));
+}
+
+/** Inputs of the one captured resource with this type and name; fails the test on zero or several. */
+export function registrationOf(captured: Captured[], type: string, name: string) {
+  const found = captured.filter((c) => c.type === type && c.name === name);
+  expect(found).toHaveLength(1);
+  return found[0].inputs;
+}
+
+/** Silences `console.log` per test and restores PULUMI_NODEJS_STACK afterwards; call inside `describe`. */
+export function quietStackHooks() {
+  const originalStack = process.env.PULUMI_NODEJS_STACK;
+  let logSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    logSpy.mockRestore();
+    restoreStack(originalStack);
+  });
 }
 
 /** Restore PULUMI_NODEJS_STACK to whatever it was before the test file overrode it. */
@@ -76,5 +124,40 @@ export function mockAksFetch(): () => void {
   })) as unknown as typeof fetch;
   return () => {
     global.fetch = original;
+  };
+}
+
+/**
+ * AzKubernetes test harness for files that load the component once (no `withStack`): stubs `fetch` for the
+ * file and installs the mock monitor on `pulumi`. Call it before importing AzKubernetes. `extraState` adds
+ * cluster state some feature flags read (e.g. `addonProfiles`, `oidcIssuerProfile`).
+ */
+export function useAksMocks(pulumi: typeof import('@pulumi/pulumi'), sink: () => Captured[], extraState: object = {}) {
+  let restoreFetch: () => void;
+  beforeAll(() => {
+    restoreFetch = mockAksFetch();
+  });
+  afterAll(() => restoreFetch());
+  pulumi.runtime.setMocks(mockMonitor(sink, () => extraState));
+}
+
+/**
+ * Returns `createCluster(props)`: deploys `AzKubernetes` with `{ ...baseArgs, ...props }`, drains its outputs and
+ * returns the captured ManagedCluster.
+ */
+export function aksClusterFactory(
+  pulumi: typeof import('@pulumi/pulumi'),
+  AzKubernetes: new (name: string, args: any) => any,
+  baseArgs: object,
+  sink: () => Captured[],
+) {
+  return async (props: any): Promise<Captured> => {
+    const aks = new AzKubernetes('cluster1', { ...baseArgs, ...props });
+    await pulumi.output(aks.id).promise();
+    // Drains the always-created kubeletIdentity/systemIdentityId outputs so their pending
+    // getExtraAksOutputs() fetch chain resolves inside the test instead of after teardown.
+    if (aks.kubeletIdentity) await pulumi.output(aks.kubeletIdentity).promise();
+    if (aks.systemIdentityId) await pulumi.output(aks.systemIdentityId).promise();
+    return sink().find((c) => c.type === 'azure-native:containerservice:ManagedCluster')!;
   };
 }

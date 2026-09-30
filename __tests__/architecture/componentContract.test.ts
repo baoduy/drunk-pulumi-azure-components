@@ -37,12 +37,9 @@ describe('PULUMI-PKG-002 — every component registers its outputs', () => {
    * KNOWN_VIOLATIONS is today's offenders and MUST ONLY SHRINK. Fixing a component
    * deletes its entry; the second assertion below enforces that.
    */
-  const KNOWN_VIOLATIONS = [
-    // DRK-1047 [A1037-10]
-    'AppResources.ts',
-    'azAd/CustomRoles.ts',
-    'vnet/NetworkPeering.ts',
-  ];
+  // Emptied by DRK-1812: DRK-1047 [A1037-10] fixed all three original offenders (AppResources.ts,
+  // azAd/CustomRoles.ts, vnet/NetworkPeering.ts), so the rule is now fully enforced (Tier 1).
+  const KNOWN_VIOLATIONS: string[] = [];
 
   const isComponent = /extends\s+(?:pulumi\.)?ComponentResource\b|extends\s+Base[A-Za-z]*Component\b/;
 

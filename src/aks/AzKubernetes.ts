@@ -335,7 +335,16 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       {
         ...props,
         ...rsGroup,
-        sku,
+        // An explicit tier always wins. Otherwise PRD and every Automatic cluster (Azure preconfigures
+        // Automatic to Standard) get the Standard (SLA-backed) tier, and everything else gets Free.
+        sku: {
+          ...sku,
+          tier:
+            sku.tier ??
+            (azureEnv.isPrd || sku.name === ccs.ManagedClusterSKUName.Automatic
+              ? ccs.ManagedClusterSKUTier.Standard
+              : ccs.ManagedClusterSKUTier.Free),
+        },
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,
@@ -355,7 +364,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             enabled: Boolean(features?.enableAzureKeyVault),
           },
 
-          azurePolicy: { enabled: features?.enableAzurePolicy || false },
+          azurePolicy: { enabled: features?.enableAzurePolicy ?? azureEnv.isPrd },
           kubeDashboard: { enabled: false },
           httpApplicationRouting: { enabled: false },
           aciConnectorLinux: {
@@ -421,7 +430,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
               }),
         agentPoolProfiles: poolsWithZones,
 
-        autoUpgradeProfile: {
+        autoUpgradeProfile: props.autoUpgradeProfile ?? {
           nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,
           upgradeChannel: ccs.UpgradeChannel.Stable,
         },
@@ -469,9 +478,11 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           : undefined,
 
         securityProfile: {
-          defender: logWorkspace?.defenderEnabled
+          // Defender for Containers: an explicit flag always wins; when absent it defaults on in PRD
+          // whenever a log workspace is given.
+          defender: Boolean(logWorkspace?.defenderEnabled ?? (azureEnv.isPrd && logWorkspace?.id))
             ? {
-                logAnalyticsWorkspaceResourceId: logWorkspace.id,
+                logAnalyticsWorkspaceResourceId: logWorkspace?.id,
                 securityMonitoring: { enabled: true },
               }
             : undefined,

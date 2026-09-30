@@ -36,6 +36,10 @@ export interface ApimArgs
       | 'publisherEmail'
       | 'customProperties'
     > {
+  network?: types.NetworkArgs & {
+    /** Inject the service into the VNet in Internal mode instead of External. Applies only when `vnetRules` is non-empty. */
+    internal?: boolean;
+  };
   publisherEmail?: pulumi.Input<string>;
   publisherName?: pulumi.Input<string>;
   customProperties?: string[];
@@ -108,7 +112,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
         })
       : [];
 
-    return { ...caCerts, ...rootCerts };
+    return [...caCerts, ...rootCerts];
   }
 
   private createApim() {
@@ -185,17 +189,20 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             : apim.PublicNetworkAccess.Enabled,
 
         //NATGateway
-        virtualNetworkType: 'None',
-        virtualNetworkConfiguration: network?.vnetRules
+        virtualNetworkType: network?.vnetRules?.length ? (network.internal ? 'Internal' : 'External') : 'None',
+        virtualNetworkConfiguration: network?.vnetRules?.length
           ? {
-              subnetResourceId: network?.vnetRules[0].subnetId,
+              subnetResourceId: network.vnetRules[0].subnetId,
             }
           : undefined,
 
+        //PRD default zones only on the tiers Azure supports zones on; other tiers keep the caller's zones
         zones:
           sku.name == apim.SkuType.Basic || sku.name == apim.SkuType.Consumption
             ? undefined
-            : zoneHelper.getDefaultZones(zones),
+            : ['Premium', 'StandardV2', 'PremiumV2'].includes(sku.name)
+              ? zoneHelper.getDefaultZones(zones)
+              : zones,
 
         //Only available for Premium
         additionalLocations:

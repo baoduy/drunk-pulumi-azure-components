@@ -6,7 +6,7 @@ import * as vault from '../vault';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 
 import { PrivateEndpoint } from '../vnet';
-import { azureEnv, zoneHelper } from '../helpers';
+import { azureEnv, networkGuard, zoneHelper } from '../helpers';
 
 const defaultQueueOptions: Partial<bus.QueueArgs> = {
   //duplicateDetectionHistoryTimeWindow: 'P10M',
@@ -33,7 +33,7 @@ const defaultTopicOptions: Partial<bus.TopicArgs> = {
 };
 
 const defaultSubOptions: Partial<bus.SubscriptionArgs> = {
-  duplicateDetectionHistoryTimeWindow: 'P10M',
+  duplicateDetectionHistoryTimeWindow: 'PT10M',
   //autoDeleteOnIdle: isPrd ? 'P180D' : 'P90D',
   defaultMessageTimeToLive: azureEnv.isPrd ? 'P14D' : 'P5D',
   enableBatchedOperations: true,
@@ -78,12 +78,17 @@ export interface ServiceBusArgs
   >;
 }
 
+/** `Disabled` when private link is set and public access is not requested; shared by the namespace and its rule set. */
+const getPublicNetworkAccess = (network?: types.NetworkArgs) =>
+  network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled';
+
 export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
   public readonly id: pulumi.Output<string>;
   public readonly resourceName: pulumi.Output<string>;
 
   constructor(name: string, args: ServiceBusArgs, opts?: pulumi.ComponentResourceOptions) {
     super('ServiceBus', name, args, opts);
+    networkGuard.assertPrdNetworkRestricted('ServiceBus', name, args.network);
 
     const service = this.createBusNamespace();
     this.createNetwork(service);
@@ -142,7 +147,8 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
               keySource: bus.KeySource.Microsoft_KeyVault,
               keyVaultProperties: [
                 {
-                  ...encryptionKey,
+                  keyName: encryptionKey.keyName,
+                  keyVaultUri: encryptionKey.vaultUrl,
                   identity: defaultUAssignedId ? { userAssignedIdentity: defaultUAssignedId.id } : undefined,
                 },
               ],
@@ -150,7 +156,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
             }
           : undefined,
 
-        publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
+        publicNetworkAccess: getPublicNetworkAccess(network),
       },
       {
         ...this.opts,
@@ -177,7 +183,9 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
       {
         ...rsGroup,
         namespaceName: service.name,
-        defaultAction: network.defaultAction ? network.defaultAction : 'Allow',
+        defaultAction: networkGuard.hasNetworkRules(network) ? 'Deny' : (network.defaultAction ?? 'Allow'),
+        // The rule set carries its own publicNetworkAccess (SDK default Enabled); keep it in step with the namespace.
+        publicNetworkAccess: getPublicNetworkAccess(network),
         trustedServiceAccessEnabled: true,
 
         ipRules: network.ipRules
@@ -326,7 +334,7 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
             topicName: topicName,
             namespaceName: service.name,
             subscriptionName: k,
-            ...defaultTopicOptions,
+            ...defaultSubOptions,
             ...subOps,
           },
           { dependsOn: [service, topic], parent: this },

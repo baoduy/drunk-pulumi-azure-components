@@ -24,7 +24,9 @@ export class VaultSecret extends BaseComponent<VaultSecretArgs> {
   public readonly version: pulumi.Output<string>;
 
   constructor(name: string, args: VaultSecretArgs, opts?: pulumi.ComponentResourceOptions) {
-    super(getComponentResourceType('VaultSecret'), name, args, opts);
+    // Secret-mark a caller value before it becomes a component input; an absent value keeps the config fallback.
+    const componentArgs = args.value == null ? args : { ...args, value: pulumi.secret(args.value) };
+    super(getComponentResourceType('VaultSecret'), name, componentArgs, opts);
     const secretValue = args.value ?? configHelper.getSecret(name) ?? '';
     const secretName = vaultHelpers.getSecretName(this.name);
 

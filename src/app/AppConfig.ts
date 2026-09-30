@@ -1,6 +1,7 @@
 import * as appConfig from '@pulumi/azure-native/appconfiguration';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
+import { networkGuard } from '../helpers';
 import * as types from '../types';
 import * as vault from '../vault';
 import { PrivateEndpoint } from '../vnet';
@@ -13,6 +14,8 @@ export interface AppConfigArgs
       appConfig.ConfigurationStoreArgs,
       'dataPlaneProxy' | 'disableLocalAuth' | 'enablePurgeProtection' | 'softDeleteRetentionInDays'
     > {
+  /** Store SKU name: `free`, `developer`, `standard` or `premium`. Defaults to `Standard` in every env. */
+  sku?: pulumi.Input<string>;
   network?: Pick<types.NetworkArgs, 'publicNetworkAccess' | 'privateLink'>;
 }
 
@@ -22,6 +25,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
 
   constructor(name: string, args: AppConfigArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AppConfig', name, args, opts);
+    networkGuard.assertPrdNetworkRestricted('AppConfig', name, args.network, { privateLinkOnly: true });
 
     const {
       rsGroup,
@@ -31,6 +35,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
       enableEncryption,
       vaultInfo,
       network,
+      sku,
       ...props
     } = args;
     const encryptionKey = args.enableEncryption ? this.getEncryptionKey() : undefined;
@@ -39,11 +44,11 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
       {
         ...args.rsGroup,
         ...props,
-        sku: { name: 'Standard' },
+        sku: { name: sku ?? 'Standard' },
 
-        publicNetworkAccess: !network?.publicNetworkAccess
+        publicNetworkAccess: network?.publicNetworkAccess
           ? appConfig.PublicNetworkAccess.Enabled
-          : network.privateLink
+          : network?.privateLink
             ? appConfig.PublicNetworkAccess.Disabled
             : appConfig.PublicNetworkAccess.Enabled,
 

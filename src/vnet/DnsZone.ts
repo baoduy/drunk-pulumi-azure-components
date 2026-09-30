@@ -19,6 +19,18 @@ type DnsZoneRecordArgs = Omit<
 type DnsZoneProps = { name: string; records?: DnsZoneRecordArgs[] };
 
 export interface DnsZoneArgs extends WithResourceGroupInputs, DnsZoneProps {
+  /**
+   * Sub-zones delegated from this zone. Each child `name` is a label under the root zone: `{ name: 'sub' }`
+   * under `example.com` creates the Azure zone `sub.example.com` and an NS record `sub` in the root zone.
+   *
+   * Upgrade note: before this fix a child resource pointed at the root Azure zone, so replacing it would delete
+   * the root zone. Stacks deployed with `children` on an older version must remove each old child zone from
+   * state (`pulumi state delete <child-zone-urn>`) before upgrading.
+   *
+   * Upgrade note: a zone record's relative name is now its `name` as given (`www`, `*`); older versions prefixed
+   * it with the zone name (`example.com-www`, `sub-*`). Root and child zone records created by an older version
+   * are replaced on upgrade.
+   */
   children?: DnsZoneProps[];
 }
 
@@ -68,14 +80,19 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
     );
   }
 
+  /**
+   * Adds a record set `name` to `zone`. `zoneLabel` only goes into the Pulumi resource name, so the same record
+   * name in two zones of this component gets two distinct resources.
+   */
   public addRecordSet(
     zone: dns.Zone,
     name: string,
     props: Omit<dns.RecordSetArgs, 'zoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl'>,
+    zoneLabel?: string,
   ) {
     const group = this.getRsGroupInfo();
     return new dns.RecordSet(
-      `${this._rsName}-${getDnsRecordName(name)}-${props.recordType}`,
+      `${this._rsName}${zoneLabel ? `-${zoneLabel}` : ''}-${getDnsRecordName(name)}-${props.recordType}`,
       {
         ...props,
         ...group,
@@ -103,20 +120,20 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
       {
         resourceGroupName: group.resourceGroupName,
         location: group.location,
-        zoneName: this.name,
+        zoneName: parent ? `${name}.${this.name}` : this.name,
       },
       parent ? { ...this.childOpts, dependsOn: parent, parent: this } : { ...this.opts, parent: this },
     );
 
     if (records) {
       records.map((record) => {
-        this.addRecordSet(zone, `${name}-${record.name}`, record);
+        this.addRecordSet(zone, record.name, record, parent ? name : undefined);
       });
     }
 
     if (parent) {
       zone.nameServers.apply((ns) => {
-        this.addRecordSet(parent, `${this.name}-${name}-ns`, {
+        this.addRecordSet(parent, name, {
           recordType: 'NS',
           nsRecords: ns.map((s) => ({ nsdname: s })),
         });

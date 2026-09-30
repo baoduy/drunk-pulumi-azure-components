@@ -39,6 +39,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
 
     const { server, credentials } = this.createPostgres();
     this.createNetwork(server);
+    this.enableADAdmin(server);
     this.createDatabases(server, credentials);
 
     this.id = server.id;
@@ -70,6 +71,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
     const uAssignedId = this.getUAssignedId();
+    const availabilityZone = this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1');
 
     const server = new postgresql.Server(
       this.name,
@@ -116,13 +118,17 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
 
         highAvailability:
           this.args.sku?.tier !== 'Burstable'
-            ? (this.args.highAvailability ?? {
-                mode: azureEnv.isPrd ? 'ZoneRedundant' : 'SameZone',
-                standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
-              })
+            ? (this.args.highAvailability ??
+              (azureEnv.isPrd
+                ? {
+                    mode: 'ZoneRedundant',
+                    // The standby must sit in a different zone from the primary.
+                    standbyAvailabilityZone: pulumi.output(availabilityZone).apply((z) => (z === '1' ? '2' : '1')),
+                  }
+                : undefined))
             : undefined,
 
-        availabilityZone: this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1'),
+        availabilityZone,
 
         network: {
           publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',
@@ -144,7 +150,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     this.addSecrets({
       [`${this.name}-postgres-host`]: credentials.host,
       [`${this.name}-postgres-port`]: credentials.port,
-      [`${this.name}-postgres-login`]: this.args.administratorLogin!,
+      [`${this.name}-postgres-login`]: credentials.username,
       [`${this.name}-postgres-pass`]: credentials.password,
     });
 
@@ -195,6 +201,25 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
         { dependsOn: server, parent: this },
       );
     }
+  }
+
+  /** Registers `groupRoles.admin` as the server's Microsoft Entra administrator when Entra auth is enabled. */
+  private enableADAdmin(server: postgresql.Server) {
+    const { rsGroup, groupRoles, enableAzureADAdmin } = this.args;
+    if (!enableAzureADAdmin || !groupRoles) return undefined;
+
+    return new postgresql.AdministratorsMicrosoftEntra(
+      this.name,
+      {
+        ...rsGroup,
+        serverName: server.name,
+        objectId: groupRoles.admin.objectId,
+        principalName: groupRoles.admin.displayName,
+        principalType: postgresql.PrincipalType.Group,
+        tenantId: azureEnv.tenantId,
+      },
+      { dependsOn: server, parent: this },
+    );
   }
 
   private createDatabases(server: postgresql.Server, cred: types.DbCredentialsType) {

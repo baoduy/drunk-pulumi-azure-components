@@ -1,5 +1,8 @@
 import { withStack, restoreStack, Captured } from '../testUtils/pulumiMocks';
 
+// Each test cold-loads the component via jest.resetModules() + require, which can exceed 5000 ms under parallel load.
+jest.setTimeout(30000);
+
 /**
  * DRK-1821 rows 4 and 5.
  * - R2/R3: every topic subscription starts from the subscription defaults (dead-lettering on,
@@ -29,8 +32,9 @@ function loadServiceBus() {
       const mod: typeof import('../../src/services/ServiceBus') = require('../../src/services/ServiceBus');
       return { pulumi: p, ServiceBus: mod.ServiceBus };
     },
-    // The encryption key's dynamic resource reports the vault URL it lives in.
-    ({ name }) => (name.endsWith('-encryptKey') ? { vaultUrl: VAULT_URL } : {}),
+    // The encryption key's dynamic resource reports the Key Vault key name and the vault URL it lives in,
+    // as the real VaultKeyResourceProvider does (the mock's default `name` is the Pulumi resource name).
+    ({ name }) => (name.endsWith('-encryptKey') ? { name: 'sb1-encryptKey', vaultUrl: VAULT_URL } : {}),
   );
 }
 

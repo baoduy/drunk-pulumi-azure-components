@@ -1,4 +1,4 @@
-import { withStack, restoreStack } from '../testUtils/pulumiMocks';
+import { asSecret, withStack, restoreStack } from '../testUtils/pulumiMocks';
 
 // DRK-1819 (PULUMI-SEC-005): a Postgres server with Entra auth on must register the admin group as
 // its Entra administrator (mirroring MySql.enableADAdmin), and the `<name>-postgres-login` vault
@@ -97,7 +97,7 @@ describe('Postgres — Entra administrator and login secret (DRK-1819)', () => {
     const loginSecret = captured.find((c) => c.type === VAULT_SECRET_TYPE && c.name === 'pg1-postgres-login');
     expect(server.inputs.administratorLogin).toBe('pg1-admin-RND');
     expect(loginSecret).toBeDefined();
-    expect(loginSecret!.inputs.value).toBe('pg1-admin-RND');
+    expect(loginSecret!.inputs.value).toEqual(asSecret('pg1-admin-RND'));
   });
 
   test('S5 — supplied administratorLogin is written to the login secret', async () => {
@@ -105,6 +105,6 @@ describe('Postgres — Entra administrator and login secret (DRK-1819)', () => {
 
     const loginSecret = captured.find((c) => c.type === VAULT_SECRET_TYPE && c.name === 'pg1-postgres-login');
     expect(loginSecret).toBeDefined();
-    expect(loginSecret!.inputs.value).toBe('admin');
+    expect(loginSecret!.inputs.value).toEqual(asSecret('admin'));
   });
 });

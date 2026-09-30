@@ -19,6 +19,14 @@ type DnsZoneRecordArgs = Omit<
 type DnsZoneProps = { name: string; records?: DnsZoneRecordArgs[] };
 
 export interface DnsZoneArgs extends WithResourceGroupInputs, DnsZoneProps {
+  /**
+   * Sub-zones delegated from this zone. Each child `name` is a label under the root zone: `{ name: 'sub' }`
+   * under `example.com` creates the Azure zone `sub.example.com` and an NS record `sub` in the root zone.
+   *
+   * Upgrade note: before this fix a child resource pointed at the root Azure zone, so replacing it would delete
+   * the root zone. Stacks deployed with `children` on an older version must remove each old child zone from
+   * state (`pulumi state delete <child-zone-urn>`) before upgrading.
+   */
   children?: DnsZoneProps[];
 }
 
@@ -103,7 +111,7 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
       {
         resourceGroupName: group.resourceGroupName,
         location: group.location,
-        zoneName: this.name,
+        zoneName: parent ? `${name}.${this.name}` : this.name,
       },
       parent ? { ...this.childOpts, dependsOn: parent, parent: this } : { ...this.opts, parent: this },
     );
@@ -116,7 +124,7 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
 
     if (parent) {
       zone.nameServers.apply((ns) => {
-        this.addRecordSet(parent, `${this.name}-${name}-ns`, {
+        this.addRecordSet(parent, name, {
           recordType: 'NS',
           nsRecords: ns.map((s) => ({ nsdname: s })),
         });

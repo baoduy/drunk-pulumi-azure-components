@@ -105,7 +105,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
     return { firewall: this.firewall, policy: this.policy, privateIpAddress: this.privateIpAddress };
   }
 
-  private createPolicy(basePolicy?: types.ResourceInputs) {
+  private createPolicy() {
     const {
       rsGroup,
       sku,
@@ -119,13 +119,9 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
         ...policy,
         ...rsGroup,
         sku,
-        basePolicy: basePolicy ? { id: basePolicy.id } : undefined,
+        basePolicy: policy.basePolicy ? { id: policy.basePolicy.id } : undefined,
         dnsSettings:
-          (policy.dnsSettings ?? sku.tier !== network.FirewallPolicySkuTier.Basic)
-            ? {
-                enableProxy: true,
-              }
-            : undefined,
+          policy.dnsSettings ?? (sku.tier !== network.FirewallPolicySkuTier.Basic ? { enableProxy: true } : undefined),
 
         snat: {
           //Auto learn need a Route Server
@@ -134,9 +130,8 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
         },
 
         threatIntelMode:
-          (policy.threatIntelMode ?? sku.tier !== network.FirewallPolicySkuTier.Basic)
-            ? network.AzureFirewallThreatIntelMode.Deny
-            : undefined,
+          policy.threatIntelMode ??
+          (sku.tier !== network.FirewallPolicySkuTier.Basic ? network.AzureFirewallThreatIntelMode.Deny : undefined),
         threatIntelWhitelist: policy.threatIntelWhitelist ?? {
           fqdns: ['*.microsoft.com'],
           ipAddresses: ['20.3.4.5'],
@@ -188,9 +183,10 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
         additionalProperties: properties,
         firewallPolicy: firewallPolicy ? { id: firewallPolicy.id } : undefined,
         threatIntelMode:
-          (props.threatIntelMode ?? (sku.tier !== network.AzureFirewallSkuTier.Basic && sku.name !== 'AZFW_Hub'))
+          props.threatIntelMode ??
+          (sku.tier !== network.AzureFirewallSkuTier.Basic && sku.name !== 'AZFW_Hub'
             ? network.AzureFirewallThreatIntelMode.Deny
-            : undefined,
+            : undefined),
       },
       { ...this.opts, parent: this },
     );

@@ -13,6 +13,8 @@ export interface AppConfigArgs
       appConfig.ConfigurationStoreArgs,
       'dataPlaneProxy' | 'disableLocalAuth' | 'enablePurgeProtection' | 'softDeleteRetentionInDays'
     > {
+  /** Store SKU name: `free`, `developer`, `standard` or `premium`. Defaults to `Standard` in every env. */
+  sku?: pulumi.Input<string>;
   network?: Pick<types.NetworkArgs, 'publicNetworkAccess' | 'privateLink'>;
 }
 

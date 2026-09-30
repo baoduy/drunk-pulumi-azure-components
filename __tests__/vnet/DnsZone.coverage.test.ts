@@ -38,7 +38,15 @@ describe('DnsZone — untouched branches (DRK-1852 coverage)', () => {
       rsGroup: { resourceGroupName: 'rg', location: 'eastus' },
       name: 'contoso.com',
       records: [{ name: 'www', recordType: 'CNAME', cnameRecord: { cname: 'contoso.azurewebsites.net' } }],
-      children: [{ name: 'api', records: [{ name: '*', recordType: 'TXT', txtRecords: [{ value: ['v'] }] }] }],
+      children: [
+        {
+          name: 'api',
+          records: [
+            { name: '*', recordType: 'TXT', txtRecords: [{ value: ['v'] }] },
+            { name: 'www', recordType: 'CNAME', cnameRecord: { cname: 'api.azurewebsites.net' } },
+          ],
+        },
+      ],
     });
     await resolve(dnsZone.id);
     await waitFor(() => captured.some((c) => c.type === RECORD_SET && c.inputs.recordType === 'NS'));
@@ -56,14 +64,14 @@ describe('DnsZone — untouched branches (DRK-1852 coverage)', () => {
   });
 
   test('root zone records land in the root zone with a 3600 ttl', () => {
-    const cname = recordSets().find((c) => c.inputs.recordType === 'CNAME')!;
+    const cname = recordSets().find((c) => c.inputs.recordType === 'CNAME' && c.inputs.zoneName === 'contoso.com')!;
     expect(cname.name).toBe('contoso-com-contoso.com-www-aRecord-CNAME');
     expect(cname.inputs).toEqual({
       recordType: 'CNAME',
       cnameRecord: { cname: 'contoso.azurewebsites.net' },
       resourceGroupName: 'rg',
       zoneName: 'contoso.com',
-      relativeRecordSetName: 'contoso.com-www',
+      relativeRecordSetName: 'www',
       ttl: 3600,
     });
   });
@@ -72,7 +80,16 @@ describe('DnsZone — untouched branches (DRK-1852 coverage)', () => {
   test('child zone records land in the child zone', () => {
     const txt = recordSets().find((c) => c.inputs.recordType === 'TXT')!;
     expect(txt.inputs.zoneName).toBe('api');
-    expect(txt.inputs.relativeRecordSetName).toBe('api-*');
+    expect(txt.name).toBe('contoso-com-api-all-aRecord-TXT');
+    expect(txt.inputs.relativeRecordSetName).toBe('*');
+  });
+
+  test('the same record name in the root and a child zone: two record sets, same relative name, distinct resource names', () => {
+    const cnames = recordSets().filter((c) => c.inputs.recordType === 'CNAME');
+    expect(cnames.map((c) => [c.name, c.inputs.zoneName, c.inputs.relativeRecordSetName])).toEqual([
+      ['contoso-com-contoso.com-www-aRecord-CNAME', 'contoso.com', 'www'],
+      ['contoso-com-api-www-aRecord-CNAME', 'api', 'www'],
+    ]);
   });
 
   test('child NS record is named after the child label', () => {

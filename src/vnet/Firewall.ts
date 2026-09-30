@@ -142,20 +142,22 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
             ? { certificateAuthority: policy.transportSecurityCA }
             : undefined,
 
-        insights: logs
-          ? {
-              isEnabled: true,
-              logAnalyticsResources: {
-                defaultWorkspaceId: { id: logs.defaultWorkspace.id },
-                workspaces: logs.regionalWorkspaces
-                  ? logs.regionalWorkspaces.map((wp) => ({
-                      region: wp.region,
-                      workspaceId: { id: wp.id },
-                    }))
-                  : undefined,
-              },
-            }
-          : undefined,
+        insights:
+          policy.insights ??
+          (logs
+            ? {
+                isEnabled: true,
+                logAnalyticsResources: {
+                  defaultWorkspaceId: { id: logs.defaultWorkspace.id },
+                  workspaces: logs.regionalWorkspaces
+                    ? logs.regionalWorkspaces.map((wp) => ({
+                        region: wp.region,
+                        workspaceId: { id: wp.id },
+                      }))
+                    : undefined,
+                },
+              }
+            : undefined),
       },
       { ...this.childOpts, parent: this },
     );

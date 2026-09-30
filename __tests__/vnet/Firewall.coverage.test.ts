@@ -73,6 +73,25 @@ describe('Firewall — untouched branches (DRK-1852 coverage)', () => {
     });
   });
 
+  test('caller policy.insights without logs: policy insights equal the caller value', async () => {
+    const { policy } = await deploy({
+      sku: STANDARD,
+      policy: { insights: { isEnabled: true, retentionDays: 30 } },
+    });
+
+    expect(policy.insights).toEqual({ isEnabled: true, retentionDays: 30 });
+  });
+
+  test('caller policy.insights with logs: the caller value wins over the logs-derived insights', async () => {
+    const { policy } = await deploy({
+      sku: STANDARD,
+      policy: { insights: { isEnabled: false } },
+      logs: { defaultWorkspace: { id: '/ws/default', resourceName: 'default', resourceGroupName: 'rg' } },
+    });
+
+    expect(policy.insights).toEqual({ isEnabled: false });
+  });
+
   test('no logs: insights undefined, snat auto-learn and default threat-intel whitelist applied', async () => {
     const { policy } = await deploy({ sku: STANDARD, policy: {} });
 

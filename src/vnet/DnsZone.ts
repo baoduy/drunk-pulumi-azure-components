@@ -26,6 +26,10 @@ export interface DnsZoneArgs extends WithResourceGroupInputs, DnsZoneProps {
    * Upgrade note: before this fix a child resource pointed at the root Azure zone, so replacing it would delete
    * the root zone. Stacks deployed with `children` on an older version must remove each old child zone from
    * state (`pulumi state delete <child-zone-urn>`) before upgrading.
+   *
+   * Upgrade note: a zone record's relative name is now its `name` as given (`www`, `*`); older versions prefixed
+   * it with the zone name (`example.com-www`, `sub-*`). Root and child zone records created by an older version
+   * are replaced on upgrade.
    */
   children?: DnsZoneProps[];
 }
@@ -76,14 +80,19 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
     );
   }
 
+  /**
+   * Adds a record set `name` to `zone`. `zoneLabel` only goes into the Pulumi resource name, so the same record
+   * name in two zones of this component gets two distinct resources.
+   */
   public addRecordSet(
     zone: dns.Zone,
     name: string,
     props: Omit<dns.RecordSetArgs, 'zoneName' | 'relativeRecordSetName' | 'resourceGroupName' | 'ttl'>,
+    zoneLabel?: string,
   ) {
     const group = this.getRsGroupInfo();
     return new dns.RecordSet(
-      `${this._rsName}-${getDnsRecordName(name)}-${props.recordType}`,
+      `${this._rsName}${zoneLabel ? `-${zoneLabel}` : ''}-${getDnsRecordName(name)}-${props.recordType}`,
       {
         ...props,
         ...group,
@@ -118,7 +127,7 @@ export class DnsZone extends BaseComponent<DnsZoneArgs> {
 
     if (records) {
       records.map((record) => {
-        this.addRecordSet(zone, `${name}-${record.name}`, record);
+        this.addRecordSet(zone, record.name, record, name);
       });
     }
 

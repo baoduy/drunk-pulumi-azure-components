@@ -37,7 +37,7 @@ export interface ApimArgs
       | 'customProperties'
     > {
   network?: types.NetworkArgs & {
-    /** Inject the service into the VNet in Internal mode instead of External. */
+    /** Inject the service into the VNet in Internal mode instead of External. Applies only when `vnetRules` is non-empty. */
     internal?: boolean;
   };
   publisherEmail?: pulumi.Input<string>;

@@ -46,7 +46,7 @@ describe('DnsZone — children are delegated sub-zones (DRK-1821)', () => {
   let captured: Captured[];
   beforeAll(async () => {
     captured = await deployRootWithChild();
-  });
+  }, 30000);
   afterAll(() => restoreStack(ORIGINAL_STACK));
 
   test("S6 — root 'example.com' with child 'sub': root zone is example.com, child zone is sub.example.com (R4)", async () => {

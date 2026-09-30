@@ -1,41 +1,18 @@
 import * as pulumi from '@pulumi/pulumi';
-import { mockAksFetch, Captured } from '../testUtils/pulumiMocks';
+import { aksClusterFactory, Captured, useAksMocks } from '../testUtils/pulumiMocks';
 
 // DRK-770 §5: Cilium dataplane pinning, agent-pool compute/hardening defaults, node
 // auto-provisioning defaulting-on without reshaping declared pools or dropping disk encryption.
 
 let captured: Captured[];
-let restoreFetch: () => void;
-
-beforeAll(() => {
-  restoreFetch = mockAksFetch();
-});
-afterAll(() => restoreFetch());
-
-pulumi.runtime.setMocks({
-  newResource: (args: pulumi.runtime.MockResourceArgs) => {
-    captured.push({ type: args.type, name: args.name, inputs: args.inputs });
-    return {
-      id: `${args.name}_id`,
-      state: {
-        ...args.inputs,
-        name: args.name,
-        // AzKubernetes unconditionally reads `cluster.identity.principalId` in its constructor,
-        // and reads addonProfiles/oidcIssuerProfile whenever the matching feature flag is on.
-        identity: { principalId: `${args.name}_principal`, type: 'SystemAssigned' },
-        addonProfiles: {
-          azureKeyvaultSecretsProvider: {
-            identity: { resourceId: 'kv_identity_id', clientId: 'kv_client', objectId: 'kv_object' },
-          },
-        },
-        oidcIssuerProfile: { issuerURL: 'https://issuer.example.com' },
-      },
-    };
+// AzKubernetes reads addonProfiles/oidcIssuerProfile whenever the matching feature flag is on.
+useAksMocks(pulumi, () => captured, {
+  addonProfiles: {
+    azureKeyvaultSecretsProvider: {
+      identity: { resourceId: 'kv_identity_id', clientId: 'kv_client', objectId: 'kv_object' },
+    },
   },
-  call: (args: pulumi.runtime.MockCallArgs) => {
-    if (args.token === 'azure-native:authorization:getClientToken') return { token: 'mock-token' };
-    return args.inputs;
-  },
+  oidcIssuerProfile: { issuerURL: 'https://issuer.example.com' },
 });
 
 import { AzKubernetes } from '../../src/aks/AzKubernetes';
@@ -46,15 +23,7 @@ const baseArgs = {
   features: { enablePrivateCluster: false },
 };
 
-async function createCluster(props: any) {
-  const aks = new AzKubernetes('cluster1', { ...baseArgs, ...props } as any);
-  await pulumi.output(aks.id).promise();
-  // Drains the always-created kubeletIdentity/systemIdentityId outputs so their pending
-  // getExtraAksOutputs() fetch chain resolves inside the test instead of after teardown.
-  if (aks.kubeletIdentity) await pulumi.output(aks.kubeletIdentity).promise();
-  if (aks.systemIdentityId) await pulumi.output(aks.systemIdentityId).promise();
-  return captured.find((c) => c.type === 'azure-native:containerservice:ManagedCluster')!;
-}
+const createCluster = aksClusterFactory(pulumi, AzKubernetes, baseArgs, () => captured);
 
 describe('AzKubernetes — network dataplane pinning', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { withStack, restoreStack, mockAksFetch } from '../testUtils/pulumiMocks';
 
-// Each case reloads the AKS module graph through `withStack`; under a parallel full-suite run that
-// load alone can exceed Jest's 5 s default.
+// Each case reloads the AKS module graph through `withStack` and builds a cluster; under a parallel
+// full-suite run one case can exceed Jest's 5 s default.
 jest.setTimeout(30000);
 
 /**

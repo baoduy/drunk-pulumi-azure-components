@@ -2,7 +2,8 @@ import { withStack, restoreStack } from '../testUtils/pulumiMocks';
 
 // DRK-1822 Section A: in PRD, APIM gets the default zones ['1','2','3'] only on the tiers Azure
 // supports zones on (Premium, Standard v2, Premium v2 — Microsoft Learn, "Enable availability zones
-// for API Management", 2026-09-16). Every other tier gets the caller's zones verbatim, or none.
+// for API Management", 2026-09-16). Other tiers get the caller's zones verbatim, or none; Basic
+// and Consumption never get zones.
 // The SDK enum has no V2 names, so V2 tiers are passed as strings, the way callers do.
 
 const APIM_TYPE = 'azure-native:apimanagement:ApiManagementService';
@@ -28,9 +29,12 @@ describe('Apim — zone defaults only on zone-capable tiers (DRK-1822 S1-S3)', (
   afterEach(() => restoreStack(ORIGINAL_STACK));
 
   // S1 (R1): tiers without zone support get no zones in PRD.
-  test.each(['Developer', 'Standard', 'BasicV2'])('S1: prd %s with no caller zones sends no zones', async (skuName) => {
-    expect(await sentZones('prd', skuName)).toBeUndefined();
-  });
+  test.each(['Developer', 'Standard', 'Isolated', 'BasicV2'])(
+    'S1: prd %s with no caller zones sends no zones',
+    async (skuName) => {
+      expect(await sentZones('prd', skuName)).toBeUndefined();
+    },
+  );
 
   // S2 (R2): zone-capable tiers keep the three default zones in PRD.
   test.each(['Premium', 'StandardV2', 'PremiumV2'])(

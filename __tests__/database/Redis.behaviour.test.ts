@@ -27,6 +27,12 @@ const defaultUAssignedId = {
   resourceGroupName: 'rg',
 };
 
+// Every withStack call reloads @pulumi/pulumi, and each copy holds a process `exit` listener while
+// its RPCs settle. This file runs more than 10 such reloads, so lift the limit for this file only.
+const ORIGINAL_MAX_LISTENERS = process.getMaxListeners();
+beforeAll(() => process.setMaxListeners(50));
+afterAll(() => process.setMaxListeners(ORIGINAL_MAX_LISTENERS));
+
 async function deployRedis(props: any, { stack = 'dev', hostName }: { stack?: string; hostName?: string } = {}) {
   const { pulumi, Redis, captured } = withStack(stack, (p) => {
     const mod: typeof import('../../src/database/Redis') = require('../../src/database/Redis');

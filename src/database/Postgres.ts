@@ -70,6 +70,7 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
     const password = this.createPassword();
     const encryptionKey = enableEncryption ? this.getEncryptionKey() : undefined;
     const uAssignedId = this.getUAssignedId();
+    const availabilityZone = this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1');
 
     const server = new postgresql.Server(
       this.name,
@@ -116,13 +117,17 @@ export class Postgres extends BaseResourceComponent<PostgresArgs> {
 
         highAvailability:
           this.args.sku?.tier !== 'Burstable'
-            ? (this.args.highAvailability ?? {
-                mode: azureEnv.isPrd ? 'ZoneRedundant' : 'SameZone',
-                standbyAvailabilityZone: azureEnv.isPrd ? '3' : '1',
-              })
+            ? (this.args.highAvailability ??
+              (azureEnv.isPrd
+                ? {
+                    mode: 'ZoneRedundant',
+                    // The standby must sit in a different zone from the primary.
+                    standbyAvailabilityZone: pulumi.output(availabilityZone).apply((z) => (z === '1' ? '2' : '1')),
+                  }
+                : undefined))
             : undefined,
 
-        availabilityZone: this.args.availabilityZone ?? (azureEnv.isPrd ? '3' : '1'),
+        availabilityZone,
 
         network: {
           publicNetworkAccess: network?.publicNetworkAccess ? 'Enabled' : network?.privateLink ? 'Disabled' : 'Enabled',

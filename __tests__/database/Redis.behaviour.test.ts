@@ -280,7 +280,6 @@ describe('Redis — vault connection strings', () => {
 
     expect(await resolveSecrets(pulumi, redis)).toEqual({
       'cache-1-redis-host': HOST,
-      'cache-1-redis-pass': 'PRIMARY-KEY',
       'cache-1-redis-port': '6380',
       'cache-1-redis-conn-nodejs': `rediss://${HOST}:6380`,
       'cache-1-redis-conn-dotnet': `${HOST}:6380,ssl=True,abortConnect=False`,
@@ -289,10 +288,18 @@ describe('Redis — vault connection strings', () => {
     });
   });
 
-  test('no host name yet means no secrets', async () => {
-    const { pulumi, redis } = await deployRedis({ vaultInfo });
+  test('secrets are collected before the host name resolves', async () => {
+    const { redis } = await deployRedis({ vaultInfo, disableAccessKeyAuthentication: false });
 
-    expect(await resolveSecrets(pulumi, redis)).toEqual({});
+    expect(Object.keys(redis._secrets).sort()).toEqual([
+      'cache-1-redis-conn',
+      'cache-1-redis-conn-dotnet',
+      'cache-1-redis-conn-nodejs',
+      'cache-1-redis-conn-python',
+      'cache-1-redis-host',
+      'cache-1-redis-pass',
+      'cache-1-redis-port',
+    ]);
   });
 
   test('no vaultInfo means no secrets', async () => {

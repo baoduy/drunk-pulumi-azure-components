@@ -54,6 +54,7 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
       enableResourceIdentity,
       defaultUAssignedId,
       retentionDaysPolicy,
+      enableContentTrust,
       sku,
       network,
       ...props
@@ -106,7 +107,7 @@ export class ContainerRegistry extends BaseResourceComponent<ContainerRegistryAr
                   status: registry.PolicyStatus.Enabled,
                 },
                 trustPolicy: {
-                  status: registry.PolicyStatus.Enabled,
+                  status: enableContentTrust ? registry.PolicyStatus.Enabled : registry.PolicyStatus.Disabled,
                   type: registry.TrustPolicyType.Notary,
                 },
               }

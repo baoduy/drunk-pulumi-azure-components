@@ -414,8 +414,8 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
   }
 
   /**
-   * One server audit, targeting Azure Monitor, whenever a log destination or the assessment storage is given.
-   * The master-database diagnostic setting forwards its events; the storage fields are set only with the assessment storage.
+   * One server audit, targeting Azure Monitor, when a log destination is given or the assessment is on with its storage.
+   * The master-database diagnostic setting forwards its events; the storage fields are set only in the second case.
    */
   private createServerAudit(
     server: sql.Server,

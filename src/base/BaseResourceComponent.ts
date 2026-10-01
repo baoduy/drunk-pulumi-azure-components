@@ -12,6 +12,7 @@ import { RoleAssignment } from '../azAd/RoleAssignment';
 import { SecretItemArgs } from '../vault/VaultSecret';
 import { getComponentResourceType } from './helpers';
 import * as authorization from '@pulumi/azure-native/authorization';
+import * as monitor from '@pulumi/azure-native/monitor';
 
 /**
  * Base interface for resource component arguments that combines vault information
@@ -192,6 +193,36 @@ export abstract class BaseResourceComponent<TArgs extends BaseArgs> extends Base
     this.postCreated();
     this._outputsRegistered = true;
     super.registerOutputs();
+  }
+
+  /**
+   * Sends the given resource logs of `resourceUri` to the caller's Log Analytics workspace and/or storage account.
+   * Each log is enabled by category name; no metrics are sent.
+   * @param name - The Pulumi resource name of the diagnostic setting
+   * @param resourceUri - The id of the resource whose logs are sent
+   * @param categories - The log categories to send
+   * @param dest - The destinations; a missing `id` means that destination is not used
+   * @returns The diagnostic setting, or undefined when neither destination is given
+   */
+  protected createDiagnosticSetting(
+    name: string,
+    resourceUri: pulumi.Input<string>,
+    categories: string[],
+    { logWorkspace, logStorage }: types.WithDiagnosticLogs,
+  ) {
+    if (!logWorkspace?.id && !logStorage?.id) return undefined;
+
+    return new monitor.DiagnosticSetting(
+      name,
+      {
+        name: 'drunk-diag',
+        resourceUri,
+        workspaceId: logWorkspace?.id,
+        storageAccountId: logStorage?.id,
+        logs: categories.map((category) => ({ category, enabled: true })),
+      },
+      { parent: this },
+    );
   }
 
   /**

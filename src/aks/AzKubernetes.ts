@@ -112,6 +112,8 @@ export interface AzKubernetesArgs
   logWorkspace?: types.ResourceInputs & {
     defenderEnabled?: boolean;
   };
+  /** An existing storage account that receives the cluster's resource logs. It must be in the same region as the cluster. */
+  logStorage?: types.ResourceInputs;
 }
 
 export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
@@ -290,6 +292,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       features,
       network,
       logWorkspace,
+      logStorage,
       sku,
       autoScalerProfile,
       extraAgentPoolProfiles,
@@ -330,7 +333,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           ? undefined
           : { defaultNodePools: 'None' as const, mode: 'Auto' as const };
 
-    return new ccs.ManagedCluster(
+    const cluster = new ccs.ManagedCluster(
       this.name,
       {
         ...props,
@@ -516,6 +519,14 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         parent: this,
       },
     );
+
+    this.createDiagnosticSetting(
+      `${this.name}-diag`,
+      cluster.id,
+      ['kube-audit-admin', 'guard', 'cluster-autoscaler'],
+      this.args,
+    );
+    return cluster;
   }
 
   private createExtraAgentPoolProfiles(aks: ccs.ManagedCluster) {

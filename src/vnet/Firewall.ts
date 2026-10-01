@@ -84,6 +84,12 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
 
     const policy = this.createPolicy();
     const firewall = this.createFirewall(policy);
+    this.createDiagnosticSetting(
+      `${name}-diag`,
+      firewall.id,
+      ['AZFWNetworkRule', 'AZFWApplicationRule', 'AZFWNatRule', 'AZFWThreatIntel', 'AZFWIdpsSignature'],
+      args,
+    );
     this.createPolicyRuleGroup(policy);
 
     this.firewall = {
@@ -165,7 +171,7 @@ export class Firewall extends BaseResourceComponent<FirewallArgs> {
   }
 
   private createFirewall(firewallPolicy: network.FirewallPolicy) {
-    const { rsGroup, sku, logs, policy, snat, additionalProperties, ...props } = this.args;
+    const { rsGroup, sku, logs, policy, snat, additionalProperties, logWorkspace, logStorage, ...props } = this.args;
     const properties: Record<string, pulumi.Input<string>> = {
       ...additionalProperties,
       //autoLearnPrivateRanges: 'Enabled',

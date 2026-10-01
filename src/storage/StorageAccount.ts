@@ -68,6 +68,8 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
       enableEncryption,
       network,
       containers,
+      logWorkspace,
+      logStorage,
       ...props
     } = args;
 
@@ -194,6 +196,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     this.createLifeCycleManagement(stg);
     this.enableStaticWebsite(stg);
     this.createContainers(stg);
+    this.createDiagnosticSettings(stg);
 
     this.addSecretsToVault(stg);
 
@@ -210,6 +213,18 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
       resourceGroupName: pulumi.output(this.args.rsGroup.resourceGroupName),
       id: this.id,
     };
+  }
+
+  /** Write and delete logs of each storage service; read logs and the account itself are not logged. */
+  private createDiagnosticSettings(stg: storage.StorageAccount) {
+    for (const service of ['blob', 'file', 'queue', 'table']) {
+      this.createDiagnosticSetting(
+        `${this.name}-diag-${service}`,
+        pulumi.interpolate`${stg.id}/${service}Services/default`,
+        ['StorageWrite', 'StorageDelete'],
+        this.args,
+      );
+    }
   }
 
   private createPrivateLink(stg: storage.StorageAccount) {

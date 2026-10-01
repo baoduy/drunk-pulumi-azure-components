@@ -73,6 +73,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
     super('Apim', name, args, opts);
 
     const apim = this.createApim();
+    this.createDiagnosticSetting(`${name}-diag`, apim.id, ['GatewayLogs'], args);
     this.buildEntraID(apim);
     this.buildDisableSigIn(apim);
     this.buildPrivateLink(apim);
@@ -133,6 +134,8 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
       customProperties = {},
       zones,
       network,
+      logWorkspace,
+      logStorage,
       ...others
     } = this.args;
 

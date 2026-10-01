@@ -120,6 +120,8 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
       enableEncryption,
       network,
       disableLocalAuth,
+      logWorkspace,
+      logStorage,
       ...props
     } = this.args;
     const encryptionKey = enableEncryption && props.sku.name === 'Premium' ? this.getEncryptionKey() : undefined;
@@ -163,6 +165,14 @@ export class ServiceBus extends BaseResourceComponent<ServiceBusArgs> {
         ...this.opts,
         parent: this,
       },
+    );
+
+    //Runtime audit logs exist on the Premium tier only.
+    this.createDiagnosticSetting(
+      `${this.name}-diag`,
+      service.id,
+      ['OperationalLogs', 'VNetAndIPFilteringLogs', ...(props.sku.name === 'Premium' ? ['RuntimeAuditLogs'] : [])],
+      this.args,
     );
 
     //Add Root Manage Shared Access Key to Key Vault

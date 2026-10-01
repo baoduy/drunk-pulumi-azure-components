@@ -292,6 +292,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
       features,
       network,
       logWorkspace,
+      logStorage,
       sku,
       autoScalerProfile,
       extraAgentPoolProfiles,
@@ -332,7 +333,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           ? undefined
           : { defaultNodePools: 'None' as const, mode: 'Auto' as const };
 
-    return new ccs.ManagedCluster(
+    const cluster = new ccs.ManagedCluster(
       this.name,
       {
         ...props,
@@ -518,6 +519,14 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         parent: this,
       },
     );
+
+    this.createDiagnosticSetting(
+      `${this.name}-diag`,
+      cluster.id,
+      ['kube-audit-admin', 'guard', 'cluster-autoscaler'],
+      this.args,
+    );
+    return cluster;
   }
 
   private createExtraAgentPoolProfiles(aks: ccs.ManagedCluster) {

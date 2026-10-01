@@ -94,6 +94,7 @@ export class KeyVault extends BaseResourceComponent<KeyVaultArgs> {
     );
 
     this.createPrivateEndpoint(vault);
+    this.createDiagnosticSetting(`${name}-diag`, vault.id, ['AuditEvent'], args);
     this.addSecretsToVault(vault);
 
     this.resourceName = vault.name;

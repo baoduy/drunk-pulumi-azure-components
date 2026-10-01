@@ -14,6 +14,12 @@ export interface ContainerRegistryArgs
     Partial<Pick<registry.RegistryArgs, 'dataEndpointEnabled' | 'zoneRedundancy'>> {
   sku: registry.SkuName;
   retentionDaysPolicy?: number;
+  /**
+   * Turns on Docker Content Trust (`policies.trustPolicy`) on a Premium registry. Off by default.
+   * @deprecated Azure Container Registry retires Docker Content Trust on 2028-03-31. Sign and verify
+   * images with Notary Project / Notation instead.
+   */
+  enableContentTrust?: boolean;
   network?: Omit<types.NetworkArgs, 'vnetRules'>;
 }
 

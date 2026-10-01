@@ -7,8 +7,13 @@ jest.setTimeout(30000);
  * DRK-1980 §5 — Feature: Resource logs sent to the destinations a stack names.
  *
  * One test per spec scenario, named verbatim; Scenario Outlines run their Examples rows through `test.each`.
- * Every expected value is a literal from the spec (§3 log table, §5 Examples). Target resource ids follow the
- * mock monitor's `${pulumiResourceName}_id` convention, so `kv-prd-01_id` is the id of the vault `kv-prd-01`.
+ * Sources of the expected values:
+ * - log categories and resource names: the spec's §3 log table and §5 Examples, verbatim;
+ * - SQL audit fields (`state`, `isAzureMonitorTargetEnabled`, `isDevopsAuditEnabled`, storage fields): brief rule R5;
+ * - the "no destination" resource-type lists: what each component registered before this change (R1 baseline);
+ * - `https://stauditprd01.blob.core.windows.net`: the blob endpoint the package derives for an assessment storage;
+ * - target resource ids: the mock monitor's `${pulumiResourceName}_id` convention, so `kv-prd-01_id` is the vault
+ *   `kv-prd-01`.
  * Scenarios named `*-prd-*` run on a prd stack, `*-dev-*` on a dev stack.
  */
 
@@ -351,6 +356,7 @@ describe('Feature: Resource logs sent to the destinations a stack names', () => 
     // No assessment storage was given, so no storage copy of the audit is kept.
     expect(audits[0].inputs.storageEndpoint).toBeUndefined();
     expect(audits[0].inputs.storageAccountAccessKey).toBeUndefined();
+    expect(audits[0].inputs.storageAccountSubscriptionId).toBeUndefined();
 
     const server = settingOn(captured, 'sql-dev-01_id/databases/master');
     expect(server.workspaceId).toBe(LOG_DEV_01.id);
@@ -401,16 +407,16 @@ describe('Feature: Resource logs sent to the destinations a stack names', () => 
   test('Scenario: An AKS stack that already gives a workspace gets control-plane logs', async () => {
     const captured = await deploy('prd', 'AKS cluster', 'aks-prd-01', { logWorkspace: LOG_PRD_01 });
 
-    const setting = settingOn(captured, 'aks-prd-01_id');
-    expect(setting.workspaceId).toBe(LOG_PRD_01.id);
-    expectOnlyLogs(setting, ['kube-audit-admin', 'guard', 'cluster-autoscaler']);
-
-    // And Defender for "aks-prd-01" is configured as before.
+    // Defender for "aks-prd-01" is configured as before.
     const [cluster] = ofType(captured, MANAGED_CLUSTER);
     expect(cluster.inputs.securityProfile.defender).toEqual({
       logAnalyticsWorkspaceResourceId: LOG_PRD_01.id,
       securityMonitoring: { enabled: true },
     });
+
+    const setting = settingOn(captured, 'aks-prd-01_id');
+    expect(setting.workspaceId).toBe(LOG_PRD_01.id);
+    expectOnlyLogs(setting, ['kube-audit-admin', 'guard', 'cluster-autoscaler']);
   });
 
   test.each<[Component, string, string, object, (captured: Captured[]) => void]>([

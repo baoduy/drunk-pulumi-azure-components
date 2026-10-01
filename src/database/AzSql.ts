@@ -415,7 +415,8 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
 
   /**
    * One server audit, targeting Azure Monitor, when a log destination is given or the assessment is on with its storage.
-   * The master-database diagnostic setting forwards its events; the storage fields are set only in the second case.
+   * The master-database diagnostic setting forwards its events. The storage fields and the predicate are set only when
+   * the assessment is on with its storage.
    */
   private createServerAudit(
     server: sql.Server,
@@ -447,7 +448,8 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         blobAuditingPolicyName: 'default',
         isAzureMonitorTargetEnabled: true,
         isStorageSecondaryKeyInUse: false,
-        predicateExpression: "object_name = 'SensitiveData'",
+        //Only the audit with the assessment storage keeps its existing filter; every other audit is unfiltered.
+        predicateExpression: storage ? "object_name = 'SensitiveData'" : undefined,
         queueDelayMs: 4000,
         retentionDays: this.getRetentionDays(),
         state: 'Enabled',

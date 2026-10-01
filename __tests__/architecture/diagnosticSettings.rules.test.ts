@@ -1,4 +1,4 @@
-import { Captured, mockAksFetch, restoreStack, settle, withStack } from '../testUtils/pulumiMocks';
+import { Captured, mockAksFetch, quietStackHooks, settle, withStack } from '../testUtils/pulumiMocks';
 import { captureResourceParents } from '../testUtils/pulumiParentSpy';
 
 // Each case reloads a component's module graph through `withStack`; AKS and SQL can exceed Jest's 5 s default.
@@ -57,27 +57,24 @@ async function deploy(stack: 'prd' | 'dev', path: string, ctor: string, name: st
 
 const ofType = (captured: Captured[], type: string) => captured.filter((c) => c.type === type);
 
-const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
-let restoreFetch: () => void;
-beforeAll(() => {
-  restoreFetch = mockAksFetch();
-});
-afterAll(() => restoreFetch());
-let exitListeners: Function[] = [];
-let logSpy: jest.SpyInstance;
-beforeEach(() => {
-  exitListeners = process.listeners('exit');
-  logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-});
-afterEach(() => {
-  logSpy.mockRestore();
-  restoreStack(ORIGINAL_STACK);
-  for (const listener of process.listeners('exit')) {
-    if (!exitListeners.includes(listener)) process.removeListener('exit', listener as (code: number) => void);
-  }
-});
+// AzKubernetes fetches its kubelet identity over HTTP; stub it for the whole file.
+afterAll(mockAksFetch());
 
 describe('Diagnostic settings — rules beyond the acceptance tests', () => {
+  quietStackHooks();
+
+  // Every `withStack` reload adds a process `exit` listener; keep only the ones that existed before the case.
+  let exitListenersBefore = new Set<Function>();
+  beforeEach(() => {
+    exitListenersBefore = new Set(process.listeners('exit'));
+  });
+  afterEach(() =>
+    process
+      .listeners('exit')
+      .filter((listener) => !exitListenersBefore.has(listener))
+      .forEach((listener) => process.off('exit', listener)),
+  );
+
   test('R3: APIM logs.workspace and logs.storage create no diagnostic setting', async () => {
     const captured = await deploy('prd', '../../src/apim/Apim', 'Apim', 'apim-prd-01', {
       sku: { name: 'Developer', capacity: 1 },
@@ -117,9 +114,23 @@ describe('Diagnostic settings — rules beyond the acceptance tests', () => {
     expect(audits[0].name).toBe('sql-prd-01-audit');
     expect(audits[0].inputs.state).toBe('Enabled');
     expect(audits[0].inputs.isAzureMonitorTargetEnabled).toBe(true);
+    expect(audits[0].inputs.predicateExpression).toBeUndefined();
     expect(audits[0].inputs.storageEndpoint).toBeUndefined();
     expect(audits[0].inputs.storageAccountAccessKey).toBeUndefined();
     expect(audits[0].inputs.storageAccountSubscriptionId).toBeUndefined();
+  });
+
+  test('R5: dev SQL with no assessment audits every event, with no predicate', async () => {
+    const captured = await deploy('dev', '../../src/database/AzSql', 'AzSql', 'sql-dev-01', {
+      administrators: { azureAdOnlyAuthentication: true },
+      logWorkspace: LOG_WORKSPACE,
+    });
+
+    expect(ofType(captured, 'azure-native:sql:ServerSecurityAlertPolicy')).toHaveLength(0);
+    const audits = ofType(captured, AUDIT_POLICY);
+    expect(audits).toHaveLength(1);
+    expect(audits[0].inputs.state).toBe('Enabled');
+    expect(audits[0].inputs.predicateExpression).toBeUndefined();
   });
 
   test('R5: SQL with the assessment off keeps no storage copy even when assessment storage is given', async () => {
@@ -143,7 +154,7 @@ describe('Diagnostic settings — rules beyond the acceptance tests', () => {
     expect(audits[0].inputs.blobAuditingPolicyName).toBe('default');
     expect(audits[0].inputs.serverName).toBe('sql-prd-01');
     expect(audits[0].inputs.isStorageSecondaryKeyInUse).toBe(false);
-    expect(audits[0].inputs.predicateExpression).toBe("object_name = 'SensitiveData'");
+    expect(audits[0].inputs.predicateExpression).toBeUndefined();
     expect(audits[0].inputs.queueDelayMs).toBe(4000);
     expect(audits[0].inputs.storageEndpoint).toBeUndefined();
     expect(audits[0].inputs.storageAccountAccessKey).toBeUndefined();

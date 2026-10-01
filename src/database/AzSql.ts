@@ -54,6 +54,7 @@ export interface AzSqlArgs
   extends
     CommonBaseArgs,
     types.WithEncryptionEnabler,
+    types.WithDiagnosticLogs,
     Partial<
       Pick<
         sql.ServerArgs,

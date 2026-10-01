@@ -52,6 +52,7 @@ export interface ServiceBusArgs
     CommonBaseArgs,
     types.WithEncryptionEnabler,
     types.WithNetworkArgs,
+    types.WithDiagnosticLogs,
     Partial<Pick<bus.NamespaceArgs, 'sku' | 'zoneRedundant' | 'alternateName' | 'premiumMessagingPartitions'>> {
   disableLocalAuth: boolean;
   sku: {

@@ -21,6 +21,7 @@ export interface ApimArgs
     CommonBaseArgs,
     types.WithNetworkArgs,
     types.WithLogs,
+    types.WithDiagnosticLogs,
     Omit<
       apim.ApiManagementServiceArgs,
       | types.CommonProps

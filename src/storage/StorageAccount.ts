@@ -12,6 +12,7 @@ export interface StorageAccountArgs
   extends
     CommonBaseArgs,
     types.WithEncryptionEnabler,
+    types.WithDiagnosticLogs,
     Partial<
       Pick<
         storage.StorageAccountArgs,

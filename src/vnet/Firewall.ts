@@ -20,6 +20,7 @@ export interface FirewallArgs
     CommonBaseArgs,
     types.WithUserAssignedIdentity,
     types.WithEncryptionEnabler,
+    types.WithDiagnosticLogs,
     Partial<
       Pick<
         network.AzureFirewallArgs,

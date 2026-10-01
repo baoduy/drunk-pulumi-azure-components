@@ -112,6 +112,8 @@ export interface AzKubernetesArgs
   logWorkspace?: types.ResourceInputs & {
     defenderEnabled?: boolean;
   };
+  /** An existing storage account that receives the cluster's resource logs. It must be in the same region as the cluster. */
+  logStorage?: types.ResourceInputs;
 }
 
 export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {

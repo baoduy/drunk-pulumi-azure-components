@@ -10,7 +10,12 @@ import { VaultSecrets } from './VaultSecrets';
 import { azureEnv, networkGuard } from '../helpers';
 
 export interface KeyVaultArgs
-  extends BaseArgs, types.WithResourceGroupInputs, types.WithNetworkArgs, Partial<Pick<keyvault.VaultArgs, 'tags'>> {
+  extends
+    BaseArgs,
+    types.WithResourceGroupInputs,
+    types.WithNetworkArgs,
+    types.WithDiagnosticLogs,
+    Partial<Pick<keyvault.VaultArgs, 'tags'>> {
   sku?: 'standard' | 'premium';
 
   properties?: {

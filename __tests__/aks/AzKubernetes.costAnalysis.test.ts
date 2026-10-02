@@ -1,4 +1,4 @@
-import { withStack, restoreStack, mockAksFetch } from '../testUtils/pulumiMocks';
+import { withStack, aksState, aksStackHooks, settleAks } from '../testUtils/pulumiMocks';
 
 /**
  * DRK-1922 row 4 — opt-in AKS cost analysis (acceptance tests, DRK-1986).
@@ -24,16 +24,6 @@ const baseArgs = {
   agentPoolProfiles: [{ name: 'system', vnetSubnetID: 'subnet_id', enableEncryptionAtHost: false, osDiskSizeGB: 128 }],
 };
 
-// Same extra state the existing AKS tests return, so the addon/OIDC reads resolve.
-const aksState = () => ({
-  addonProfiles: {
-    azureKeyvaultSecretsProvider: {
-      identity: { resourceId: 'kv_identity_id', clientId: 'kv_client', objectId: 'kv_object' },
-    },
-  },
-  oidcIssuerProfile: { issuerURL: 'https://issuer.example.com' },
-});
-
 async function deploy(stackName: 'prd' | 'dev', props: { enableCostAnalysis?: boolean; tier?: string } = {}) {
   const { pulumi, AzKubernetes, captured } = withStack(
     stackName,
@@ -47,11 +37,7 @@ async function deploy(stackName: 'prd' | 'dev', props: { enableCostAnalysis?: bo
   const sku = props.tier ? { name: 'Base', tier: props.tier } : baseArgs.sku;
 
   const aks = new AzKubernetes(CLUSTER_NAME, { ...baseArgs, sku, features } as any);
-  await pulumi.output(aks.id).promise();
-  if (aks.kubeletIdentity) await pulumi.output(aks.kubeletIdentity).promise();
-  if (aks.systemIdentityId) await pulumi.output(aks.systemIdentityId).promise();
-  // Let fire-and-forget children settle before the next `withStack` swaps the mock monitor.
-  await new Promise((resolve) => setTimeout(resolve, 50));
+  await settleAks(pulumi, aks);
 
   const cluster = captured.find((c: any) => c.type === 'azure-native:containerservice:ManagedCluster')!.inputs;
   // Warnings that name this cluster and the cost-analysis input.
@@ -61,24 +47,7 @@ async function deploy(stackName: 'prd' | 'dev', props: { enableCostAnalysis?: bo
   return { cluster, costWarnings };
 }
 
-const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
-let restoreFetch: () => void;
-beforeAll(() => {
-  restoreFetch = mockAksFetch();
-});
-afterAll(() => restoreFetch());
-// Each fresh `@pulumi/pulumi` copy that `withStack` loads adds a process `exit` listener; drop the ones a
-// case added so the reloads don't pile up past Node's 10-listener limit.
-let exitListeners: Function[] = [];
-beforeEach(() => {
-  exitListeners = process.listeners('exit');
-});
-afterEach(() => {
-  restoreStack(ORIGINAL_STACK);
-  for (const listener of process.listeners('exit')) {
-    if (!exitListeners.includes(listener)) process.removeListener('exit', listener as (code: number) => void);
-  }
-});
+aksStackHooks();
 
 describe('cost analysis is sent when asked for on a paid tier', () => {
   test('a prd cluster (Standard by default) with cost analysis on sends metricsProfile.costAnalysis enabled', async () => {

@@ -1,5 +1,5 @@
 import type { AppConfigArgs } from '../../src/app/AppConfig';
-import { withStack, restoreStack, settle } from '../testUtils/pulumiMocks';
+import { withStack, settle, quietStackHooks, dropExitListenerHooks } from '../testUtils/pulumiMocks';
 
 /**
  * DRK-1922 row 9 — opt-in App Configuration replicas (acceptance tests, DRK-1986).
@@ -43,22 +43,8 @@ async function deploy(stackName: string, extra: Partial<AppConfigArgs> = {}) {
 }
 
 describe('AppConfig — opt-in replicas', () => {
-  const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
-  let logSpy: jest.SpyInstance;
-  // Each fresh `@pulumi/pulumi` copy that `withStack` loads adds a process `exit` listener; drop the ones a
-  // case added so the reloads don't pile up past Node's 10-listener limit.
-  let exitListeners: Function[] = [];
-  beforeEach(() => {
-    logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    exitListeners = process.listeners('exit');
-  });
-  afterEach(() => {
-    logSpy.mockRestore();
-    restoreStack(ORIGINAL_STACK);
-    for (const listener of process.listeners('exit')) {
-      if (!exitListeners.includes(listener)) process.removeListener('exit', listener as (code: number) => void);
-    }
-  });
+  quietStackHooks();
+  dropExitListenerHooks();
 
   describe('replicaLocations creates one replica per region', () => {
     test.each(['prd', 'dev'])('%s: two regions give two replicas on the store', async (stack) => {

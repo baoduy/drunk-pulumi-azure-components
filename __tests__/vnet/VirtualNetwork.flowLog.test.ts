@@ -1,5 +1,5 @@
 import type { VnetArgs } from '../../src/vnet/VirtualNetwork';
-import { withStack, restoreStack, settle } from '../testUtils/pulumiMocks';
+import { withStack, settle, quietStackHooks, dropExitListenerHooks } from '../testUtils/pulumiMocks';
 
 /**
  * DRK-1922 row 7 — opt-in VNet flow logs (acceptance tests, DRK-1986).
@@ -50,22 +50,8 @@ async function deploy(stackName: string, flowLog?: VnetArgs['flowLog']) {
 }
 
 describe('Vnet — opt-in VNet flow logs', () => {
-  const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
-  let logSpy: jest.SpyInstance;
-  // Each fresh `@pulumi/pulumi` copy that `withStack` loads adds a process `exit` listener; drop the ones a
-  // case added so the reloads don't pile up past Node's 10-listener limit.
-  let exitListeners: Function[] = [];
-  beforeEach(() => {
-    logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    exitListeners = process.listeners('exit');
-  });
-  afterEach(() => {
-    logSpy.mockRestore();
-    restoreStack(ORIGINAL_STACK);
-    for (const listener of process.listeners('exit')) {
-      if (!exitListeners.includes(listener)) process.removeListener('exit', listener as (code: number) => void);
-    }
-  });
+  quietStackHooks();
+  dropExitListenerHooks();
 
   describe('flowLog creates one flow log on the VNet', () => {
     test.each(['prd', 'dev'])(

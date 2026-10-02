@@ -1,5 +1,5 @@
 import type { StorageAccountArgs } from '../../src/storage/StorageAccount';
-import { withStack, restoreStack, settle } from '../testUtils/pulumiMocks';
+import { withStack, settle, quietStackHooks, dropExitListenerHooks } from '../testUtils/pulumiMocks';
 
 /**
  * DRK-1922 row 2 — opt-in Defender for Storage (acceptance tests, DRK-1986).
@@ -39,22 +39,8 @@ async function deploy(stackName: string, extra: Partial<StorageAccountArgs> = {}
 }
 
 describe('StorageAccount — opt-in Defender for Storage', () => {
-  const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
-  let logSpy: jest.SpyInstance;
-  // Each fresh `@pulumi/pulumi` copy that `withStack` loads adds a process `exit` listener; drop the ones a
-  // case added so the reloads don't pile up past Node's 10-listener limit.
-  let exitListeners: Function[] = [];
-  beforeEach(() => {
-    logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    exitListeners = process.listeners('exit');
-  });
-  afterEach(() => {
-    logSpy.mockRestore();
-    restoreStack(ORIGINAL_STACK);
-    for (const listener of process.listeners('exit')) {
-      if (!exitListeners.includes(listener)) process.removeListener('exit', listener as (code: number) => void);
-    }
-  });
+  quietStackHooks();
+  dropExitListenerHooks();
 
   describe('defender.enabled creates one Defender setting on the account', () => {
     test.each(['prd', 'dev'])(

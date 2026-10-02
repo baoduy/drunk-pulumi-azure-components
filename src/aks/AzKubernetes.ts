@@ -91,6 +91,11 @@ export interface AzKubernetesArgs
     enableAzurePolicy?: boolean;
     enableAzureKeyVault?: boolean;
     enableNodeAutoProvisioning?: boolean;
+    /**
+     * AKS cost analysis add-on. Off by default; a prd stack without it logs a warning.
+     * Needs the `Standard` or `Premium` tier: on the `Free` tier it is skipped with a warning.
+     */
+    enableCostAnalysis?: boolean;
   };
 
   network?: Omit<

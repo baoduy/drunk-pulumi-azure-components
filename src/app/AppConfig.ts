@@ -17,6 +17,12 @@ export interface AppConfigArgs
   /** Store SKU name: `free`, `developer`, `standard` or `premium`. Defaults to `Standard` in every env. */
   sku?: pulumi.Input<string>;
   network?: Pick<types.NetworkArgs, 'publicNetworkAccess' | 'privateLink'>;
+  /**
+   * Extra regions that get a replica of this store, e.g. `['southeastasia']`. Empty by default; a prd stack
+   * without replicas logs a warning. Each replica is billed like another store, and gets no private endpoint
+   * of its own.
+   */
+  replicaLocations?: string[];
 }
 
 export class AppConfig extends BaseResourceComponent<AppConfigArgs> {

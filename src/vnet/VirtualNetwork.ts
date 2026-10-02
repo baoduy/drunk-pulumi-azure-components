@@ -98,6 +98,21 @@ export interface VnetArgs extends CommonBaseArgs {
     /** The Private DNS Zone that will be linked to this Vnet */
     privateZonesLinks?: Array<types.ResourceInputs>;
   };
+  /** VNet flow logs. Off by default; a prd stack without them logs a warning. */
+  flowLog?: {
+    /** The storage account that receives the flow logs. It must be in the VNet's region. */
+    storageAccountId: pulumi.Input<string>;
+    /** Days the logs are kept. Defaults to 90. */
+    retentionDays?: number;
+    /** The Network Watcher to use. Defaults to Azure's `NetworkWatcher_<location>` in `NetworkWatcherRG`. */
+    networkWatcher?: { name: pulumi.Input<string>; resourceGroupName: pulumi.Input<string> };
+    /** Traffic analytics into a Log Analytics workspace. Off unless given. */
+    trafficAnalytics?: {
+      workspace: types.ResourceInputs & { customerId?: pulumi.Input<string> };
+      /** Processing interval in minutes. Defaults to 60. */
+      intervalInMinutes?: 10 | 60;
+    };
+  };
 }
 
 export type VnetOutputs = {

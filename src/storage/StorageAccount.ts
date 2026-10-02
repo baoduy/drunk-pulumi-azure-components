@@ -44,6 +44,19 @@ export interface StorageAccountArgs
     defaultManagementPolicyRules?: pulumi.Input<pulumi.Input<inputs.storage.ManagementPolicyRuleArgs>[]>;
   };
 
+  /** Microsoft Defender for Storage on this account. Off by default; a prd stack without it logs a warning. */
+  defender?: {
+    /** Turn Defender for Storage (activity monitoring) on for this account. */
+    enabled: boolean;
+    /** On-upload malware scanning, billed per GB scanned. Off unless `enabled` is `true`. */
+    malwareScanning?: {
+      /** Turn on-upload malware scanning on. */
+      enabled: boolean;
+      /** Monthly scan cap in GB. Omitted means the Azure default. */
+      capGBPerMonth?: number;
+    };
+  };
+
   containers?: {
     containers?: Array<{ name: string; isPublic?: boolean }>;
     queues?: Array<string>;

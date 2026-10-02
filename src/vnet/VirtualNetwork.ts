@@ -13,7 +13,17 @@ import { getBasionSecurityRules } from './securityRules';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import { IpAddresses, IpAddressesArgs } from './IpAddresses';
 import * as privateDns from '@pulumi/azure-native/privatedns';
-import { rsHelpers, zoneHelper } from '../helpers';
+import { azureEnv, prdGuard, rsHelpers, zoneHelper } from '../helpers';
+import { azRegions } from '../helpers/Location/LocationBuiltIn';
+
+/**
+ * The Azure region code for a region name or display name: the known region's code, else the input without
+ * whitespace, lower-cased. Unlike `getRegionCode` it never falls back to a fixed region.
+ */
+const toRegionCode = (location: string) => {
+  const code = location.replace(/\s+/g, '').toLowerCase();
+  return azRegions.find((r) => r.display_name.replace(/\s+/g, '').toLowerCase() === code)?.name ?? code;
+};
 
 type ServiceEndpointTypes =
   | 'Microsoft.Storage'
@@ -98,6 +108,22 @@ export interface VnetArgs extends CommonBaseArgs {
     /** The Private DNS Zone that will be linked to this Vnet */
     privateZonesLinks?: Array<types.ResourceInputs>;
   };
+  /** VNet flow logs. Off by default; a prd stack without them logs a warning. */
+  flowLog?: {
+    /** The storage account that receives the flow logs. It must be in the VNet's region. */
+    storageAccountId: pulumi.Input<string>;
+    /** Days the logs are kept. Defaults to 90. */
+    retentionDays?: number;
+    /** The Network Watcher to use. Defaults to Azure's `NetworkWatcher_<location>` in `NetworkWatcherRG`. */
+    networkWatcher?: { name: pulumi.Input<string>; resourceGroupName: pulumi.Input<string> };
+    /** Traffic analytics into a Log Analytics workspace. Off unless given. */
+    trafficAnalytics?: {
+      /** `location` is the workspace's region. Defaults to the VNet's region. */
+      workspace: types.ResourceInputs & { customerId?: pulumi.Input<string>; location?: pulumi.Input<string> };
+      /** Processing interval in minutes. Defaults to 60. */
+      intervalInMinutes?: 10 | 60;
+    };
+  };
 }
 
 export type VnetOutputs = {
@@ -131,6 +157,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     const ipAddresses = this.createPublicIpAddresses();
     const natGateway = this.createNatGateway(ipAddresses);
     const { vnet, subnets } = this.createVnet({ natGateway, routeTable, securityGroup });
+    this.createFlowLog(vnet);
     const firewall = this.createFirewall(subnets);
     const basion = this.createBasion(subnets);
     const vpnGateway = this.createVpnGateway(subnets);
@@ -539,6 +566,46 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   //     return router.addRoute('Internet-via-Gateway', helpers.defaultRouteRules.defaultGatewayRoute);
   //   }
   // }
+
+  /** VNet flow log into the caller's storage account when `flowLog` is set; in prd a missing one only warns. */
+  private createFlowLog(vnet: network.VirtualNetwork) {
+    const { flowLog } = this.args;
+    if (!flowLog) {
+      prdGuard.warnPrdMissing('Vnet', this.name, 'VNet flow logs', 'flowLog');
+      return undefined;
+    }
+    const { trafficAnalytics } = flowLog;
+    // Region code as Azure names it (`southeastasia`), from the VNet itself rather than the caller's spelling.
+    const region = vnet.location.apply((l) => toRegionCode(l ?? azureEnv.currentRegionName));
+
+    return new network.FlowLog(
+      `${this.name}-flowlog`,
+      {
+        // Azure auto-creates one watcher per region as `NetworkWatcher_<location>` in `NetworkWatcherRG`.
+        networkWatcherName: flowLog.networkWatcher?.name ?? pulumi.interpolate`NetworkWatcher_${region}`,
+        resourceGroupName: flowLog.networkWatcher?.resourceGroupName ?? 'NetworkWatcherRG',
+        location: region,
+        targetResourceId: vnet.id,
+        storageId: flowLog.storageAccountId,
+        enabled: true,
+        retentionPolicy: { enabled: true, days: flowLog.retentionDays ?? 90 },
+        flowAnalyticsConfiguration: trafficAnalytics
+          ? {
+              networkWatcherFlowAnalyticsConfiguration: {
+                enabled: true,
+                workspaceResourceId: trafficAnalytics.workspace.id,
+                workspaceId: trafficAnalytics.workspace.customerId,
+                workspaceRegion: trafficAnalytics.workspace.location
+                  ? pulumi.output(trafficAnalytics.workspace.location).apply(toRegionCode)
+                  : region,
+                trafficAnalyticsInterval: trafficAnalytics.intervalInMinutes ?? 60,
+              },
+            }
+          : undefined,
+      },
+      { ...this.childOpts, dependsOn: vnet, deletedWith: vnet, parent: this },
+    );
+  }
 
   private createPeering(vnet: network.VirtualNetwork) {
     const {

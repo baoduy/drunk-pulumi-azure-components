@@ -99,6 +99,22 @@ export function quietStackHooks() {
   });
 }
 
+/**
+ * Each fresh `@pulumi/pulumi` copy that `withStack` loads adds a process `exit` listener; drop the ones a test
+ * added so many reloads in one file don't pile up past Node's 10-listener limit. Call inside `describe`.
+ */
+export function dropExitListenerHooks() {
+  let before: Function[] = [];
+  beforeEach(() => {
+    before = process.listeners('exit');
+  });
+  afterEach(() => {
+    for (const listener of process.listeners('exit')) {
+      if (!before.includes(listener)) process.removeListener('exit', listener as (code: number) => void);
+    }
+  });
+}
+
 /** Restore PULUMI_NODEJS_STACK to whatever it was before the test file overrode it. */
 export function restoreStack(original: string | undefined) {
   if (original === undefined) delete process.env.PULUMI_NODEJS_STACK;
@@ -125,6 +141,40 @@ export function mockAksFetch(): () => void {
   return () => {
     global.fetch = original;
   };
+}
+
+/** Extra AKS cluster state, so the Key Vault add-on identity and OIDC issuer reads resolve. */
+export const aksState = () => ({
+  addonProfiles: {
+    azureKeyvaultSecretsProvider: {
+      identity: { resourceId: 'kv_identity_id', clientId: 'kv_client', objectId: 'kv_object' },
+    },
+  },
+  oidcIssuerProfile: { issuerURL: 'https://issuer.example.com' },
+});
+
+/**
+ * Hooks for AzKubernetes files that reload the component per case through `withStack`: stub `fetch` for the
+ * file, restore PULUMI_NODEJS_STACK and drop the added `exit` listeners after each case.
+ */
+export function aksStackHooks() {
+  const originalStack = process.env.PULUMI_NODEJS_STACK;
+  let restoreFetch: () => void;
+  beforeAll(() => {
+    restoreFetch = mockAksFetch();
+  });
+  afterAll(() => restoreFetch());
+  afterEach(() => restoreStack(originalStack));
+  dropExitListenerHooks();
+}
+
+/** Awaits an AzKubernetes component's id and identities, then lets its fire-and-forget children settle. */
+export async function settleAks(pulumi: typeof import('@pulumi/pulumi'), aks: any) {
+  await pulumi.output(aks.id).promise();
+  if (aks.kubeletIdentity) await pulumi.output(aks.kubeletIdentity).promise();
+  if (aks.systemIdentityId) await pulumi.output(aks.systemIdentityId).promise();
+  // Let fire-and-forget children settle before the next `withStack` swaps the mock monitor.
+  await new Promise((resolve) => setTimeout(resolve, 50));
 }
 
 /**

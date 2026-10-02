@@ -6,7 +6,7 @@ import * as mid from '@pulumi/azure-native/managedidentity';
 
 import { AppRegistration, AzRole, RoleAssignment } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv, computeHelper, rsHelpers, zoneHelper } from '../helpers';
+import { azureEnv, computeHelper, prdGuard, rsHelpers, zoneHelper } from '../helpers';
 
 import { DiskEncryptionSet } from '../vm';
 import { SshGenerator } from '../common';
@@ -91,6 +91,11 @@ export interface AzKubernetesArgs
     enableAzurePolicy?: boolean;
     enableAzureKeyVault?: boolean;
     enableNodeAutoProvisioning?: boolean;
+    /**
+     * AKS cost analysis add-on. Off by default; a prd stack without it logs a warning.
+     * Needs the `Standard` or `Premium` tier: on the `Free` tier it is skipped with a warning.
+     */
+    enableCostAnalysis?: boolean;
   };
 
   network?: Omit<
@@ -226,6 +231,21 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     );
   }
 
+  /** Cost analysis needs a paid tier: Azure rejects it on `Free`, so it is skipped there with a warning. */
+  private getMetricsProfile(tier: ccs.ManagedClusterSKUTier) {
+    if (!this.args.features?.enableCostAnalysis) {
+      prdGuard.warnPrdMissing('AzKubernetes', this.name, 'cost analysis', 'features.enableCostAnalysis');
+      return undefined;
+    }
+    if (tier === ccs.ManagedClusterSKUTier.Free) {
+      pulumi.log.warn(
+        `AzKubernetes '${this.name}' is on the Free tier, so \`features.enableCostAnalysis\` is skipped. Use the Standard or Premium tier.`,
+      );
+      return undefined;
+    }
+    return { costAnalysis: { enabled: true } };
+  }
+
   private createUserNameAndSshKeys() {
     const { vaultInfo } = this.args;
     const userName = this.createRandomString({ type: 'string', length: 8, vaultInfo }).value.apply((v) =>
@@ -333,21 +353,22 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
           ? undefined
           : { defaultNodePools: 'None' as const, mode: 'Auto' as const };
 
+    // An explicit tier always wins. Otherwise PRD and every Automatic cluster (Azure preconfigures
+    // Automatic to Standard) get the Standard (SLA-backed) tier, and everything else gets Free.
+    const tier =
+      sku.tier ??
+      (azureEnv.isPrd || sku.name === ccs.ManagedClusterSKUName.Automatic
+        ? ccs.ManagedClusterSKUTier.Standard
+        : ccs.ManagedClusterSKUTier.Free);
+    const metricsProfile = this.getMetricsProfile(tier);
+
     const cluster = new ccs.ManagedCluster(
       this.name,
       {
         ...props,
         ...rsGroup,
-        // An explicit tier always wins. Otherwise PRD and every Automatic cluster (Azure preconfigures
-        // Automatic to Standard) get the Standard (SLA-backed) tier, and everything else gets Free.
-        sku: {
-          ...sku,
-          tier:
-            sku.tier ??
-            (azureEnv.isPrd || sku.name === ccs.ManagedClusterSKUName.Automatic
-              ? ccs.ManagedClusterSKUTier.Standard
-              : ccs.ManagedClusterSKUTier.Free),
-        },
+        sku: { ...sku, tier },
+        metricsProfile,
         aadProfile: groupRoles
           ? {
               enableAzureRBAC: true,

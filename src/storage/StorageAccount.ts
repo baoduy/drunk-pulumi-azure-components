@@ -1,12 +1,13 @@
 import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
+import * as security from '@pulumi/azure-native/security';
 import * as storage from '@pulumi/azure-native/storage';
 import * as types from '../types';
 import * as vault from '../vault';
 import * as vnet from '../vnet';
 
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { azureEnv } from '../helpers';
+import { azureEnv, prdGuard } from '../helpers';
 
 export interface StorageAccountArgs
   extends
@@ -83,6 +84,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
       containers,
       logWorkspace,
       logStorage,
+      defender,
       ...props
     } = args;
 
@@ -209,6 +211,7 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
     this.createLifeCycleManagement(stg);
     this.enableStaticWebsite(stg);
     this.createContainers(stg);
+    this.createDefender(stg);
     this.createDiagnosticSettings(stg);
 
     this.addSecretsToVault(stg);
@@ -238,6 +241,36 @@ export class StorageAccount extends BaseResourceComponent<StorageAccountArgs> {
         this.args,
       );
     }
+  }
+
+  /** Defender for Storage on this account when `defender.enabled`; in prd a missing protection only warns. */
+  private createDefender(stg: storage.StorageAccount) {
+    const { defender } = this.args;
+    if (!defender?.enabled) {
+      prdGuard.warnPrdMissing('StorageAccount', this.name, 'Defender for Storage', 'defender.enabled');
+      return;
+    }
+    if (!defender.malwareScanning?.enabled)
+      prdGuard.warnPrdMissing('StorageAccount', this.name, 'malware scanning', 'defender.malwareScanning.enabled');
+
+    return new security.DefenderForStorage(
+      `${this.name}-defender`,
+      {
+        resourceId: stg.id,
+        settingName: 'current',
+        properties: {
+          isEnabled: true,
+          overrideSubscriptionLevelSettings: true,
+          malwareScanning: {
+            onUpload: {
+              isEnabled: defender.malwareScanning?.enabled ?? false,
+              capGBPerMonth: defender.malwareScanning?.capGBPerMonth,
+            },
+          },
+        },
+      },
+      { dependsOn: stg, deletedWith: stg, parent: this },
+    );
   }
 
   private createPrivateLink(stg: storage.StorageAccount) {

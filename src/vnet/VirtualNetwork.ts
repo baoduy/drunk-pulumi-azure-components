@@ -13,7 +13,7 @@ import { getBasionSecurityRules } from './securityRules';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import { IpAddresses, IpAddressesArgs } from './IpAddresses';
 import * as privateDns from '@pulumi/azure-native/privatedns';
-import { rsHelpers, zoneHelper } from '../helpers';
+import { prdGuard, rsHelpers, zoneHelper } from '../helpers';
 
 type ServiceEndpointTypes =
   | 'Microsoft.Storage'
@@ -146,6 +146,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     const ipAddresses = this.createPublicIpAddresses();
     const natGateway = this.createNatGateway(ipAddresses);
     const { vnet, subnets } = this.createVnet({ natGateway, routeTable, securityGroup });
+    this.createFlowLog(vnet);
     const firewall = this.createFirewall(subnets);
     const basion = this.createBasion(subnets);
     const vpnGateway = this.createVpnGateway(subnets);
@@ -554,6 +555,42 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
   //     return router.addRoute('Internet-via-Gateway', helpers.defaultRouteRules.defaultGatewayRoute);
   //   }
   // }
+
+  /** VNet flow log into the caller's storage account when `flowLog` is set; in prd a missing one only warns. */
+  private createFlowLog(vnet: network.VirtualNetwork) {
+    const { rsGroup, flowLog } = this.args;
+    if (!flowLog) {
+      prdGuard.warnPrdMissing('Vnet', this.name, 'VNet flow logs', 'flowLog');
+      return undefined;
+    }
+    const { trafficAnalytics } = flowLog;
+
+    return new network.FlowLog(
+      `${this.name}-flowlog`,
+      {
+        // Azure auto-creates one watcher per region as `NetworkWatcher_<location>` in `NetworkWatcherRG`.
+        networkWatcherName: flowLog.networkWatcher?.name ?? pulumi.interpolate`NetworkWatcher_${rsGroup.location}`,
+        resourceGroupName: flowLog.networkWatcher?.resourceGroupName ?? 'NetworkWatcherRG',
+        location: rsGroup.location,
+        targetResourceId: vnet.id,
+        storageId: flowLog.storageAccountId,
+        enabled: true,
+        retentionPolicy: { enabled: true, days: flowLog.retentionDays ?? 90 },
+        flowAnalyticsConfiguration: trafficAnalytics
+          ? {
+              networkWatcherFlowAnalyticsConfiguration: {
+                enabled: true,
+                workspaceResourceId: trafficAnalytics.workspace.id,
+                workspaceId: trafficAnalytics.workspace.customerId,
+                workspaceRegion: rsGroup.location,
+                trafficAnalyticsInterval: trafficAnalytics.intervalInMinutes ?? 60,
+              },
+            }
+          : undefined,
+      },
+      { ...this.childOpts, dependsOn: vnet, deletedWith: vnet, parent: this },
+    );
+  }
 
   private createPeering(vnet: network.VirtualNetwork) {
     const {

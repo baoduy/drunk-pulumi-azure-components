@@ -14,7 +14,16 @@ import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import { IpAddresses, IpAddressesArgs } from './IpAddresses';
 import * as privateDns from '@pulumi/azure-native/privatedns';
 import { azureEnv, prdGuard, rsHelpers, zoneHelper } from '../helpers';
-import { getRegionCode } from '../helpers/Location';
+import { azRegions } from '../helpers/Location/LocationBuiltIn';
+
+/**
+ * The Azure region code for a region name or display name: the known region's code, else the input without
+ * whitespace, lower-cased. Unlike `getRegionCode` it never falls back to a fixed region.
+ */
+const toRegionCode = (location: string) => {
+  const code = location.replace(/\s+/g, '').toLowerCase();
+  return azRegions.find((r) => r.display_name.replace(/\s+/g, '').toLowerCase() === code)?.name ?? code;
+};
 
 type ServiceEndpointTypes =
   | 'Microsoft.Storage'
@@ -567,7 +576,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
     }
     const { trafficAnalytics } = flowLog;
     // Region code as Azure names it (`southeastasia`), from the VNet itself rather than the caller's spelling.
-    const region = vnet.location.apply((l) => getRegionCode(l ?? azureEnv.currentRegionName));
+    const region = vnet.location.apply((l) => toRegionCode(l ?? azureEnv.currentRegionName));
 
     return new network.FlowLog(
       `${this.name}-flowlog`,
@@ -587,7 +596,7 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
                 workspaceResourceId: trafficAnalytics.workspace.id,
                 workspaceId: trafficAnalytics.workspace.customerId,
                 workspaceRegion: trafficAnalytics.workspace.location
-                  ? pulumi.output(trafficAnalytics.workspace.location).apply(getRegionCode)
+                  ? pulumi.output(trafficAnalytics.workspace.location).apply(toRegionCode)
                   : region,
                 trafficAnalyticsInterval: trafficAnalytics.intervalInMinutes ?? 60,
               },

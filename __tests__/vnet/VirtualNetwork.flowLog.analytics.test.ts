@@ -3,9 +3,10 @@ import { withStack, settle, quietStackHooks } from '../testUtils/pulumiMocks';
 
 /**
  * DRK-1922 Build additions. The flow log's region is the VNet's own location as an Azure region code, so a
- * display name such as `Southeast Asia` still finds `NetworkWatcher_southeastasia` (review B1). Traffic
- * analytics takes `workspaceId` from the workspace's `customerId` (brief §9 Q4), and `workspaceRegion` from
- * the workspace's `location`, else the VNet's region (review S1).
+ * display name such as `Southeast Asia` still finds `NetworkWatcher_southeastasia` (review B1), and a region
+ * the built-in list lacks keeps its own code (review B2). Traffic analytics takes `workspaceId` from the
+ * workspace's `customerId` (brief §9 Q4), and `workspaceRegion` from the workspace's `location`, else the
+ * VNet's region (review S1).
  */
 const STORAGE_ID = '/subscriptions/sub/resourceGroups/rg-logs/providers/Microsoft.Storage/storageAccounts/stgflowlogs';
 const WORKSPACE = {
@@ -38,6 +39,22 @@ describe('Vnet — flow log region and traffic analytics workspace', () => {
     expect(flowLog.location).toBe('southeastasia');
   });
 
+  test.each(['italynorth', 'Italy North'])(
+    'a VNet in "%s", a region the built-in list lacks, uses NetworkWatcher_italynorth and italynorth',
+    async (location) => {
+      const flowLog = await flowLogOf(location);
+
+      expect(flowLog.networkWatcherName).toBe('NetworkWatcher_italynorth');
+      expect(flowLog.location).toBe('italynorth');
+    },
+  );
+
+  test('a VNet in "East US (Stage)" takes the built-in code eastusstage', async () => {
+    const flowLog = await flowLogOf('East US (Stage)');
+
+    expect(flowLog.location).toBe('eastusstage');
+  });
+
   test('a VNet without a location falls back to the stack region (SoutheastAsia when unset)', async () => {
     const flowLog = await flowLogOf(undefined);
 
@@ -67,6 +84,15 @@ describe('Vnet — flow log region and traffic analytics workspace', () => {
 
     const analytics = flowLog.flowAnalyticsConfiguration.networkWatcherFlowAnalyticsConfiguration;
     expect(analytics.workspaceRegion).toBe('southeastasia');
+  });
+
+  test('a workspace in "Italy North" sends italynorth as workspaceRegion', async () => {
+    const flowLog = await flowLogOf('Southeast Asia', {
+      trafficAnalytics: { workspace: { ...WORKSPACE, location: 'Italy North' } },
+    });
+
+    const analytics = flowLog.flowAnalyticsConfiguration.networkWatcherFlowAnalyticsConfiguration;
+    expect(analytics.workspaceRegion).toBe('italynorth');
   });
 
   test('a workspace in "East US" sends eastus as workspaceRegion', async () => {

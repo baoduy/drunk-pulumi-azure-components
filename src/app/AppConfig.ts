@@ -113,11 +113,20 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
     );
   }
 
-  /** One replica per `replicaLocations` region, named after the region; in prd none only warns. */
+  /**
+   * One replica per `replicaLocations` region, named after the region; in prd none only warns. Azure rejects
+   * replicas on the `free` and `developer` SKUs, so they are skipped there with a warning.
+   */
   private createReplicas(azConfig: appConfig.ConfigurationStore) {
-    const { rsGroup, replicaLocations } = this.args;
+    const { rsGroup, replicaLocations, sku } = this.args;
     if (!replicaLocations?.length) {
       prdGuard.warnPrdMissing('AppConfig', this.name, 'App Configuration replicas', 'replicaLocations');
+      return [];
+    }
+    if (typeof sku === 'string' && ['free', 'developer'].includes(sku.toLowerCase())) {
+      pulumi.log.warn(
+        `AppConfig '${this.name}' is on the ${sku} SKU, so \`replicaLocations\` is skipped. Use the Standard or Premium SKU.`,
+      );
       return [];
     }
 

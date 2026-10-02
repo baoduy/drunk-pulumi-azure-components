@@ -13,7 +13,8 @@ import { getBasionSecurityRules } from './securityRules';
 import { VpnGateway, VpnGatewayArgs } from './VpnGateway';
 import { IpAddresses, IpAddressesArgs } from './IpAddresses';
 import * as privateDns from '@pulumi/azure-native/privatedns';
-import { prdGuard, rsHelpers, zoneHelper } from '../helpers';
+import { azureEnv, prdGuard, rsHelpers, zoneHelper } from '../helpers';
+import { getRegionCode } from '../helpers/Location';
 
 type ServiceEndpointTypes =
   | 'Microsoft.Storage'
@@ -108,7 +109,8 @@ export interface VnetArgs extends CommonBaseArgs {
     networkWatcher?: { name: pulumi.Input<string>; resourceGroupName: pulumi.Input<string> };
     /** Traffic analytics into a Log Analytics workspace. Off unless given. */
     trafficAnalytics?: {
-      workspace: types.ResourceInputs & { customerId?: pulumi.Input<string> };
+      /** `location` is the workspace's region. Defaults to the VNet's region. */
+      workspace: types.ResourceInputs & { customerId?: pulumi.Input<string>; location?: pulumi.Input<string> };
       /** Processing interval in minutes. Defaults to 60. */
       intervalInMinutes?: 10 | 60;
     };
@@ -558,20 +560,22 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
 
   /** VNet flow log into the caller's storage account when `flowLog` is set; in prd a missing one only warns. */
   private createFlowLog(vnet: network.VirtualNetwork) {
-    const { rsGroup, flowLog } = this.args;
+    const { flowLog } = this.args;
     if (!flowLog) {
       prdGuard.warnPrdMissing('Vnet', this.name, 'VNet flow logs', 'flowLog');
       return undefined;
     }
     const { trafficAnalytics } = flowLog;
+    // Region code as Azure names it (`southeastasia`), from the VNet itself rather than the caller's spelling.
+    const region = vnet.location.apply((l) => getRegionCode(l ?? azureEnv.currentRegionName));
 
     return new network.FlowLog(
       `${this.name}-flowlog`,
       {
         // Azure auto-creates one watcher per region as `NetworkWatcher_<location>` in `NetworkWatcherRG`.
-        networkWatcherName: flowLog.networkWatcher?.name ?? pulumi.interpolate`NetworkWatcher_${rsGroup.location}`,
+        networkWatcherName: flowLog.networkWatcher?.name ?? pulumi.interpolate`NetworkWatcher_${region}`,
         resourceGroupName: flowLog.networkWatcher?.resourceGroupName ?? 'NetworkWatcherRG',
-        location: rsGroup.location,
+        location: region,
         targetResourceId: vnet.id,
         storageId: flowLog.storageAccountId,
         enabled: true,
@@ -582,7 +586,9 @@ export class Vnet extends BaseResourceComponent<VnetArgs> {
                 enabled: true,
                 workspaceResourceId: trafficAnalytics.workspace.id,
                 workspaceId: trafficAnalytics.workspace.customerId,
-                workspaceRegion: rsGroup.location,
+                workspaceRegion: trafficAnalytics.workspace.location
+                  ? pulumi.output(trafficAnalytics.workspace.location).apply(getRegionCode)
+                  : region,
                 trafficAnalyticsInterval: trafficAnalytics.intervalInMinutes ?? 60,
               },
             }

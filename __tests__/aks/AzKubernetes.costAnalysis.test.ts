@@ -57,7 +57,7 @@ async function deploy(stackName: 'prd' | 'dev', props: { enableCostAnalysis?: bo
   // Warnings that name this cluster and the cost-analysis input.
   const costWarnings = warn.mock.calls
     .map((call) => String(call[0]))
-    .filter((m) => m.includes('AzKubernetes') && m.includes(CLUSTER_NAME) && m.includes('enableCostAnalysis'));
+    .filter((m) => m.includes('AzKubernetes') && m.includes(CLUSTER_NAME) && m.includes('features.enableCostAnalysis'));
   return { cluster, costWarnings };
 }
 

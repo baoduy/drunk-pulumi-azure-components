@@ -176,6 +176,14 @@ export type WithLogs = {
   logs?: LogsInputs;
 };
 
+/** Destinations for the component's Azure Monitor resource logs. No destination means no diagnostic setting. */
+export type WithDiagnosticLogs = {
+  /** An existing Log Analytics workspace that receives the resource logs. */
+  logWorkspace?: ResourceInputs;
+  /** An existing storage account that receives the resource logs. It must be in the same region as the logged resource. */
+  logStorage?: ResourceInputs;
+};
+
 export type LogsOutputs = {
   storage?: ResourceOutputs;
   workspace?: WorkspaceOutputs;

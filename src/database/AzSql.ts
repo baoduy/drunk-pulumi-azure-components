@@ -54,6 +54,7 @@ export interface AzSqlArgs
   extends
     CommonBaseArgs,
     types.WithEncryptionEnabler,
+    types.WithDiagnosticLogs,
     Partial<
       Pick<
         sql.ServerArgs,
@@ -92,11 +93,11 @@ export interface AzSqlArgs
    */
   vulnerabilityAssessment?: {
     /**
-     * Turn the assessment and alert policy on or off. `false` also skips the blob audit policy, even when
-     * `logStorage` is set. Default: `true` in PRD or when this block is supplied.
+     * Turn the assessment and alert policy on or off. `false` also drops the storage copy of the server audit,
+     * even when `logStorage` is set. Default: `true` in PRD or when this block is supplied.
      */
     enabled?: boolean;
-    /** Optional storage account for alert logs and the server blob auditing policy. No audit policy without it. */
+    /** Optional storage account for alert logs and a storage copy of the server audit. */
     logStorage?: types.ResourceWithGroupInputs;
     /** Extra alert recipients; subscription admins are always emailed. */
     alertEmails?: pulumi.Input<string[]>;
@@ -133,7 +134,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     const { server, password } = this.createSql();
     const elastic = this.createElasticPool(server);
 
-    this.createVulnerabilityAssessment(server);
+    this.createServerAudit(server, this.createVulnerabilityAssessment(server));
     this.createNetwork(server);
     this.createDatabases(server, password, elastic);
 
@@ -176,6 +177,8 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       administrators,
       network,
       administratorLogin,
+      logWorkspace,
+      logStorage,
       ...props
     } = this.args;
 
@@ -370,7 +373,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
     const { rsGroup, vulnerabilityAssessment: va, vaultInfo } = this.args;
     if (!(va?.enabled ?? (azureEnv.isPrd || va !== undefined))) return undefined;
 
-    const retentionDays = va?.retentionDays ?? (azureEnv.isPrd ? 30 : 7);
+    const retentionDays = this.getRetentionDays();
     const stgEndpoints = va?.logStorage ? storageHelpers.getStorageEndpointsOutputs(va.logStorage) : undefined;
     const storageKey = va?.logStorage ? getStorageAccessKeyOutputs(va.logStorage, vaultInfo) : undefined;
 
@@ -402,10 +405,37 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
       { dependsOn: alert, parent: this },
     );
 
-    if (!stgEndpoints) return undefined;
+    return { alert, storage: stgEndpoints ? { endpoint: stgEndpoints.blob, key: storageKey } : undefined };
+  }
 
-    //Server Audit
-    new sql.ExtendedServerBlobAuditingPolicy(
+  /** Retention for alert and audit logs, used as given, including `0`. Default: 30 in PRD, else 7. */
+  private getRetentionDays() {
+    return this.args.vulnerabilityAssessment?.retentionDays ?? (azureEnv.isPrd ? 30 : 7);
+  }
+
+  /**
+   * One server audit, targeting Azure Monitor, when a log destination is given or the assessment is on with its storage.
+   * The master-database diagnostic setting forwards its events. The storage fields and the predicate are set only when
+   * the assessment is on with its storage.
+   */
+  private createServerAudit(
+    server: sql.Server,
+    va?: {
+      alert: sql.ServerSecurityAlertPolicy;
+      storage?: { endpoint: pulumi.Input<string>; key?: pulumi.Input<string> };
+    },
+  ) {
+    const { rsGroup } = this.args;
+    const diagnostic = this.createDiagnosticSetting(
+      `${this.name}-diag`,
+      pulumi.interpolate`${server.id}/databases/master`,
+      ['SQLSecurityAuditEvents', 'DevOpsOperationsAudit'],
+      this.args,
+    );
+    const storage = va?.storage;
+    if (!diagnostic && !storage) return undefined;
+
+    return new sql.ExtendedServerBlobAuditingPolicy(
       `${this.name}-audit`,
       {
         ...rsGroup,
@@ -418,17 +448,18 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         blobAuditingPolicyName: 'default',
         isAzureMonitorTargetEnabled: true,
         isStorageSecondaryKeyInUse: false,
-        predicateExpression: "object_name = 'SensitiveData'",
+        //Only the audit with the assessment storage keeps its existing filter; every other audit is unfiltered.
+        predicateExpression: storage ? "object_name = 'SensitiveData'" : undefined,
         queueDelayMs: 4000,
-        retentionDays,
+        retentionDays: this.getRetentionDays(),
         state: 'Enabled',
         isDevopsAuditEnabled: true,
 
-        storageAccountAccessKey: storageKey,
-        storageAccountSubscriptionId: azureEnv.subscriptionId,
-        storageEndpoint: stgEndpoints.blob,
+        storageAccountAccessKey: storage?.key,
+        storageAccountSubscriptionId: storage ? azureEnv.subscriptionId : undefined,
+        storageEndpoint: storage?.endpoint,
       },
-      { dependsOn: alert, parent: this },
+      { dependsOn: va?.alert ?? server, parent: this },
     );
   }
 
@@ -463,6 +494,7 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         },
         { dependsOn: elasticPool ? [server, password, elasticPool] : [server, password], parent: this },
       );
+      this.createDiagnosticSetting(`${this.name}-${name}-diag`, db.id, ['Errors', 'Timeouts', 'Deadlocks'], this.args);
 
       const secrets: Record<string, pulumi.Input<string>> = {
         [`${name}-sql-default-sysid-conn`]: pulumi.interpolate`Server=tcp:${server.name}.database.windows.net,1433; Initial Catalog=${db.name}; Authentication="Active Directory Default"; MultipleActiveResultSets=False;Encrypt=True; TrustServerCertificate=True; Connection Timeout=120;`,

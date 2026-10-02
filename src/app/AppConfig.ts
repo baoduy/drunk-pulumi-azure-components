@@ -1,7 +1,7 @@
 import * as appConfig from '@pulumi/azure-native/appconfiguration';
 import * as pulumi from '@pulumi/pulumi';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
-import { networkGuard } from '../helpers';
+import { networkGuard, prdGuard } from '../helpers';
 import * as types from '../types';
 import * as vault from '../vault';
 import { PrivateEndpoint } from '../vnet';
@@ -17,6 +17,12 @@ export interface AppConfigArgs
   /** Store SKU name: `free`, `developer`, `standard` or `premium`. Defaults to `Standard` in every env. */
   sku?: pulumi.Input<string>;
   network?: Pick<types.NetworkArgs, 'publicNetworkAccess' | 'privateLink'>;
+  /**
+   * Extra regions that get a replica of this store, e.g. `['southeastasia']`. Empty by default; a prd stack
+   * without replicas logs a warning. Each replica is billed like another store, and gets no private endpoint
+   * of its own.
+   */
+  replicaLocations?: string[];
 }
 
 export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
@@ -36,6 +42,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
       vaultInfo,
       network,
       sku,
+      replicaLocations,
       ...props
     } = args;
     const encryptionKey = args.enableEncryption ? this.getEncryptionKey() : undefined;
@@ -78,6 +85,7 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
     );
 
     this.createPrivateLink(azConfig);
+    this.createReplicas(azConfig);
     this.createSecrets(azConfig);
 
     this.id = azConfig.id;
@@ -103,6 +111,33 @@ export class AppConfig extends BaseResourceComponent<AppConfigArgs> {
       { ...network.privateLink, resourceInfo: azConfig, rsGroup, type: 'azConfig' },
       { dependsOn: azConfig, parent: this },
     );
+  }
+
+  /**
+   * One replica per `replicaLocations` region, named after the region; in prd none only warns. Azure rejects
+   * replicas on the `free` and `developer` SKUs, so they are skipped there with a warning.
+   */
+  private createReplicas(azConfig: appConfig.ConfigurationStore) {
+    const { rsGroup, replicaLocations, sku } = this.args;
+    if (!replicaLocations?.length) {
+      prdGuard.warnPrdMissing('AppConfig', this.name, 'App Configuration replicas', 'replicaLocations');
+      return [];
+    }
+    if (typeof sku === 'string' && ['free', 'developer'].includes(sku.toLowerCase())) {
+      pulumi.log.warn(
+        `AppConfig '${this.name}' is on the ${sku} SKU, so \`replicaLocations\` is skipped. Use the Standard or Premium SKU.`,
+      );
+      return [];
+    }
+
+    return replicaLocations.map((location) => {
+      const replicaName = location.replace(/[\s-]/g, '').toLowerCase();
+      return new appConfig.Replica(
+        `${this.name}-${replicaName}`,
+        { configStoreName: azConfig.name, resourceGroupName: rsGroup.resourceGroupName, replicaName, location },
+        { dependsOn: azConfig, parent: this },
+      );
+    });
   }
 
   private createSecrets(azConfig: appConfig.ConfigurationStore) {

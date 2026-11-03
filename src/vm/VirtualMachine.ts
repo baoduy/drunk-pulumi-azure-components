@@ -34,6 +34,10 @@ export interface VirtualMachineArgs
   > & {
     osDisk: Omit<inputs.compute.OSDiskArgs, 'encryptionSettings'>;
     dataDisks?: Omit<inputs.compute.DataDiskArgs, 'managedDisk'>[];
+    /**
+     * Managed-disk type applied to the OS disk and every data disk.
+     * Defaults to `StandardSSD_LRS` (was `Standard_LRS`); set `Standard_LRS` to keep Standard HDD.
+     */
     storageAccountType?: compute.StorageAccountTypes;
     securityEncryptionType?: compute.SecurityEncryptionTypes;
   };
@@ -94,6 +98,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
     const nic = this.createNetworkInterface();
     const credential = this.createCredentials();
 
+    const storageAccountType = storageProfile?.storageAccountType ?? compute.StorageAccountTypes.StandardSSD_LRS;
     const isWindows = Boolean(osProfile?.windowsConfiguration);
     const defaultVmSize = isWindows ? computeHelper.DEFAULT_X64_VM_SIZE : computeHelper.DEFAULT_ARM_VM_SIZE;
 
@@ -227,7 +232,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                     securityEncryptionType: storageProfile.securityEncryptionType,
                   }
                 : undefined,
-              storageAccountType: storageProfile?.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
+              storageAccountType,
             },
           },
 
@@ -248,7 +253,7 @@ export class VirtualMachine extends BaseResourceComponent<VirtualMachineArgs> {
                         securityEncryptionType: storageProfile.securityEncryptionType,
                       }
                     : undefined,
-                  storageAccountType: storageProfile?.storageAccountType ?? compute.StorageAccountTypes.Standard_LRS,
+                  storageAccountType,
                 },
               }))
             : [],

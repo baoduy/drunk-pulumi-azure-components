@@ -123,6 +123,10 @@ describe("The SKU name resolves from the caller's value and the environment", ()
     // §6a D1: an empty `sku` object resolves like a missing one.
     ['prd', '{} (empty sku)', 'Automatic', { ...automaticArgs, sku: {} }],
     ['dev', '{} (empty sku)', 'Base', { ...baseArgs, sku: {} }],
+    // §6a D1: each name × prd/dev — an explicit name always wins; a tier alone leaves the name to the environment.
+    ['prd', 'Automatic', 'Automatic', { ...automaticArgs, sku: { name: 'Automatic' } }],
+    ['dev', 'Base', 'Base', { ...baseArgs, sku: { name: 'Base' } }],
+    ['dev', '{ tier: Premium } only', 'Base', { ...baseArgs, sku: { tier: 'Premium' } }],
   ] as const)('a %s stack given the SKU name %s resolves to %s', async (env, _given, resolved, args) => {
     const { captured } = await sharedPreview(env, 'aks-payments', args);
     expect(aksClusterOf(captured).inputs.sku.name).toBe(resolved);

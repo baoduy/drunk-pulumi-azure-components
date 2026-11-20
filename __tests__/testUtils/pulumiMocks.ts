@@ -8,6 +8,8 @@
  * makes the new stack name take effect.
  */
 
+import { captureResourceParents, RegisteredResource } from './pulumiParentSpy';
+
 export type Captured = { type: string; name: string; inputs: any };
 
 // Pulumi's wire envelope for a secret-marked value; a plain value would arrive as the bare string.
@@ -143,14 +145,29 @@ export function mockAksFetch(): () => void {
   };
 }
 
-/** Extra AKS cluster state, so the Key Vault add-on identity and OIDC issuer reads resolve. */
-export const aksState = () => ({
+/**
+ * Extra AKS cluster state, so the Key Vault add-on identity and OIDC issuer reads resolve. Given the registration,
+ * it also answers the AKS Automatic reads: a user-assigned identity's `principalId`/`clientId`, and the OIDC issuer
+ * under `properties` of the generic `azure-native:resources:Resource` an Automatic cluster is created through.
+ */
+export const aksState = (args?: { type: string; name: string; inputs: any }) => ({
   addonProfiles: {
     azureKeyvaultSecretsProvider: {
       identity: { resourceId: 'kv_identity_id', clientId: 'kv_client', objectId: 'kv_object' },
     },
   },
   oidcIssuerProfile: { issuerURL: 'https://issuer.example.com' },
+  ...(args?.type === 'azure-native:managedidentity:UserAssignedIdentity'
+    ? { principalId: `${args.name}_principal`, clientId: `${args.name}_client` }
+    : {}),
+  ...(args?.type === 'azure-native:resources:Resource'
+    ? {
+        properties: {
+          ...args.inputs.properties,
+          oidcIssuerProfile: { ...args.inputs.properties?.oidcIssuerProfile, issuerURL: 'https://issuer.example.com' },
+        },
+      }
+    : {}),
 });
 
 /**
@@ -210,4 +227,85 @@ export function aksClusterFactory(
     if (aks.systemIdentityId) await pulumi.output(aks.systemIdentityId).promise();
     return sink().find((c) => c.type === 'azure-native:containerservice:ManagedCluster')!;
   };
+}
+
+/**
+ * The one AKS cluster registration: a Base cluster's `ManagedCluster`, or an Automatic cluster's generic
+ * `azure-native:resources:Resource` of type `managedClusters`. Fails the test on zero or several.
+ */
+export function aksClusterOf(captured: Captured[]): Captured {
+  const found = captured.filter(
+    (c) =>
+      c.type === 'azure-native:containerservice:ManagedCluster' ||
+      (c.type === 'azure-native:resources:Resource' && c.inputs.resourceType === 'managedClusters'),
+  );
+  expect(found).toHaveLength(1);
+  return found[0];
+}
+
+export type AksPreview = {
+  pulumi: typeof import('@pulumi/pulumi');
+  aks: any;
+  captured: Captured[];
+  /** Every resource as it was registered (synchronously), with its `opts` — `dependsOn` included. */
+  registered: RegisteredResource[];
+};
+
+/** Loads AzKubernetes fresh under `stackName` with the `aksState` mocks and a registration spy. */
+function loadAks(stackName: string) {
+  return withStack(
+    stackName,
+    (p) => {
+      // Installed after `withStack` reset the registry, so it patches the copy AzKubernetes loads below.
+      const spy = captureResourceParents();
+      return { pulumi: p, spy, AzKubernetes: require('../../src/aks/AzKubernetes').AzKubernetes };
+    },
+    aksState,
+  );
+}
+
+/** AzKubernetes args, or a builder that makes them from the `@pulumi/pulumi` copy loaded for the case (for Outputs). */
+export type AksArgs = object | ((pulumi: typeof import('@pulumi/pulumi')) => object);
+
+const resolveArgs = (pulumi: typeof import('@pulumi/pulumi'), args: AksArgs) =>
+  typeof args === 'function' ? args(pulumi) : args;
+
+/**
+ * Deploys `AzKubernetes` under `stackName` and settles it; returns the error that fails the preview, if any —
+ * a constructor throw or an `apply` that rejects the cluster.
+ */
+async function runAks(stackName: string, name: string, args: AksArgs) {
+  const { pulumi, AzKubernetes, spy, captured } = loadAks(stackName);
+  let aks: any;
+  let error: Error | undefined;
+  try {
+    aks = new AzKubernetes(name, resolveArgs(pulumi, args));
+    await settleAks(pulumi, aks);
+  } catch (e) {
+    error = e as Error;
+    // A failed preview can leave child registrations in flight: let them finish on this case's mock monitor
+    // before the next `withStack` swaps it.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  } finally {
+    spy.restore();
+  }
+  return { pulumi, aks, error, captured, registered: spy.captured };
+}
+
+/** Deploys `AzKubernetes` under `stackName` (fresh module graph, `aksState` mocks) and settles it. */
+export async function previewAks(stackName: string, name: string, args: AksArgs): Promise<AksPreview> {
+  const { error, ...preview } = await runAks(stackName, name, args);
+  if (error) throw error;
+  return preview;
+}
+
+/** Deploys `AzKubernetes` like `previewAks` and returns the error that fails the preview; fails the test if none. */
+export async function previewAksFailure(
+  stackName: string,
+  name: string,
+  args: AksArgs,
+): Promise<{ error: Error; captured: Captured[]; registered: RegisteredResource[] }> {
+  const { error, captured, registered } = await runAks(stackName, name, args);
+  if (!error) throw new Error(`expected the preview of '${name}' to fail, but it succeeded`);
+  return { error, captured, registered };
 }

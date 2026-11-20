@@ -12,7 +12,7 @@ import { withStack, restoreStack } from '../testUtils/pulumiMocks';
 type Expected = Partial<Record<'Database' | 'ElasticPool', Record<string, unknown>>>;
 
 const standalone = (sku: Record<string, unknown>) => ({ databases: { app: { sku } } });
-const noZoneDefault = { zoneRedundant: undefined, requestedBackupStorageRedundancy: 'Geo', autoPauseDelay: undefined };
+const noZoneDefault = { zoneRedundant: undefined, requestedBackupStorageRedundancy: 'Zone', autoPauseDelay: undefined };
 
 const cases: Array<[string, 'prd' | 'dev', Record<string, unknown>, Expected]> = [
   [

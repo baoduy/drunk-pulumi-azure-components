@@ -14,20 +14,21 @@ jest.setTimeout(30000);
  * Burstable skips the high-availability block entirely and would hide the HA defaults.
  */
 
-describe('PULUMI-WAF-001 / PULUMI-WAF-002 — Flexible Server backup defaults follow the environment', () => {
+describe('PULUMI-WAF-001 / PULUMI-WAF-002 — Flexible Server backup retention follows the environment, geo-redundant backup stays off', () => {
   const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
   afterEach(() => restoreStack(ORIGINAL_STACK));
 
   /**
-   * Tier 1 — both components pass today; this pins it. Production gets geo-redundant backup and
-   * 30-day retention so a regional outage or a late-noticed corruption is recoverable; every
-   * other environment gets local backup and 7 days so dev and sandbox do not pay for either.
+   * Tier 1. DRK-2569 replaces the DRK-1812 rule "prd gets geo-redundant backup": the owner chose
+   * zone redundancy over geo redundancy, so production keeps its backups inside the region with
+   * geo-redundant backup off. Production keeps 30-day retention so a late-noticed corruption is
+   * recoverable; every other environment keeps 7 days so dev and sandbox do not pay for it.
    */
   test.each(Object.keys(components) as ServerKind[])(
-    '%s: prd gets geo-redundant 30-day backup, dev gets local 7-day backup',
+    '%s: prd gets 30-day backup with geo-redundant backup off, dev gets 7-day backup with geo-redundant backup off',
     async (kind) => {
       expect((await serverInputs(kind, 'prd')).backup).toEqual({
-        geoRedundantBackup: 'Enabled',
+        geoRedundantBackup: 'Disabled',
         backupRetentionDays: 30,
       });
       expect((await serverInputs(kind, 'dev')).backup).toEqual({

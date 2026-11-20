@@ -32,25 +32,26 @@ export const automaticUpgradeProfile = (profile: AzKubernetesArgs['autoUpgradePr
   }));
 
 /**
- * Refuses every input an AKS Automatic cluster cannot take, naming the input. A literal value is checked now, before
- * any child resource registers; an Output is checked once it is known, and the returned `deferred` Outputs fail there.
+ * Refuses every input an AKS Automatic cluster cannot take, naming the input, before any child resource registers.
+ * The upgrade channels and an extra pool's `enableAutoScaling` must be literal values: an Output or a Promise is
+ * refused, since it is only known after resources are registered.
  * Returns the VNet of the API server subnet, the scope of the cluster identity's network grant.
  */
 export function checkAutomaticArgs(name: string, args: AzKubernetesArgs) {
   const { network, features, autoUpgradeProfile } = args;
-  const deferred: pulumi.Output<void>[] = [];
 
-  const check = <T>(
+  const check = <T>(input: string, value: T, allowed: (v: T) => boolean, rule: string) => {
+    if (!allowed(value)) throw new Error(`AzKubernetes '${name}' is an AKS Automatic cluster: \`${input}\` ${rule}.`);
+  };
+  /** Like `check`, for an input that must also be a literal value. */
+  const checkLiteral = <T>(
     input: string,
     value: pulumi.Input<T> | undefined,
     allowed: (v: T | undefined) => boolean,
     rule: string,
   ) => {
-    const refuse = (v: T | undefined) => {
-      if (!allowed(v)) throw new Error(`AzKubernetes '${name}' is an AKS Automatic cluster: \`${input}\` ${rule}.`);
-    };
-    if (isLiteral(value)) refuse(value);
-    else deferred.push(pulumi.output(value).apply((v) => refuse(v as T | undefined)));
+    check(input, value, isLiteral, 'must be a literal value, not an Output or a Promise');
+    check(input, value as T | undefined, allowed, rule);
   };
   const channel = (key: 'upgradeChannel' | 'nodeOSUpgradeChannel'): pulumi.Input<string | undefined> =>
     isLiteral(autoUpgradeProfile)
@@ -90,20 +91,20 @@ export function checkAutomaticArgs(name: string, args: AzKubernetesArgs) {
     (v) => !v,
     'cannot be set: an Automatic cluster has no virtual nodes',
   );
-  check(
+  checkLiteral(
     'autoUpgradeProfile.upgradeChannel',
     channel('upgradeChannel'),
     (v) => v === undefined || v === ccs.UpgradeChannel.Stable,
     `must be left out or '${ccs.UpgradeChannel.Stable}'`,
   );
-  check(
+  checkLiteral(
     'autoUpgradeProfile.nodeOSUpgradeChannel',
     channel('nodeOSUpgradeChannel'),
     (v) => v === undefined || v === ccs.NodeOSUpgradeChannel.NodeImage,
     `must be left out or '${ccs.NodeOSUpgradeChannel.NodeImage}'`,
   );
   for (const pool of args.extraAgentPoolProfiles ?? []) {
-    check(
+    checkLiteral(
       'extraAgentPoolProfiles',
       pool.enableAutoScaling,
       (v) => v === undefined || v === false,
@@ -118,5 +119,5 @@ export function checkAutomaticArgs(name: string, args: AzKubernetesArgs) {
   const vnetId = isLiteral(apiServerSubnetId)
     ? toVnetId(apiServerSubnetId)
     : pulumi.output(apiServerSubnetId).apply(toVnetId);
-  return { vnetId, deferred };
+  return { vnetId };
 }

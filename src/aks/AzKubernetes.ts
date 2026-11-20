@@ -605,7 +605,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
    */
   private createAutomaticCluster(
     base: ccs.ManagedClusterArgs,
-    { vnetId, deferred }: ReturnType<typeof checkAutomaticArgs>,
+    { vnetId }: ReturnType<typeof checkAutomaticArgs>,
   ): AksCluster {
     const { rsGroup, network, autoUpgradeProfile } = this.args;
     const identity = new UserAssignedIdentity(
@@ -663,8 +663,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         resourceType: 'managedClusters',
         sku: base.sku,
         identity: { type: resources.ResourceIdentityType.UserAssigned, userAssignedIdentities: [identity.id] },
-        // A refused Output value fails the cluster's own inputs, so the cluster is never created with it.
-        properties: deferred.length ? pulumi.all(deferred).apply(() => pulumi.output(properties)) : properties,
+        properties,
       },
       { ...this.childOpts, dependsOn: grant, parent: this },
     );

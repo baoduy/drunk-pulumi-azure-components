@@ -104,8 +104,9 @@ export class MySql extends BaseResourceComponent<MySqlArgs> {
               })
             : undefined,
 
+        //Backups stay inside the region by default: geo-redundant backup off in every environment.
         backup: this.args.backup ?? {
-          geoRedundantBackup: azureEnv.isPrd ? 'Enabled' : 'Disabled',
+          geoRedundantBackup: 'Disabled',
           backupRetentionDays: azureEnv.isPrd ? 30 : 7,
         },
 

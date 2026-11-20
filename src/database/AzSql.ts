@@ -481,9 +481,10 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
           zoneRedundant: elasticPool
             ? props.zoneRedundant
             : (props.zoneRedundant ?? (supportsZoneRedundancy(sku) ? azureEnv.isPrd : undefined)),
+          //PRD keeps backups zone-redundant inside the region; Hyperscale gets no default.
           requestedBackupStorageRedundancy:
             props.requestedBackupStorageRedundancy ??
-            (isHyperscale(sku) ? undefined : azureEnv.isPrd ? 'Geo' : 'Local'),
+            (isHyperscale(sku) ? undefined : azureEnv.isPrd ? 'Zone' : 'Local'),
           autoPauseDelay: props.autoPauseDelay ?? defaultAutoPauseDelay(sku),
           preferredEnclaveType: sql.AlwaysEncryptedEnclaveType.VBS,
 
@@ -494,6 +495,21 @@ export class AzSql extends BaseResourceComponent<AzSqlArgs> {
         },
         { dependsOn: elasticPool ? [server, password, elasticPool] : [server, password], parent: this },
       );
+      //PRD takes a differential backup every 12 hours with 7 days of point-in-time restore; Hyperscale is excluded.
+      if (azureEnv.isPrd && !isHyperscale(sku))
+        new sql.BackupShortTermRetentionPolicy(
+          `${this.name}-${name}-backup`,
+          {
+            ...rsGroup,
+            serverName: server.name,
+            databaseName: db.name,
+            policyName: 'default',
+            diffBackupIntervalInHours: 12,
+            retentionDays: 7,
+          },
+          { dependsOn: db, parent: this },
+        );
+
       this.createDiagnosticSetting(`${this.name}-${name}-diag`, db.id, ['Errors', 'Timeouts', 'Deadlocks'], this.args);
 
       const secrets: Record<string, pulumi.Input<string>> = {

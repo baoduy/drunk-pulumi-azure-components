@@ -29,6 +29,7 @@
     "src/ResourceBuilder.ts",
     "src/aks/AzKubernetes.ts",
     "src/aks/ContainerRegistry.ts",
+    "src/aks/automatic.ts",
     "src/aks/helpers.ts",
     "src/aks/index.ts",
     "src/aks/types.ts",

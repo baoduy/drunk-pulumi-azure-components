@@ -59,7 +59,7 @@ export type ArgoCDExtensionArgs = types.WithResourceGroupInputs &
   Required<types.WithUserAssignedIdentity> & {
     allowInsecureAccess?: boolean;
     argoCdDomain: pulumi.Input<string>;
-    aks: azure.containerservice.ManagedCluster;
+    aks: pulumi.CustomResource & { name: pulumi.Output<string> };
     identity: AppRegistration;
     releaseTrain?: 'preview' | pulumi.Input<string>;
     allowedNameSpaces?: pulumi.Input<string>[];

@@ -3,8 +3,9 @@ import * as inputs from '@pulumi/azure-native/types/input';
 import * as pulumi from '@pulumi/pulumi';
 import * as types from '../types';
 import * as mid from '@pulumi/azure-native/managedidentity';
+import * as resources from '@pulumi/azure-native/resources';
 
-import { AppRegistration, AzRole, RoleAssignment } from '../azAd';
+import { AppRegistration, AzRole, RoleAssignment, UserAssignedIdentity } from '../azAd';
 import { BaseResourceComponent, CommonBaseArgs } from '../base';
 import { azureEnv, computeHelper, prdGuard, rsHelpers, zoneHelper } from '../helpers';
 
@@ -13,6 +14,7 @@ import { SshGenerator } from '../common';
 import { ArgoCDExtensionArgs, createArgoCDExtension, getAksClusterOutput } from './helpers';
 import { getPrivateRecordSetOutput } from '../vnet/helpers';
 import * as azAd from '@pulumi/azuread';
+import { AKS_AUTOMATIC_API_VERSION, automaticUpgradeProfile, checkAutomaticArgs } from './automatic';
 
 type AgentPoolProfile = inputs.containerservice.ManagedClusterAgentPoolProfileArgs & {
   vmSize?: pulumi.Input<string>;
@@ -53,6 +55,18 @@ const getNodeOSWindow = (maintenance: MaintenanceArgs | undefined): AutoUpgradeS
   return maintenance.nodeOS;
 };
 
+/** What the component reads from its cluster once created: a Base `ManagedCluster` or an Automatic generic resource. */
+type AksCluster = {
+  resource: pulumi.CustomResource & { name: pulumi.Output<string> };
+  id: pulumi.Output<string>;
+  name: pulumi.Output<string>;
+  systemIdentityId: pulumi.Output<string>;
+  oidcIssuerProfile: ccs.ManagedCluster['oidcIssuerProfile'];
+  nodeResourceGroup: ccs.ManagedCluster['nodeResourceGroup'];
+  privateFQDN: ccs.ManagedCluster['privateFQDN'];
+  addonProfiles: ccs.ManagedCluster['addonProfiles'];
+};
+
 export interface AzKubernetesArgs
   extends
     CommonBaseArgs,
@@ -66,14 +80,24 @@ export interface AzKubernetesArgs
         'dnsPrefix' | 'supportPlan' | 'autoScalerProfile' | 'autoUpgradeProfile' | 'storageProfile'
       >
     > {
-  sku: {
-    name: ccs.ManagedClusterSKUName;
+  sku?: {
+    /**
+     * The cluster SKU name. Left out, it resolves to `Automatic` in a prd stack and to `Base` in every other stack; a
+     * given name always wins. An `Automatic` cluster needs the three `network` subnet IDs and takes no node pool.
+     *
+     * Warning: removing `sku.name` from an existing prd stack requests Automatic. Azure cannot migrate a Base cluster to
+     * Automatic, so keep `sku.name: 'Base'` on every existing prd cluster.
+     */
+    name?: ccs.ManagedClusterSKUName;
     tier?: ccs.ManagedClusterSKUTier;
   };
   nodeResourceGroup?: pulumi.Input<string>;
   namespaces?: Record<string, ccs.NamespaceArgs['properties']>;
-  /** This only allows when cluster creating. For additional agent pool after cluster created please use extraAgentPools */
-  agentPoolProfiles: AgentPoolProfile[];
+  /**
+   * This only allows when cluster creating. For additional agent pool after cluster created please use extraAgentPools.
+   * Required for a `Base` cluster (an empty list is sent as is); an `Automatic` cluster takes none.
+   */
+  agentPoolProfiles?: AgentPoolProfile[];
   extraAgentPoolProfiles?: AgentPoolProfile[];
   attachToAcr?: types.ResourceInputs;
   extensions?: {
@@ -112,6 +136,12 @@ export interface AzKubernetesArgs
     extraPrivateDnsVnets?: types.ResourceInputs[];
     authorizedIPRanges?: pulumi.Input<string>[];
     virtualHostSubnetName?: pulumi.Input<string>;
+    /** `Automatic` only, and required there: the API server subnet (at least /28, delegated to `Microsoft.ContainerService/managedClusters`). Its VNet scopes the cluster identity's `Network Contributor` grant. */
+    apiServerSubnetId?: pulumi.Input<string>;
+    /** `Automatic` only, and required there: the subnet of the AKS-managed system nodes (at least /26), in the same VNet. */
+    systemNodeSubnetId?: pulumi.Input<string>;
+    /** `Automatic` only, and required there: the subnet of the auto-provisioned workload nodes, in the same VNet. */
+    workloadNodeSubnetId?: pulumi.Input<string>;
   };
   maintenance?: MaintenanceArgs;
   logWorkspace?: types.ResourceInputs & {
@@ -132,12 +162,23 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
   public readonly kubeletIdentity?: types.IdentityOutputs;
   public readonly systemIdentityId?: pulumi.Output<string>;
   public readonly oidcIssuerUrl?: pulumi.Output<string>;
+  private readonly skuName: ccs.ManagedClusterSKUName;
 
   constructor(name: string, args: AzKubernetesArgs, opts?: pulumi.ComponentResourceOptions) {
     super('AzKubernetes', name, args, opts);
 
+    // Every refusal runs before the first child resource registers.
+    this.skuName =
+      args.sku?.name ?? (azureEnv.isPrd ? ccs.ManagedClusterSKUName.Automatic : ccs.ManagedClusterSKUName.Base);
+    const automatic = this.skuName === ccs.ManagedClusterSKUName.Automatic ? checkAutomaticArgs(name, args) : undefined;
+    if (!automatic && !args.agentPoolProfiles) {
+      throw new Error(
+        `AzKubernetes '${name}' is a Base cluster: \`agentPoolProfiles\` is required. Give the node pools, or an empty list for an existing cluster.`,
+      );
+    }
+
     const app = this.createIdentity();
-    const cluster = this.createCluster(app);
+    const cluster = this.createCluster(app, automatic);
     this.createExtraAgentPoolProfiles(cluster);
     this.createMaintenance(cluster);
     this.createExtensions(cluster, app);
@@ -157,7 +198,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     this.id = cluster.id;
     this.resourceName = cluster.name;
 
-    this.systemIdentityId = cluster.identity.apply((id) => id!.principalId);
+    this.systemIdentityId = cluster.systemIdentityId;
     this.keyVaultSecretProviderIdentity = args.features.enableAzureKeyVault
       ? cluster.addonProfiles.apply((aa) => ({
           id: aa!.azureKeyvaultSecretsProvider.identity.resourceId!,
@@ -166,9 +207,10 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         }))
       : undefined;
     this.kubeletIdentity = this.getExtraAksOutputs(cluster);
-    this.oidcIssuerUrl = args.features?.enableWorkloadIdentity
-      ? cluster.oidcIssuerProfile.apply((o) => o?.issuerURL!)
-      : undefined;
+    this.oidcIssuerUrl =
+      args.features?.enableWorkloadIdentity || automatic
+        ? cluster.oidcIssuerProfile.apply((o) => o?.issuerURL!)
+        : undefined;
 
     this.assignPermission(cluster);
     this.registerOutputs();
@@ -300,7 +342,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return aksAdminGroup;
   }
 
-  private createCluster(appID: AppRegistration) {
+  private createCluster(appID: AppRegistration, automatic?: ReturnType<typeof checkAutomaticArgs>): AksCluster {
     const {
       rsGroup,
       vaultInfo,
@@ -328,7 +370,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     const aksAdminGroup = this.createAksAdminGroupRole();
 
     // Add default zones for PRD environment to agent pools
-    const poolsWithZones = agentPoolProfiles.map((pool) => ({
+    const poolsWithZones = (agentPoolProfiles ?? []).map((pool) => ({
       ...pool,
       vmSize: pool.vmSize ?? computeHelper.DEFAULT_ARM_VM_SIZE,
       securityProfile: pool.securityProfile ?? { enableSecureBoot: true, enableVTPM: true },
@@ -345,7 +387,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     // "can't tell it doesn't autoscale", which suppresses the default rather than misapply it.
     const autoScales = (pool: AgentPoolProfile) =>
       pool.enableAutoScaling !== undefined && pool.enableAutoScaling !== false;
-    const hasAutoScalingPool = [...agentPoolProfiles, ...(extraAgentPoolProfiles ?? [])].some(autoScales);
+    const hasAutoScalingPool = [...(agentPoolProfiles ?? []), ...(extraAgentPoolProfiles ?? [])].some(autoScales);
     const nodeProvisioningProfile =
       features?.enableNodeAutoProvisioning === true
         ? { defaultNodePools: 'Auto' as const, mode: 'Auto' as const }
@@ -356,190 +398,195 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     // An explicit tier always wins. Otherwise PRD and every Automatic cluster (Azure preconfigures
     // Automatic to Standard) get the Standard (SLA-backed) tier, and everything else gets Free.
     const tier =
-      sku.tier ??
-      (azureEnv.isPrd || sku.name === ccs.ManagedClusterSKUName.Automatic
+      sku?.tier ??
+      (azureEnv.isPrd || this.skuName === ccs.ManagedClusterSKUName.Automatic
         ? ccs.ManagedClusterSKUTier.Standard
         : ccs.ManagedClusterSKUTier.Free);
     const metricsProfile = this.getMetricsProfile(tier);
 
-    const cluster = new ccs.ManagedCluster(
-      this.name,
-      {
-        ...props,
-        ...rsGroup,
-        sku: { ...sku, tier },
-        metricsProfile,
-        aadProfile: groupRoles
-          ? {
-              enableAzureRBAC: true,
-              managed: true,
-              adminGroupObjectIDs: [aksAdminGroup.getOutputs().objectId],
-              tenantID: azureEnv.tenantId,
-            }
-          : undefined,
+    // The three subnet IDs are Automatic-only inputs and never reach a Base `networkProfile`.
+    const { apiServerSubnetId, systemNodeSubnetId, workloadNodeSubnetId, ...networkArgs } = network ?? {};
 
-        addonProfiles: {
-          azureKeyvaultSecretsProvider: {
-            config: features?.enableAzureKeyVault
-              ? {
-                  enableSecretRotation: 'true',
-                }
-              : undefined,
-            enabled: Boolean(features?.enableAzureKeyVault),
-          },
+    const clusterArgs: ccs.ManagedClusterArgs = {
+      ...props,
+      ...rsGroup,
+      sku: { ...sku, name: this.skuName, tier },
+      metricsProfile,
+      aadProfile: groupRoles
+        ? {
+            enableAzureRBAC: true,
+            managed: true,
+            adminGroupObjectIDs: [aksAdminGroup.getOutputs().objectId],
+            tenantID: azureEnv.tenantId,
+          }
+        : undefined,
 
-          azurePolicy: { enabled: features?.enableAzurePolicy ?? azureEnv.isPrd },
-          kubeDashboard: { enabled: false },
-          httpApplicationRouting: { enabled: false },
-          aciConnectorLinux: {
-            enabled: Boolean(network?.virtualHostSubnetName),
-            config: network?.virtualHostSubnetName ? { SubnetName: network.virtualHostSubnetName } : undefined,
-          },
-          // ingressApplicationGateway: {
-          //   enabled: Boolean(addon.applicationGateway),
-          //   config: addon.applicationGateway
-          //     ? {
-          //         gatewayName: `${name}-gateway`,
-          //         subnetId: addon.applicationGateway.gatewaySubnetId,
-          //       }
-          //     : undefined,
-          // },
-          omsAgent: {
-            enabled: Boolean(logWorkspace?.id),
-            config: logWorkspace?.id
-              ? {
-                  logAnalyticsWorkspaceResourceID: logWorkspace.id,
-                }
-              : undefined,
-          },
-        },
-
-        apiServerAccessProfile: {
-          authorizedIPRanges: features?.enablePrivateCluster ? undefined : (network?.authorizedIPRanges ?? []),
-          disableRunCommand: true,
-          enablePrivateCluster: features?.enablePrivateCluster,
-          //TODO: to make the life simple we enable this to allows IP DNS query from public internet.
-          enablePrivateClusterPublicFQDN: features?.enablePrivateClusterPublicFQDN ?? true,
-          privateDNSZone: features?.enablePrivateCluster ? 'system' : undefined,
-          //privateDNSZone: privateDnsZone?.id,
-        },
-
-        nodeProvisioningProfile,
-
-        // Cluster-autoscaler tuning is meaningless once NAP owns provisioning — suppress the
-        // default when NAP is on and the engineer supplied no autoScalerProfile of their own.
-        // An engineer-supplied autoScalerProfile is always passed through verbatim.
-        autoScalerProfile:
-          autoScalerProfile ??
-          (nodeProvisioningProfile
-            ? undefined
-            : {
-                balanceSimilarNodeGroups: 'false',
-                expander: 'random',
-                maxEmptyBulkDelete: '10',
-                maxGracefulTerminationSec: '600',
-                maxNodeProvisionTime: '15m',
-                maxTotalUnreadyPercentage: '45',
-                newPodScaleUpDelay: '0s',
-                okTotalUnreadyCount: '3',
-                scaleDownDelayAfterAdd: '10m',
-                scaleDownDelayAfterDelete: '10s',
-                scaleDownDelayAfterFailure: '3m',
-                scaleDownUnneededTime: '10m',
-                scaleDownUnreadyTime: '20m',
-                scaleDownUtilizationThreshold: '0.5',
-                scanInterval: '10s',
-                skipNodesWithLocalStorage: 'false',
-                skipNodesWithSystemPods: 'true',
-              }),
-        agentPoolProfiles: poolsWithZones,
-
-        autoUpgradeProfile: props.autoUpgradeProfile ?? {
-          nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,
-          upgradeChannel: ccs.UpgradeChannel.Stable,
-        },
-
-        disableLocalAccounts: true,
-        diskEncryptionSetID: diskEncryptionSet?.id,
-        dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
-        enableRBAC: true,
-
-        identity: enableResourceIdentity
-          ? {
-              type: ccs.ResourceIdentityType.SystemAssigned,
-              //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
-              //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
-            }
-          : undefined,
-
-        //identityProfile: {},
-
-        linuxProfile: {
-          adminUsername: login.userName,
-          ssh: { publicKeys: [{ keyData: login.sshPublicKey }] },
-        },
-
-        networkProfile: {
-          ...network,
-          //networkMode: ccs.NetworkMode.Transparent,
-          networkPlugin: ccs.NetworkPlugin.Azure,
-          networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
-          networkDataplane: network?.networkDataplane ?? ccs.NetworkDataplane.Cilium,
-          networkPluginMode: ccs.NetworkPluginMode.Overlay,
-
-          loadBalancerSku: ccs.LoadBalancerSku.Standard,
-          outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
-        },
-
-        nodeResourceGroup: nodeRg,
-        oidcIssuerProfile: { enabled: Boolean(features?.enableWorkloadIdentity) },
-        podIdentityProfile: features?.enablePodIdentity
-          ? {
-              enabled: features.enablePodIdentity,
-              //Not allow pod to use kublet command
-              allowNetworkPluginKubenet: false,
-            }
-          : undefined,
-
-        securityProfile: {
-          // Defender for Containers: an explicit flag always wins; when absent it defaults on in PRD
-          // whenever a log workspace is given.
-          defender: Boolean(logWorkspace?.defenderEnabled ?? (azureEnv.isPrd && logWorkspace?.id))
+      addonProfiles: {
+        azureKeyvaultSecretsProvider: {
+          config: features?.enableAzureKeyVault
             ? {
-                logAnalyticsWorkspaceResourceId: logWorkspace?.id,
-                securityMonitoring: { enabled: true },
+                enableSecretRotation: 'true',
               }
             : undefined,
-          imageCleaner: { enabled: true, intervalHours: 24 },
-          workloadIdentity: {
-            enabled: Boolean(features?.enableWorkloadIdentity),
-          },
+          enabled: Boolean(features?.enableAzureKeyVault),
         },
 
-        servicePrincipalProfile: {
-          clientId: appID.clientId,
-          secret: appID.clientSecret,
+        azurePolicy: { enabled: features?.enableAzurePolicy ?? azureEnv.isPrd },
+        kubeDashboard: { enabled: false },
+        httpApplicationRouting: { enabled: false },
+        aciConnectorLinux: {
+          enabled: Boolean(network?.virtualHostSubnetName),
+          config: network?.virtualHostSubnetName ? { SubnetName: network.virtualHostSubnetName } : undefined,
         },
-
-        windowsProfile: undefined,
-        workloadAutoScalerProfile: {
-          verticalPodAutoscaler: {
-            enabled: features?.enableVerticalPodAutoscaler || false,
-          },
-          keda: { enabled: features?.enableKeda || false },
+        // ingressApplicationGateway: {
+        //   enabled: Boolean(addon.applicationGateway),
+        //   config: addon.applicationGateway
+        //     ? {
+        //         gatewayName: `${name}-gateway`,
+        //         subnetId: addon.applicationGateway.gatewaySubnetId,
+        //       }
+        //     : undefined,
+        // },
+        omsAgent: {
+          enabled: Boolean(logWorkspace?.id),
+          config: logWorkspace?.id
+            ? {
+                logAnalyticsWorkspaceResourceID: logWorkspace.id,
+              }
+            : undefined,
         },
-
-        //azureMonitorProfile: { metrics: { enabled } },
-        //Refer here for details https://learn.microsoft.com/en-us/azure/aks/use-managed-identity
-        //enablePodSecurityPolicy: true,
       },
-      {
-        ...this.childOpts,
-        ignoreChanges: ['agentPoolProfiles', ...(this?.opts?.ignoreChanges || [])],
-        dependsOn: appID,
-        parent: this,
+
+      apiServerAccessProfile: {
+        authorizedIPRanges: features?.enablePrivateCluster ? undefined : (network?.authorizedIPRanges ?? []),
+        disableRunCommand: true,
+        enablePrivateCluster: features?.enablePrivateCluster,
+        //TODO: to make the life simple we enable this to allows IP DNS query from public internet.
+        enablePrivateClusterPublicFQDN: features?.enablePrivateClusterPublicFQDN ?? true,
+        privateDNSZone: features?.enablePrivateCluster ? 'system' : undefined,
+        //privateDNSZone: privateDnsZone?.id,
       },
-    );
+
+      nodeProvisioningProfile,
+
+      // Cluster-autoscaler tuning is meaningless once NAP owns provisioning — suppress the
+      // default when NAP is on and the engineer supplied no autoScalerProfile of their own.
+      // An engineer-supplied autoScalerProfile is always passed through verbatim.
+      autoScalerProfile:
+        autoScalerProfile ??
+        (nodeProvisioningProfile
+          ? undefined
+          : {
+              balanceSimilarNodeGroups: 'false',
+              expander: 'random',
+              maxEmptyBulkDelete: '10',
+              maxGracefulTerminationSec: '600',
+              maxNodeProvisionTime: '15m',
+              maxTotalUnreadyPercentage: '45',
+              newPodScaleUpDelay: '0s',
+              okTotalUnreadyCount: '3',
+              scaleDownDelayAfterAdd: '10m',
+              scaleDownDelayAfterDelete: '10s',
+              scaleDownDelayAfterFailure: '3m',
+              scaleDownUnneededTime: '10m',
+              scaleDownUnreadyTime: '20m',
+              scaleDownUtilizationThreshold: '0.5',
+              scanInterval: '10s',
+              skipNodesWithLocalStorage: 'false',
+              skipNodesWithSystemPods: 'true',
+            }),
+      agentPoolProfiles: poolsWithZones,
+
+      autoUpgradeProfile: props.autoUpgradeProfile ?? {
+        nodeOSUpgradeChannel: ccs.NodeOSUpgradeChannel.NodeImage,
+        upgradeChannel: ccs.UpgradeChannel.Stable,
+      },
+
+      disableLocalAccounts: true,
+      diskEncryptionSetID: diskEncryptionSet?.id,
+      dnsPrefix: props.dnsPrefix ?? `${azureEnv.currentEnv}-${this.name}`,
+      enableRBAC: true,
+
+      identity: enableResourceIdentity
+        ? {
+            type: ccs.ResourceIdentityType.SystemAssigned,
+            //type: defaultUAssignedId ? ccs.ResourceIdentityType.UserAssigned : ccs.ResourceIdentityType.SystemAssigned,
+            //userAssignedIdentities: defaultUAssignedId ? [defaultUAssignedId.id] : undefined,
+          }
+        : undefined,
+
+      //identityProfile: {},
+
+      linuxProfile: {
+        adminUsername: login.userName,
+        ssh: { publicKeys: [{ keyData: login.sshPublicKey }] },
+      },
+
+      networkProfile: {
+        ...networkArgs,
+        //networkMode: ccs.NetworkMode.Transparent,
+        networkPlugin: ccs.NetworkPlugin.Azure,
+        networkPolicy: network?.networkPolicy ?? ccs.NetworkPolicy.Cilium,
+        networkDataplane: network?.networkDataplane ?? ccs.NetworkDataplane.Cilium,
+        networkPluginMode: ccs.NetworkPluginMode.Overlay,
+
+        loadBalancerSku: ccs.LoadBalancerSku.Standard,
+        outboundType: network?.outboundType ?? ccs.OutboundType.UserDefinedRouting,
+      },
+
+      nodeResourceGroup: nodeRg,
+      oidcIssuerProfile: { enabled: Boolean(features?.enableWorkloadIdentity) },
+      podIdentityProfile: features?.enablePodIdentity
+        ? {
+            enabled: features.enablePodIdentity,
+            //Not allow pod to use kublet command
+            allowNetworkPluginKubenet: false,
+          }
+        : undefined,
+
+      securityProfile: {
+        // Defender for Containers: an explicit flag always wins; when absent it defaults on in PRD
+        // whenever a log workspace is given.
+        defender: Boolean(logWorkspace?.defenderEnabled ?? (azureEnv.isPrd && logWorkspace?.id))
+          ? {
+              logAnalyticsWorkspaceResourceId: logWorkspace?.id,
+              securityMonitoring: { enabled: true },
+            }
+          : undefined,
+        imageCleaner: { enabled: true, intervalHours: 24 },
+        workloadIdentity: {
+          enabled: Boolean(features?.enableWorkloadIdentity),
+        },
+      },
+
+      servicePrincipalProfile: {
+        clientId: appID.clientId,
+        secret: appID.clientSecret,
+      },
+
+      windowsProfile: undefined,
+      workloadAutoScalerProfile: {
+        verticalPodAutoscaler: {
+          enabled: features?.enableVerticalPodAutoscaler || false,
+        },
+        keda: { enabled: features?.enableKeda || false },
+      },
+
+      //azureMonitorProfile: { metrics: { enabled } },
+      //Refer here for details https://learn.microsoft.com/en-us/azure/aks/use-managed-identity
+      //enablePodSecurityPolicy: true,
+    };
+
+    const cluster = automatic
+      ? this.createAutomaticCluster(clusterArgs, automatic)
+      : toAksCluster(
+          new ccs.ManagedCluster(this.name, clusterArgs, {
+            ...this.childOpts,
+            ignoreChanges: ['agentPoolProfiles', ...(this?.opts?.ignoreChanges || [])],
+            dependsOn: appID,
+            parent: this,
+          }),
+        );
 
     this.createDiagnosticSetting(
       `${this.name}-diag`,
@@ -550,7 +597,92 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     return cluster;
   }
 
-  private createExtraAgentPoolProfiles(aks: ccs.ManagedCluster) {
+  /**
+   * An AKS Automatic cluster: the generic resource on Azure API `AKS_AUTOMATIC_API_VERSION`, in the caller's three
+   * subnets, signed in with its own user-assigned identity. That identity holds `Network Contributor` on the API server
+   * subnet's VNet only, granted before the cluster is created. The Automatic settings replace the Base ones; every
+   * other property is the Base default.
+   */
+  private createAutomaticCluster(
+    base: ccs.ManagedClusterArgs,
+    { vnetId, deferred }: ReturnType<typeof checkAutomaticArgs>,
+  ): AksCluster {
+    const { rsGroup, network, autoUpgradeProfile } = this.args;
+    const identity = new UserAssignedIdentity(
+      `${this.name}-cluster-identity`,
+      { rsGroup },
+      { ...this.childOpts, parent: this },
+    );
+    const grant = this.roleAssignment({
+      roleName: 'Network Contributor',
+      principalId: identity.principalId,
+      principalType: 'ServicePrincipal',
+      scope: vnetId,
+    });
+
+    const properties = {
+      metricsProfile: base.metricsProfile,
+      aadProfile: base.aadProfile ?? { enableAzureRBAC: true, managed: true, tenantID: azureEnv.tenantId },
+      addonProfiles: base.addonProfiles,
+      apiServerAccessProfile: pulumi.output(base.apiServerAccessProfile).apply((p) => ({
+        ...p,
+        enableVnetIntegration: true,
+        subnetId: network!.apiServerSubnetId,
+      })),
+      hostedSystemProfile: {
+        enabled: true,
+        systemNodeSubnetID: network!.systemNodeSubnetId,
+        nodeSubnetID: network!.workloadNodeSubnetId,
+      },
+      nodeProvisioningProfile: { mode: 'Auto' },
+      autoScalerProfile: base.autoScalerProfile,
+      autoUpgradeProfile: automaticUpgradeProfile(autoUpgradeProfile),
+      disableLocalAccounts: base.disableLocalAccounts,
+      dnsPrefix: base.dnsPrefix,
+      enableRBAC: base.enableRBAC,
+      linuxProfile: base.linuxProfile,
+      networkProfile: base.networkProfile,
+      nodeResourceGroup: base.nodeResourceGroup,
+      oidcIssuerProfile: { enabled: true },
+      securityProfile: pulumi
+        .output(base.securityProfile)
+        .apply((p) => ({ ...p, workloadIdentity: { enabled: true } })),
+      storageProfile: base.storageProfile,
+      supportPlan: base.supportPlan,
+      workloadAutoScalerProfile: { keda: { enabled: true }, verticalPodAutoscaler: { enabled: true } },
+    };
+
+    const cluster = new resources.Resource(
+      this.name,
+      {
+        resourceGroupName: base.resourceGroupName,
+        location: base.location,
+        apiVersion: AKS_AUTOMATIC_API_VERSION,
+        resourceProviderNamespace: 'Microsoft.ContainerService',
+        parentResourcePath: '',
+        resourceType: 'managedClusters',
+        sku: base.sku,
+        identity: { type: resources.ResourceIdentityType.UserAssigned, userAssignedIdentities: [identity.id] },
+        // A refused Output value fails the cluster's own inputs, so the cluster is never created with it.
+        properties: deferred.length ? pulumi.all(deferred).apply(() => pulumi.output(properties)) : properties,
+      },
+      { ...this.childOpts, dependsOn: grant, parent: this },
+    );
+
+    const clusterProperties = cluster.properties;
+    return {
+      resource: cluster,
+      id: cluster.id,
+      name: cluster.name,
+      systemIdentityId: identity.principalId,
+      oidcIssuerProfile: clusterProperties.apply((p) => p?.oidcIssuerProfile),
+      nodeResourceGroup: clusterProperties.apply((p) => p?.nodeResourceGroup),
+      privateFQDN: clusterProperties.apply((p): string => p?.privateFQDN),
+      addonProfiles: clusterProperties.apply((p) => p?.addonProfiles),
+    };
+  }
+
+  private createExtraAgentPoolProfiles(aks: AksCluster) {
     const { rsGroup, extraAgentPoolProfiles } = this.args;
     if (!extraAgentPoolProfiles || extraAgentPoolProfiles.length === 0) return;
 
@@ -567,12 +699,12 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             resourceName: aks.name,
             agentPoolName: profile.name,
           },
-          { dependsOn: aks, retainOnDelete: profile.retainOnDelete, parent: this },
+          { dependsOn: aks.resource, retainOnDelete: profile.retainOnDelete, parent: this },
         ),
     );
   }
 
-  private createNameSpaces(aks: ccs.ManagedCluster) {
+  private createNameSpaces(aks: AksCluster) {
     const { rsGroup, namespaces } = this.args;
     if (!namespaces) return {} as Record<string, ccs.Namespace>;
 
@@ -587,12 +719,12 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
             namespaceName: n,
             properties: props,
           },
-          { dependsOn: aks, parent: this, retainOnDelete: true },
+          { dependsOn: aks.resource, parent: this, retainOnDelete: true },
         ),
     );
   }
 
-  private createMaintenance(aks: ccs.ManagedCluster) {
+  private createMaintenance(aks: AksCluster) {
     const { rsGroup, maintenance } = this.args;
     const defaultMaintenanceArgs = getDefaultMaintenanceArgs(maintenance);
     const autoUpgradeWindow = getAutoUpgradeWindow(maintenance) ?? this.getDefaultAutoUpgradeWindow();
@@ -612,7 +744,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         ],
         notAllowedTime: defaultMaintenanceArgs?.notAllowedTime,
       },
-      { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
+      { dependsOn: aks.resource, deletedWith: aks.resource, deleteBeforeReplace: true, parent: this },
     );
 
     const autoUpgradeMaintenance = new ccs.MaintenanceConfiguration(
@@ -623,7 +755,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         resourceName: aks.name,
         maintenanceWindow: autoUpgradeWindow,
       },
-      { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
+      { dependsOn: aks.resource, deletedWith: aks.resource, deleteBeforeReplace: true, parent: this },
     );
 
     const nodeOSMaintenance = new ccs.MaintenanceConfiguration(
@@ -634,13 +766,13 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         resourceName: aks.name,
         maintenanceWindow: nodeOSWindow,
       },
-      { dependsOn: aks, deletedWith: aks, deleteBeforeReplace: true, parent: this },
+      { dependsOn: aks.resource, deletedWith: aks.resource, deleteBeforeReplace: true, parent: this },
     );
 
     return { default: defaultMaintenance, autoUpgrade: autoUpgradeMaintenance, nodeOS: nodeOSMaintenance };
   }
 
-  private createExtensions(aks: ccs.ManagedCluster, identity: AppRegistration) {
+  private createExtensions(aks: AksCluster, identity: AppRegistration) {
     const { extensions, rsGroup, groupRoles } = this.args;
     if (extensions?.argoCd && groupRoles) {
       const { argoCd } = extensions;
@@ -648,7 +780,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
         `${this.name}-argocd`,
         {
           ...argoCd,
-          aks,
+          aks: aks.resource,
           rsGroup,
           identity,
         },
@@ -699,7 +831,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     }
   }
 
-  private getExtraAksOutputs(aks: ccs.ManagedCluster) {
+  private getExtraAksOutputs(aks: AksCluster) {
     const { rsGroup } = this.args;
     const aksInfo = getAksClusterOutput({ resourceGroupName: rsGroup.resourceGroupName, resourceName: aks.name });
     return aksInfo.properties.identityProfile.apply((p) => ({
@@ -709,7 +841,7 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     }));
   }
 
-  private assignPermission(aks: ccs.ManagedCluster) {
+  private assignPermission(aks: AksCluster) {
     const { attachToAcr, features, enableResourceIdentity, rsGroup } = this.args;
 
     if (enableResourceIdentity && this.systemIdentityId) {
@@ -749,13 +881,13 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
               roleName: 'Container Registry Repository Reader',
               scope: attachToAcr.id,
             },
-            { dependsOn: aks, deletedWith: aks, parent: this },
+            { dependsOn: aks.resource, deletedWith: aks.resource, parent: this },
           ),
       );
     }
   }
 
-  private getPrivateDNSZone(aks: ccs.ManagedCluster) {
+  private getPrivateDNSZone(aks: AksCluster) {
     const { features } = this.args;
     if (!features.enablePrivateCluster) return undefined;
 
@@ -802,3 +934,15 @@ export class AzKubernetes extends BaseResourceComponent<AzKubernetesArgs> {
     };
   }
 }
+
+/** A Base cluster as the component reads it once created. */
+const toAksCluster = (cluster: ccs.ManagedCluster): AksCluster => ({
+  resource: cluster,
+  id: cluster.id,
+  name: cluster.name,
+  systemIdentityId: cluster.identity.apply((id) => id!.principalId),
+  oidcIssuerProfile: cluster.oidcIssuerProfile,
+  nodeResourceGroup: cluster.nodeResourceGroup,
+  privateFQDN: cluster.privateFQDN,
+  addonProfiles: cluster.addonProfiles,
+});

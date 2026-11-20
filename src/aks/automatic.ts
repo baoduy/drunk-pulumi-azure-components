@@ -2,7 +2,7 @@ import * as ccs from '@pulumi/azure-native/containerservice';
 import * as pulumi from '@pulumi/pulumi';
 import type { AzKubernetesArgs } from './AzKubernetes';
 
-/** The Azure container-service API an AKS Automatic cluster is created through: the first with `hostedSystemProfile`. */
+/** @internal The Azure container-service API an AKS Automatic cluster is created through: the first with `hostedSystemProfile`. */
 export const AKS_AUTOMATIC_API_VERSION = '2026-02-01';
 
 const SUBNET_INPUTS = ['apiServerSubnetId', 'systemNodeSubnetId', 'workloadNodeSubnetId'] as const;
@@ -24,7 +24,7 @@ const toVnetId = (subnetId: string) => {
   return match[1];
 };
 
-/** The upgrade channels an Automatic cluster runs on: the caller's, each left out one Stable / NodeImage. */
+/** @internal The caller's upgrade channels for an Automatic cluster; a channel left out runs on `stable` / `NodeImage`. */
 export const automaticUpgradeProfile = (profile: AzKubernetesArgs['autoUpgradeProfile']) =>
   pulumi.output(profile).apply((p) => ({
     upgradeChannel: p?.upgradeChannel ?? ccs.UpgradeChannel.Stable,
@@ -32,6 +32,7 @@ export const automaticUpgradeProfile = (profile: AzKubernetesArgs['autoUpgradePr
   }));
 
 /**
+ * @internal
  * Refuses every input an AKS Automatic cluster cannot take, naming the input, before any child resource registers.
  * The upgrade channels and an extra pool's `enableAutoScaling` must be literal values: an Output or a Promise is
  * refused, since it is only known after resources are registered.

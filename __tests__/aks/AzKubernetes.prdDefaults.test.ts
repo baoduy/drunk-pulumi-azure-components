@@ -1,4 +1,4 @@
-import { withStack, aksState, aksStackHooks, settleAks } from '../testUtils/pulumiMocks';
+import { withStack, aksState, aksStackHooks, settleAks, aksClusterOf, previewAks } from '../testUtils/pulumiMocks';
 
 // Each case reloads the AKS module graph through `withStack` and builds a cluster; under a parallel
 // full-suite run one case can exceed Jest's 5 s default.
@@ -78,7 +78,20 @@ describe('R1 — SKU tier defaults by environment, explicit tier wins', () => {
   });
 
   test('a dev Automatic cluster without a tier runs on Standard, the tier Azure preconfigures for Automatic', async () => {
-    expect((await clusterInputs('dev', { sku: { name: 'Automatic' } })).sku).toEqual({
+    // DRK-2546: an Automatic cluster needs its three subnets, takes no node pool, and is the generic
+    // `azure-native:resources:Resource`, so its SKU is read through `aksClusterOf`.
+    const vnet = '/subscriptions/sub/resourceGroups/rg-net/providers/Microsoft.Network/virtualNetworks/vnet-dev';
+    const { captured } = await previewAks('dev', 'prd-defaults', {
+      ...baseArgs,
+      sku: { name: 'Automatic' },
+      agentPoolProfiles: [],
+      network: {
+        apiServerSubnetId: `${vnet}/subnets/snet-aks-api`,
+        systemNodeSubnetId: `${vnet}/subnets/snet-aks-system`,
+        workloadNodeSubnetId: `${vnet}/subnets/snet-aks-workload`,
+      },
+    });
+    expect(aksClusterOf(captured).inputs.sku).toEqual({
       name: 'Automatic',
       tier: 'Standard',
     });

@@ -90,3 +90,21 @@ describe('An Automatic cluster fills the upgrade channel the stack leaves out', 
     });
   });
 });
+
+describe("An Automatic cluster maps the stack's group roles to Azure RBAC admins", () => {
+  test('a stack with group roles gets the AKS admin group as the Azure RBAC admin group', async () => {
+    const { captured } = await previewAks('prd', 'aks-orders', {
+      ...automaticArgs,
+      groupRoles: {
+        admin: { objectId: 'admin_object_id', displayName: 'admins' },
+        contributor: { objectId: 'contrib_object_id', displayName: 'contributors' },
+        readOnly: { objectId: 'read_object_id', displayName: 'readers' },
+      },
+    });
+
+    const aadProfile = aksClusterOf(captured).inputs.properties.aadProfile;
+    expect(aadProfile).toMatchObject({ enableAzureRBAC: true, managed: true, tenantID: '' });
+    // One admin group, the component's `rol-aks-orders-admin`; the mocks give a group no `objectId`.
+    expect(aadProfile.adminGroupObjectIDs).toHaveLength(1);
+  });
+});

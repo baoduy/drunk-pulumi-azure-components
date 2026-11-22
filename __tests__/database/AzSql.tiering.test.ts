@@ -4,7 +4,7 @@ import { withStack, restoreStack } from '../testUtils/pulumiMocks';
  * DRK-1822 S2 — AzSql environment tiering (acceptance tests, DRK-1862).
  *
  * PRD: SQL databases and elastic pools on zone-capable SKUs (GeneralPurpose, BusinessCritical,
- * Premium) default to zone-redundant, and databases default to geo backups.
+ * Premium) default to zone-redundant, and databases default to zone-redundant backups (DRK-2569).
  * Non-PRD: databases default to local backups. Serverless SKUs (`_S_` in the name) default
  * `autoPauseDelay` to -1 in PRD and 60 minutes elsewhere. A caller-supplied value always wins.
  *
@@ -40,15 +40,15 @@ async function deploy(stackName: string, args: Record<string, unknown>) {
   };
 }
 
-describe('AzSql — PRD zone redundancy and geo backups, non-PRD local backups and serverless auto-pause', () => {
+describe('AzSql — PRD zone redundancy and zone-redundant backups, non-PRD local backups and serverless auto-pause', () => {
   const ORIGINAL_STACK = process.env.PULUMI_NODEJS_STACK;
   afterEach(() => restoreStack(ORIGINAL_STACK));
 
-  test('S1: prd standalone GP_Gen5_2 database is zone-redundant with geo backups and no auto-pause', async () => {
+  test('S1: prd standalone GP_Gen5_2 database is zone-redundant with zone-redundant backups and no auto-pause', async () => {
     const { db } = await deploy('prd', { databases: { app: { sku: { name: 'GP_Gen5_2' } } } });
 
     expect(db.zoneRedundant).toBe(true);
-    expect(db.requestedBackupStorageRedundancy).toBe('Geo');
+    expect(db.requestedBackupStorageRedundancy).toBe('Zone');
     expect(db.autoPauseDelay).toBeUndefined();
   });
 
@@ -117,11 +117,11 @@ describe('AzSql — PRD zone redundancy and geo backups, non-PRD local backups a
     });
   });
 
-  test('S5: prd Basic database gets no zone-redundancy default but still geo backups', async () => {
+  test('S5: prd Basic database gets no zone-redundancy default but still zone-redundant backups', async () => {
     const { db } = await deploy('prd', { databases: { app: { sku: { name: 'Basic', tier: 'Basic' } } } });
 
     expect(db.zoneRedundant).toBeUndefined();
-    expect(db.requestedBackupStorageRedundancy).toBe('Geo');
+    expect(db.requestedBackupStorageRedundancy).toBe('Zone');
   });
 
   test('S6: prd Hyperscale HS_Gen5_2 database gets neither a zone-redundancy nor a backup default', async () => {

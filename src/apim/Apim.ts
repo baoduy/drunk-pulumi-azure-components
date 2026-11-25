@@ -55,9 +55,11 @@ export interface ApimArgs
     caCerts?: Array<ApimCertType>;
     rootCerts?: Array<ApimCertType>;
   };
-  sku: {
+  /** The pricing tier. When omitted, the service is created on `Consumption` with capacity 0. */
+  sku?: {
     capacity: pulumi.Input<number>;
-    name: apim.SkuType;
+    /** `PremiumV2` is not yet in the `SkuType` enum of `@pulumi/azure-native`, so it is added here. */
+    name: apim.SkuType | 'PremiumV2';
   };
   disableSignIn: boolean;
   permissions?: Array<Omit<types.GrantIdentityRoles, 'identity'>>;
@@ -124,7 +126,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
       vaultInfo,
       groupRoles,
       rsGroup,
-      sku,
+      sku = { name: 'Consumption', capacity: 0 },
       publisherName,
       publisherEmail,
       notificationSenderEmail,
@@ -160,7 +162,7 @@ export class Apim extends BaseResourceComponent<ApimArgs> {
             }
           : undefined,
 
-        sku: sku ?? { name: 'Consumption', capacity: 0 },
+        sku,
 
         apiVersionConstraint: apiVersionConstraint ?? {
           minApiVersion: '2019-12-01',
